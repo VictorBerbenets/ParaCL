@@ -26,4 +26,3 @@ add_executable(parser
 target_compile_features(parser PRIVATE cxx_std_20)
 target_include_directories(parser PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(parser PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/parsing/include)
-
