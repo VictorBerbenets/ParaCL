@@ -1,5 +1,5 @@
 %option c++
-
+%option nodefault yylineno
 
 %{
 
@@ -10,13 +10,13 @@
 WS      [ \t\n\v]+
 DIGIT   [0-9]
 DIGIT1  [1-9]
-VAR     [a-zA-Z][0-9]+
+VAR     [a-zA-Z_][0-9]+
 
 %%
 
 {WS}
-"+"               return yy::parser::token_type::ADD;
-"-"               return yy::parser::token_type::SUB;
+"+"               return yy::parser::token_type::PLUS;
+"-"               return yy::parser::token_type::MINUS;
 "*"               return yy::parser::token_type::MUL;
 "/"               return yy::parser::token_type::DIV;
 "="               return yy::parser::token_type::ASSIGN;
@@ -39,8 +39,9 @@ VAR     [a-zA-Z][0-9]+
 "{"               return yy::parser::token_type::OP_BRACE;
 "}"               return yy::parser::token_type::CL_BRACE;
 
-{DIGIT1}{DIGIT}*  return yy::parser::token_type::NUMBER;
-.			      return yy::parser::token_type::ERR;
+-?{DIGIT1}{DIGIT}* return yy::parser::token_type::NUMBER;
+{VAR}*             return yy::parser::token_type::VAR;              
+.			       return yy::parser::token_type::ERR;
 
 %%
 

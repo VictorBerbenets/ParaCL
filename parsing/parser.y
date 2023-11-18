@@ -33,8 +33,8 @@ parser::token_type yylex(parser::semantic_type* yylval,
   ASSIGN   "="
   MUL      "*"
   DIV      "/"
-  ADD      "+"
-  SUB      "-"
+  PLUS      "+"
+  MINUS      "-"
   LT       "<"
   GT       ">"
   LE       "<="
@@ -62,39 +62,51 @@ parser::token_type yylex(parser::semantic_type* yylval,
 %token <int> NUMBER
 %token <std::string> VAR
 %nterm <int> equals
-%nterm <int> expr
+%nterm <int> exp
 
-%left '+' '-' '*' '/'
+%right ASSIGN
+%left '+' '-'
+%left '*' '/'
+%nonassoc UMINUS
 
 %start program
 
 %%
 
-program: eqlist
+program: statement_block
 ;
 
-eqlist: equals SCOLON eqlist
-      | %empty
+statement_block: %empty
+                 | statement statement_block
 ;
 
-equals: expr ASSIGN expr       { 
-                                $$ = ($1 == $3); 
-                                std::cout << "Checking: " << $1 << " vs " << $3 
-                                          << "; Result: " << $$
-                                          << std::endl; 
-                              }
+statement: exp SCOLON
+          | operator
+          | function
 ;
 
-expr: expr ADD NUMBER        { $$ = $1 + $3; }
-    | expr SUB NUMBER       { $$ = $1 - $3; }
-    | NUMBER                  { $$ = $1; }
+exp:  NUMBER
+      | VAR
+      | exp PLUS exp
+      | exp MINUS exp
+      | exp MUL exp
+      | exp DIV exp
+      | exp ASSIGN exp
+      | MINUS exp %prec UMINUS
 ;
+
+operator: IF
+          | WHILE
+;
+
+function: SCAN
+          | PRINT
 
 %%
 
 namespace yy {
 
-parser::token_type yylex(parser::semantic_type* yylval,                         
+parser::token_type yylex(parser::semantic_type* yylval,
                          NumDriver* driver)
 {
   return driver->yylex(yylval);
