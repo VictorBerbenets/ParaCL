@@ -17,28 +17,54 @@ namespace yy { class NumDriver; }
 
 %code
 {
+
 #include "driver.hpp"
 
 namespace yy {
 
-parser::token_type yylex(parser::semantic_type* yylval,                         
+parser::token_type yylex(parser::semantic_type* yylval,
                          NumDriver* driver);
 }
+
 }
 
+// ariphmetic tokens
 %token
-  EQUAL   "="
-  MINUS   "-"
-  PLUS    "+"
-  SCOLON  ";"
+  ASSIGN   "="
+  MUL      "*"
+  DIV      "/"
+  ADD      "+"
+  SUB      "-"
+  LT       "<"
+  GT       ">"
+  LE       "<="
+  GE       ">="
+  EQ       "=="
+  NEQ      "!="
   ERR
 ;
 
+%token SCOLON  ";"
+
+// statement tokens
+%token
+  IF         "if"
+  WHILE      "while"
+  PRINT      "print"
+  SCAN       "?"
+  OP_BRACK   "("
+  CL_BRACK   ")"
+  OP_BRACE   "{"
+  CL_BRACE   "}"
+;
+
+
 %token <int> NUMBER
+%token <std::string> VAR
 %nterm <int> equals
 %nterm <int> expr
 
-%left '+' '-'
+%left '+' '-' '*' '/'
 
 %start program
 
@@ -51,7 +77,7 @@ eqlist: equals SCOLON eqlist
       | %empty
 ;
 
-equals: expr EQUAL expr       { 
+equals: expr ASSIGN expr       { 
                                 $$ = ($1 == $3); 
                                 std::cout << "Checking: " << $1 << " vs " << $3 
                                           << "; Result: " << $$
@@ -59,8 +85,8 @@ equals: expr EQUAL expr       {
                               }
 ;
 
-expr: expr PLUS NUMBER        { $$ = $1 + $3; }
-    | expr MINUS NUMBER       { $$ = $1 - $3; }
+expr: expr ADD NUMBER        { $$ = $1 + $3; }
+    | expr SUB NUMBER       { $$ = $1 - $3; }
     | NUMBER                  { $$ = $1; }
 ;
 
