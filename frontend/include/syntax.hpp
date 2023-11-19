@@ -13,26 +13,27 @@ eval
 namespace ast {
 
 enum class NodeT: char {
-    
-}
+
+};
 
 enum class BinOp: char {
     ADD,
     SUB,
     MUL,
     DIV
-}
+};
 
+class stmt_node;
 
 class ast {
 public:
-    
+
 private:
     std::unique_ptr<stmt_node> root_;
 };
 
 class stmt_node {
-
+public:
     virtual ~stmt_node() {}
 
 private:

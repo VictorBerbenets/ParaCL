@@ -10,7 +10,7 @@
 WS      [ \t\n\v]+
 DIGIT   [0-9]
 DIGIT1  [1-9]
-VAR     [_a-zA-Z_][_a-zA-Z0-9_]+
+VAR     [a-zA-Z][a-zA-Z0-9]+
 
 %%
 
@@ -39,8 +39,8 @@ VAR     [_a-zA-Z_][_a-zA-Z0-9_]+
 "{"               { return yy::parser::token_type::OP_BRACE; }
 "}"               { return yy::parser::token_type::CL_BRACE; }
 
--?{DIGIT1}{DIGIT}* { return yy::parser::token_type::NUMBER;  }
-{VAR}*             { return yy::parser::token_type::VAR;     }
+-?{DIGIT1}{DIGIT}* { std::cout << "NUMBER\n"; return yy::parser::token_type::NUMBER;  }
+[a-zA-Z]*          { std::cout << "VARRR\n"; return yy::parser::token_type::VAR;      }
 .			       { return yy::parser::token_type::ERR;     }
 
 %%

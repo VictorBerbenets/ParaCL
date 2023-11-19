@@ -13,7 +13,7 @@ flex_target(scanner
 bison_target(parser
   frontend/parsing/parser.y
   ${CMAKE_CURRENT_BINARY_DIR}/parser.cc
-  COMPILE_FLAGS "--defines=${CMAKE_CURRENT_BINARY_DIR}/paracl_grammar.tab.hh")
+  COMPILE_FLAGS "--defines=${CMAKE_CURRENT_BINARY_DIR}/paracl_grammar.tab.hh -Wcounterexamples")
 
 add_flex_bison_dependency(scanner parser)
 
@@ -26,3 +26,4 @@ add_executable(parser
 target_compile_features(parser PRIVATE cxx_std_20)
 target_include_directories(parser PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(parser PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/frontend/parsing/include)
+target_include_directories(parser PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include/)
