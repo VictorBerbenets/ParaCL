@@ -17,58 +17,96 @@ namespace yy { class NumDriver; }
 
 %code
 {
+
 #include "driver.hpp"
 
 namespace yy {
 
-parser::token_type yylex(parser::semantic_type* yylval,                         
+parser::token_type yylex(parser::semantic_type* yylval,
                          NumDriver* driver);
 }
+
 }
 
+// ariphmetic tokens
 %token
-  EQUAL   "="
-  MINUS   "-"
-  PLUS    "+"
-  SCOLON  ";"
+  ASSIGN   "="
+  MUL      "*"
+  DIV      "/"
+  PLUS      "+"
+  MINUS      "-"
+  LT       "<"
+  GT       ">"
+  LE       "<="
+  GE       ">="
+  EQ       "=="
+  NEQ      "!="
   ERR
 ;
 
-%token <int> NUMBER
-%nterm <int> equals
-%nterm <int> expr
+%token SCOLON  ";"
 
+// statement tokens
+%token
+  IF         "if"
+  WHILE      "while"
+  PRINT      "print"
+  SCAN       "?"
+  OP_BRACK   "("
+  CL_BRACK   ")"
+  OP_BRACE   "{"
+  CL_BRACE   "}"
+;
+
+
+%token <int> NUMBER
+%token <std::string> VAR
+%nterm <int> equals
+%nterm <int> exp
+
+%right ASSIGN
 %left '+' '-'
+%left '*' '/'
+%nonassoc UMINUS
 
 %start program
 
 %%
 
-program: eqlist
+program: statement_block
 ;
 
-eqlist: equals SCOLON eqlist
-      | %empty
+statement_block: %empty
+                 | statement statement_block
 ;
 
-equals: expr EQUAL expr       { 
-                                $$ = ($1 == $3); 
-                                std::cout << "Checking: " << $1 << " vs " << $3 
-                                          << "; Result: " << $$
-                                          << std::endl; 
-                              }
+statement: exp SCOLON
+          | operator
+          | function
 ;
 
-expr: expr PLUS NUMBER        { $$ = $1 + $3; }
-    | expr MINUS NUMBER       { $$ = $1 - $3; }
-    | NUMBER                  { $$ = $1; }
+exp:  NUMBER
+      | VAR
+      | exp PLUS exp
+      | exp MINUS exp
+      | exp MUL exp
+      | exp DIV exp
+      | exp ASSIGN exp
+      | MINUS exp %prec UMINUS
 ;
+
+operator: IF
+          | WHILE
+;
+
+function: SCAN
+          | PRINT
 
 %%
 
 namespace yy {
 
-parser::token_type yylex(parser::semantic_type* yylval,                         
+parser::token_type yylex(parser::semantic_type* yylval,
                          NumDriver* driver)
 {
   return driver->yylex(yylval);
