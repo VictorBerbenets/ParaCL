@@ -30,17 +30,11 @@ parser::token_type yylex(parser::semantic_type* yylval,
 
 // ariphmetic tokens
 %token
-  ASSIGN   "="
-  MUL      "*"
-  DIV      "/"
-  PLUS      "+"
-  MINUS      "-"
-  LT       "<"
-  GT       ">"
-  LE       "<="
-  GE       ">="
-  EQ       "=="
-  NEQ      "!="
+  ASSIGN   '='
+  MUL      '*'
+  DIV      '/'
+  PLUS     '+'
+  MINUS    '-'
   ERR
 ;
 
@@ -61,12 +55,11 @@ parser::token_type yylex(parser::semantic_type* yylval,
 
 %token <int> NUMBER
 %token <std::string> VAR
-%nterm <int> equals
-%nterm <int> exp
 
+%nonassoc <int> CMP
 %right ASSIGN
-%left '+' '-'
-%left '*' '/'
+%left PLUS MINUS
+%left MUL DIV
 %nonassoc UMINUS
 
 %start program
@@ -82,25 +75,29 @@ statement_block: %empty
 
 statement: exp SCOLON
           | operator
-          | function
 ;
-
-exp:  NUMBER
-      | VAR
+// shift-reduce conflicts
+exp:    exp CMP exp
       | exp PLUS exp
       | exp MINUS exp
       | exp MUL exp
       | exp DIV exp
       | exp ASSIGN exp
+      | '(' exp ')'
       | MINUS exp %prec UMINUS
+      | NUMBER
+      | VAR
+      | VAR ASSIGN exp
+      | function
 ;
 
-operator: IF
-          | WHILE
+operator: IF '(' exp ')' '{' statement '}'
+          | WHILE '(' exp ')' '{' statement '}'
 ;
 
-function: SCAN
-          | PRINT
+function: VAR ASSIGN SCAN
+          | PRINT VAR
+
 
 %%
 
