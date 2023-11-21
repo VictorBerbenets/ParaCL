@@ -23,69 +23,108 @@ enum class BinOp: char {
     DIV
 };
 
-class stmt_node;
+enum class UnOp: char {
+    PLUS,
+    MINUS
+};
+
+class statement;
 
 class ast {
 public:
 
 private:
-    std::unique_ptr<stmt_node> root_;
+    std::vector<std::unique_ptr<statement>> root_;
 };
 
-class stmt_node {
+class statement {
 public:
-    virtual ~stmt_node() {}
+    virtual ~statement() {}
 
 private:
-    stmt_node* parent_;
-    NodeT type_;
-
+    statement* parent_;
 };
 
-class decl_node: public stmt_node {
+class qualifier: public statement {
 
 };
 // expr nodes
-class expr_node: public stmt_node {
-    using pointer_type = std::unique_ptr<expr_node>;
-private:
-    std::vector<pointer_type> expr_childs_;
+class expression: public statement {
+protected:
+    using pointer_type = std::unique_ptr<expression>;
+
+    virtual pointer_type eval() const = 0;
 };
 
-class bin_op_node: public expr_node {
+class bin_operator: public expression{
+protected:
+    bin_operator(BinOp type, pointer_type left_, pointer_type right_);
+
+    pointer_type eval() const override;
+
+    BinOp type_;
+    pointer_type left_, right_;
+};
+
+class un_operator: public expression {
+protected:
+    un_operator(UnOp type, pointer_type child);
+
+    pointer_type eval() const override;
+
+    UnOp type_;
+    pointer_type child_;
+};
+
+class add_expression: public bin_operator {
 
 };
 
-class un_op_node: public expr_node {
+class sub_expression: public bin_operator {
 
 };
+
+class mul_expression: public bin_operator {
+
+};
+
+class div_expression: public bin_operator {
+
+};
+
+
 /////////////////////////////////////////
 
 // ctrl stmt nodes
-class ctrl_stmt_node: public stmt_node {
+class ctrl_statement: public statement {
+protected:
+    using expr_ptr = std::unique_ptr<expression>;
+    using stmt_ptr = std::unique_ptr<statement>;
+
+    expr_ptr condition_;
+    stmt_ptr body_;
+};
+
+class while_operator: public ctrl_statement {
 
 };
 
-class while_node: public ctrl_stmt_node {
-
-};
-
-class if_node: public ctrl_stmt_node {
+class if_operator: public ctrl_statement {
 
 };
 
 /////////////////////////////////////////
 
 // func nodes
-class func_node: public stmt_node {
+class function: public statement {
 
 };
 
-class print_node: public func_node {
+class print_function: public function {
 
 };
 
-class scan_node: public func_node {
+class scan_function: public function {
 
 };
 /////////////////////////////////////////
