@@ -5,11 +5,11 @@
 
 namespace yy {
 
-class NumDriver {
+class Driver {
   FlexLexer *plex_;
 
 public:
-  NumDriver(FlexLexer *plex) : plex_(plex) {}
+  Driver(FlexLexer *plex) : plex_(plex) {}
 
   parser::token_type yylex(parser::semantic_type *yylval) {
     parser::token_type tt = static_cast<parser::token_type>(plex_->yylex());

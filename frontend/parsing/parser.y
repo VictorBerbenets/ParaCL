@@ -3,7 +3,7 @@
 %skeleton "lalr1.cc"
 %defines
 %define api.value.type variant
-%param {yy::NumDriver* driver}
+%param {yy::Driver* driver}
 
 %code requires
 {
@@ -14,7 +14,10 @@
 #include "syntax.hpp"
 
 // forward decl of argument to parser
-namespace yy { class NumDriver; }
+namespace yy {
+  class Driver;
+
+}
 }
 
 %code
@@ -25,7 +28,7 @@ namespace yy { class NumDriver; }
 namespace yy {
 
 parser::token_type yylex(parser::semantic_type* yylval,
-                         NumDriver* driver);
+                         Driver* driver);
 
 
 }
@@ -73,8 +76,9 @@ parser::token_type yylex(parser::semantic_type* yylval,
 program: statement_block
 ;
 
-statement_block: statement statement_block { std::cout << "statement" << std::endl; }
-                | %empty
+statement_block: %empty {}
+                | statement_block statement { std::cout << "statement\n" << std::endl; }
+
 ;
 
 statement: exp SCOLON   {std::cout << "EXPRESSION" << std::endl;}
@@ -114,7 +118,7 @@ exp:    exp CMP exp                  { std::cout << "EXP COMP" << std::endl; }
 namespace yy {
 
 parser::token_type yylex(parser::semantic_type* yylval,
-                         NumDriver* driver)
+                         Driver* driver)
 {
   return driver->yylex(yylval);
 }
