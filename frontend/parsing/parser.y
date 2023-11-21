@@ -73,36 +73,43 @@ parser::token_type yylex(parser::semantic_type* yylval,
 program: statement_block
 ;
 
-statement_block: statement statement_block { std::cout << __LINE__ << std::endl; }
+statement_block: statement statement_block { std::cout << "statement" << std::endl; }
                 | %empty
 ;
 
-statement: exp SCOLON   {std::cout << __LINE__ << std::endl;}
-          | operator    {std::cout << __LINE__ << std::endl;}
-          | function    {std::cout << __LINE__ << std::endl;}
+statement: exp SCOLON   {std::cout << "EXPRESSION" << std::endl;}
+          | operator    {std::cout << "OPERATOR" << std::endl;}
+          | function    {std::cout << "FUNCTION" << std::endl;}
 ;
 
-exp:    exp CMP exp                  {std::cout << __LINE__ << std::endl;}
-      | exp PLUS exp                 {std::cout << __LINE__ << std::endl;}
-      | exp MINUS exp                {std::cout << __LINE__ << std::endl;}
-      | exp MUL exp                  {std::cout << __LINE__ << std::endl;}
-      | exp DIV exp                  {std::cout << __LINE__ << std::endl;}
-      | '(' exp ')'                  {std::cout << __LINE__ << std::endl;}
-      | MINUS exp %prec UMINUS       {std::cout << __LINE__ << std::endl;}
-      | NUMBER                       {std::cout << __LINE__ << std::endl;}
-      | VAR                          {std::cout << __LINE__ << std::endl;}
-      | VAR ASSIGN exp               {std::cout << __LINE__ << std::endl;}
+operator: IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE          { std::cout << "IF\n"; }
+          | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE     { std::cout << "WHILE" << std::endl;}
 ;
 
-operator: IF '(' exp ')' '{' statement '}'        { std::cout << "IF\n"; }
-          | WHILE '(' exp ')' '{' statement '}'   {std::cout << __LINE__ << std::endl;}
+function: scan_func
+         | print_func
 ;
 
-function: VAR ASSIGN SCAN       { std::cout << __LINE__ << std::endl;}
-          | PRINT VAR           { std::cout << "HI\n" << std::endl; std::cout << $2 << std::endl; }
+scan_func: VAR ASSIGN SCAN SCOLON   { std::cout << "SCAN FUNC" << std::endl; }
 ;
 
+print_func: PRINT NUMBER SCOLON       { std::cout << "PRINT " << $2 << std::endl; }
+           | PRINT VAR SCOLON         { std::cout << "PRINT " << $2 << std::endl; }
+;
+
+exp:    exp CMP exp                  { std::cout << "EXP COMP" << std::endl; }
+      | exp PLUS exp                 { std::cout << "PLUS" << std::endl;     }
+      | exp MINUS exp                { std::cout << "MINUS" << std::endl;    }
+      | exp MUL exp                  { std::cout << "MUL" << std::endl;      }
+      | exp DIV exp                  { std::cout << "DIV" << std::endl;      }
+      | OP_BRACK exp CL_BRACK        { std::cout << __LINE__ << std::endl;   }
+      | MINUS exp %prec UMINUS       { std::cout << __LINE__ << std::endl;   }
+      | NUMBER                       { std::cout << "NUMBER = " << $1 << std::endl; }
+      | VAR                          { std::cout << "VAR = " << $1 << std::endl;    }
+      | VAR ASSIGN exp SCOLON        { std::cout << $1 << " = " << "EXP" << std::endl; }
+;
 %%
+
 
 namespace yy {
 

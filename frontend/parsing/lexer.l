@@ -10,7 +10,7 @@
 WS      [ \t\n\v]+
 DIGIT   [0-9]
 DIGIT1  [1-9]
-VAR     [a-zA-Z][a-zA-Z0-9]+
+/* VAR     [a-zA-Z][a-zA-Z0-9]+*/
 
 %%
 
@@ -30,7 +30,7 @@ VAR     [a-zA-Z][a-zA-Z0-9]+
 "!="              { return yy::parser::token_type::CMP; }
 
 
-"if"              { return yy::parser::token_type::IF;       }
+"if"              { std::cout << yytext << std::endl; return yy::parser::token_type::IF;       }
 "while"           { return yy::parser::token_type::WHILE;    }
 "print"           { return yy::parser::token_type::PRINT;    }
 "?"               { return yy::parser::token_type::SCAN;     }
@@ -39,8 +39,10 @@ VAR     [a-zA-Z][a-zA-Z0-9]+
 "{"               { return yy::parser::token_type::OP_BRACE; }
 "}"               { return yy::parser::token_type::CL_BRACE; }
 
--?{DIGIT1}{DIGIT}* { std::cout << "NUMBER\n"; return yy::parser::token_type::NUMBER;  }
-[a-zA-Z]*          { std::cout << "VARRR\n"; return yy::parser::token_type::VAR;      }
+-?{DIGIT1}{DIGIT}* { return yy::parser::token_type::NUMBER;  }
+[a-zA-Z]+          {    //return yy::parser::make_IDENTIFIER(yytext, loc);
+                    /*return yy::parser::token_type::VAR; */    
+                   }
 .			       { return yy::parser::token_type::ERR;     }
 
 %%
