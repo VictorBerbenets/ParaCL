@@ -4,46 +4,55 @@
 %{
 
 #include "paracl_grammar.tab.hh"
+#include "driver.hpp"
 
 %}
 
 WS      [ \t\n\v]+
 DIGIT   [0-9]
 DIGIT1  [1-9]
-/* VAR     [a-zA-Z][a-zA-Z0-9]+*/
+
+%{
+
+  #define YY_USER_ACTION  loc.columns (yyleng);
+%}
+
 
 %%
 
+%{
+  yy::location& loc = driver->location();
+  // Code run each time yylex is called.
+  loc.step ();
+%}
+
 {WS}
-"+"              { return yy::parser::token_type::PLUS;   }
-"-"              { return yy::parser::token_type::MINUS;  }
-"*"              { return yy::parser::token_type::MUL;    }
-"/"              { return yy::parser::token_type::DIV;    }
-"="              { return yy::parser::token_type::ASSIGN; }
-";"              { return yy::parser::token_type::SCOLON; }
+"+"              { return yy::parser::make_PLUS(loc);   }
+"-"              { return yy::parser::make_MINUS(loc);  }
+"*"              { return yy::parser::make_MUL(loc);    }
+"/"              { return yy::parser::make_DIV(loc);    }
+"="              { return yy::parser::make_ASSIGN(loc); }
+";"              { return yy::parser::make_SCOLON(loc); }
 
 ">"  |
 "<"  |
 ">=" |
 "<=" |
 "==" |
-"!="              { return yy::parser::token_type::CMP; }
+"!="              { return yy::parser::make_CMP(1, loc); }
 
 
-"if"              { return yy::parser::token_type::IF;       }
-"while"           { return yy::parser::token_type::WHILE;    }
-"print"           { return yy::parser::token_type::PRINT;    }
-"?"               { return yy::parser::token_type::SCAN;     }
-"("               { return yy::parser::token_type::OP_BRACK; }
-")"               { return yy::parser::token_type::CL_BRACK; }
-"{"               { return yy::parser::token_type::OP_BRACE; }
-"}"               { return yy::parser::token_type::CL_BRACE; }
+"if"              { return yy::parser::make_IF(loc);       }
+"while"           { return yy::parser::make_WHILE(loc);    }
+"print"           { return yy::parser::make_PRINT(loc);    }
+"?"               { return yy::parser::make_SCAN(loc);     }
+"("               { return yy::parser::make_OP_BRACK(loc); }
+")"               { return yy::parser::make_CL_BRACK(loc); }
+"{"               { return yy::parser::make_OP_BRACE(loc); }
+"}"               { return yy::parser::make_CL_BRACE(loc); }
 
--?{DIGIT1}{DIGIT}* { return yy::parser::token_type::NUMBER;  }
-[a-zA-Z]+          {    //return yy::parser::make_IDENTIFIER(yytext, loc);
-                        return yy::parser::token_type::VAR;
-                   }
-.			       { return yy::parser::token_type::ERR;     }
+-?{DIGIT1}{DIGIT}* { return yy::parser::make_NUMBER(std::atoi(yytext), loc); }
+[a-zA-Z]+          { return yy::parser::make_VAR(yytext, loc);               }
+.			             { return yy::parser::make_ERR(loc);                       }
 
 %%
-

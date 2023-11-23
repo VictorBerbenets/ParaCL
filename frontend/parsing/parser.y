@@ -1,23 +1,29 @@
 %language "c++"
 
 %skeleton "lalr1.cc"
+%require "3.8"
+%header
+
 %defines
 %define api.value.type variant
+%define api.token.constructor
+
 %param {yy::Driver* driver}
 
-%code requires
-{
+%locations
+
+%code requires {
+
 #include <iostream>
 #include <string>
 #include <utility>
 
 #include "syntax.hpp"
 
-// forward decl of argument to parser
 namespace yy {
   class Driver;
-
 }
+
 }
 
 %code
@@ -25,17 +31,11 @@ namespace yy {
 
 #include "driver.hpp"
 
-namespace yy {
-
-parser::token_type yylex(parser::semantic_type* yylval,
-                         Driver* driver);
-
-
 }
 
-}
 
 // ariphmetic tokens
+%define api.token.prefix {TOKEN_}
 %token
   ASSIGN   '='
   MUL      '*'
@@ -116,12 +116,19 @@ exp:    exp CMP exp                  { std::cout << "EXP COMP" << std::endl; }
 
 
 namespace yy {
-
-parser::token_type yylex(parser::semantic_type* yylval,
-                         Driver* driver)
+/*
+parser::symbol_type yylex(Driver* driver)
 {
   return driver->yylex(yylval);
 }
+*/
 
-void parser::error(const std::string&){}
+
+parser::symbol_type yylex(Driver* driver) {
+  return parser::symbol_type();
+}
+
+
+void parser::error(const location_type& loc, const std::string& msg) {}
+
 }
