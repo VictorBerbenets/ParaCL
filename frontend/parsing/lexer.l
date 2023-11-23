@@ -6,7 +6,7 @@
 
 #define yyterminate()
 
-using namespace yy;
+using namespace my_yy;
 %}
 
 %option noyywrap nounput noinput nodefault
@@ -20,32 +20,33 @@ DIGIT1  [1-9]
 %%
 
 {WS}
-"+"              { return yy::parser::make_PLUS();   }
-"-"              { return yy::parser::make_MINUS();  }
-"*"              { return yy::parser::make_MUL();    }
-"/"              { return yy::parser::make_DIV();    }
-"="              { return yy::parser::make_ASSIGN(); }
-";"              { return yy::parser::make_SCOLON(); }
+"+"              { return parser::make_PLUS(update_loc());   }
+"-"              { return parser::make_MINUS(update_loc());  }
+"*"              { return parser::make_MUL(update_loc());    }
+"/"              { return parser::make_DIV(update_loc());    }
+"="              { return parser::make_ASSIGN(update_loc()); }
+";"              { return parser::make_SCOLON(update_loc()); }
 
 ">"  |
 "<"  |
 ">=" |
 "<=" |
 "==" |
-"!="              { return yy::parser::make_CMP(); }
+"!="              { return parser::make_CMP(1, update_loc()); }
 
 
-"if"              { return yy::parser::make_IF();       }
-"while"           { return yy::parser::make_WHILE();    }
-"print"           { return yy::parser::make_PRINT();    }
-"?"               { return yy::parser::make_SCAN();     }
-"("               { return yy::parser::make_OP_BRACK(); }
-")"               { return yy::parser::make_CL_BRACK(); }
-"{"               { return yy::parser::make_OP_BRACE(); }
-"}"               { return yy::parser::make_CL_BRACE(); }
+"if"              { return parser::make_IF(update_loc());       }
+"while"           { return parser::make_WHILE(update_loc());    }
+"print"           { return parser::make_PRINT(update_loc());    }
+"?"               { return parser::make_SCAN(update_loc());     }
+"("               { return parser::make_OP_BRACK(update_loc()); }
+")"               { return parser::make_CL_BRACK(update_loc()); }
+"{"               { return parser::make_OP_BRACE(update_loc()); }
+"}"               { return parser::make_CL_BRACE(update_loc()); }
 
--?{DIGIT1}{DIGIT}* { return yy::parser::make_NUMBER(std::atoi(yytext)); }
-[a-zA-Z]+          { return yy::parser::make_VAR(yytext);               }
-.			             { return yy::parser::make_ERR();                     }
+-?{DIGIT1}{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_loc()); }
+[a-zA-Z]+          { return parser::make_VAR(yytext, update_loc());               }
+.			             { throw parser::syntax_error{update_loc(), "Unknown symbol"}; }
+<<EOF>>            { return parser::make_EOF(update_loc());}
 
 %%
