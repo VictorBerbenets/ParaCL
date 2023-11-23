@@ -34,7 +34,7 @@ class ast {
 public:
 
 private:
-    std::vector<std::unique_ptr<statement>> root_;
+    std::unique_ptr<statement> root_;
 };
 
 class statement {

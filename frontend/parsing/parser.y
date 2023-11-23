@@ -1,14 +1,15 @@
 %language "c++"
 
 %skeleton "lalr1.cc"
-%require "3.8"
-%header
+%require "3.5"
+// %header
 
 %defines
+%define api.token.raw
+%define api.parser.class { parser }
 %define api.value.type variant
 %define api.token.constructor
-
-%param {yy::Driver* driver}
+%define api.namespace { yy }
 
 %locations
 
@@ -21,27 +22,47 @@
 #include "syntax.hpp"
 
 namespace yy {
+  class scanner;
   class Driver;
 }
 
+using namespace yy;
+
 }
+
+%code top {
+
+#include "driver.hpp"
+#include "paracl_grammar.tab.hh"
+#include "scanner.hpp"
+
+static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_driver) {
+  return p_scanner.get_next_token();
+}
+
+}
+
+%param {yy::scanner& Scanner}
+%param {yy::Driver& Driver}
+
 
 %code
 {
 
-#include "driver.hpp"
 
 }
 
 
-// ariphmetic tokens
+%define parse.trace
+%define parse.error verbose
 %define api.token.prefix {TOKEN_}
+
 %token
-  ASSIGN   '='
-  MUL      '*'
-  DIV      '/'
-  PLUS     '+'
-  MINUS    '-'
+  ASSIGN   "="
+  MUL      "*"
+  DIV      "/"
+  PLUS     "+"
+  MINUS    "-"
   ERR
 ;
 
@@ -129,6 +150,8 @@ parser::symbol_type yylex(Driver* driver) {
 }
 
 
-void parser::error(const location_type& loc, const std::string& msg) {}
+void parser::error(const std::string& msg) {
+  throw std::runtime_error{msg};
+}
 
 }

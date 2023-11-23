@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <sstream>
+
 #include <FlexLexer.h>
 
 #include "driver.hpp"
@@ -8,8 +10,10 @@
 int yyFlexLexer::yywrap() { return 1; }
 
 int main(int argc, char** argv) {
-  FlexLexer *lexer = new yyFlexLexer;
-  yy::Driver driver(lexer);
-  driver.parse(argv[1]);
-  delete lexer;
+  std::string Input{std::istreambuf_iterator<char>{std::cin},
+                    std::istreambuf_iterator<char>{}};
+  yy::Driver DRV{};
+  std::istringstream ISS{Input};
+  DRV.switchInputStream(&ISS);
+  DRV.parse();
 }

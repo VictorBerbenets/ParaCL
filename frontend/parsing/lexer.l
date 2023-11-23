@@ -1,58 +1,51 @@
-%option c++
-%option nodefault yylineno
-
 %{
+#include <iostream>
+#include <numeric>
 
-#include "paracl_grammar.tab.hh"
-#include "driver.hpp"
+#include "scanner.hpp"
 
+#define yyterminate()
+
+using namespace yy;
 %}
+
+%option noyywrap nounput noinput nodefault
+%option c++
+%option yyclass="scanner"
 
 WS      [ \t\n\v]+
 DIGIT   [0-9]
 DIGIT1  [1-9]
 
-%{
-
-  #define YY_USER_ACTION  loc.columns (yyleng);
-%}
-
-
 %%
 
-%{
-  yy::location& loc = driver->location();
-  // Code run each time yylex is called.
-  loc.step ();
-%}
-
 {WS}
-"+"              { return yy::parser::make_PLUS(loc);   }
-"-"              { return yy::parser::make_MINUS(loc);  }
-"*"              { return yy::parser::make_MUL(loc);    }
-"/"              { return yy::parser::make_DIV(loc);    }
-"="              { return yy::parser::make_ASSIGN(loc); }
-";"              { return yy::parser::make_SCOLON(loc); }
+"+"              { return yy::parser::make_PLUS();   }
+"-"              { return yy::parser::make_MINUS();  }
+"*"              { return yy::parser::make_MUL();    }
+"/"              { return yy::parser::make_DIV();    }
+"="              { return yy::parser::make_ASSIGN(); }
+";"              { return yy::parser::make_SCOLON(); }
 
 ">"  |
 "<"  |
 ">=" |
 "<=" |
 "==" |
-"!="              { return yy::parser::make_CMP(1, loc); }
+"!="              { return yy::parser::make_CMP(); }
 
 
-"if"              { return yy::parser::make_IF(loc);       }
-"while"           { return yy::parser::make_WHILE(loc);    }
-"print"           { return yy::parser::make_PRINT(loc);    }
-"?"               { return yy::parser::make_SCAN(loc);     }
-"("               { return yy::parser::make_OP_BRACK(loc); }
-")"               { return yy::parser::make_CL_BRACK(loc); }
-"{"               { return yy::parser::make_OP_BRACE(loc); }
-"}"               { return yy::parser::make_CL_BRACE(loc); }
+"if"              { return yy::parser::make_IF();       }
+"while"           { return yy::parser::make_WHILE();    }
+"print"           { return yy::parser::make_PRINT();    }
+"?"               { return yy::parser::make_SCAN();     }
+"("               { return yy::parser::make_OP_BRACK(); }
+")"               { return yy::parser::make_CL_BRACK(); }
+"{"               { return yy::parser::make_OP_BRACE(); }
+"}"               { return yy::parser::make_CL_BRACE(); }
 
--?{DIGIT1}{DIGIT}* { return yy::parser::make_NUMBER(std::atoi(yytext), loc); }
-[a-zA-Z]+          { return yy::parser::make_VAR(yytext, loc);               }
-.			             { return yy::parser::make_ERR(loc);                       }
+-?{DIGIT1}{DIGIT}* { return yy::parser::make_NUMBER(std::atoi(yytext)); }
+[a-zA-Z]+          { return yy::parser::make_VAR(yytext);               }
+.			             { return yy::parser::make_ERR();                     }
 
 %%
