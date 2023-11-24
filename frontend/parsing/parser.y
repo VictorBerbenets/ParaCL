@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include "syntax.hpp"
+#include "ast.hpp"
 
 namespace yy {
   class scanner;
