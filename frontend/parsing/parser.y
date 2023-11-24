@@ -1,51 +1,67 @@
 %language "c++"
 
 %skeleton "lalr1.cc"
-%defines
-%define api.value.type variant
-%param {yy::Driver* driver}
+%require "3.5"
 
-%code requires
-{
+%defines
+%define api.token.raw
+%define api.parser.class { parser }
+%define api.value.type variant
+%define api.token.constructor
+%define api.namespace { yy }
+%define parse.lac full
+
+%locations
+
+%code requires {
+
 #include <iostream>
 #include <string>
+#include <stdexcept>
 #include <utility>
 
 #include "syntax.hpp"
 
-// forward decl of argument to parser
 namespace yy {
+  class scanner;
   class Driver;
-
-}
 }
 
-%code
-{
+using namespace yy;
+
+}
+
+%code top {
+
+#include <iostream>
+#include <string>
 
 #include "driver.hpp"
+#include "paracl_grammar.tab.hh"
+#include "scanner.hpp"
 
-namespace yy {
-
-parser::token_type yylex(parser::semantic_type* yylval,
-                         Driver* driver);
-
-
+static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_driver) {
+  return p_scanner.get_next_token();
 }
 
 }
 
-// ariphmetic tokens
+%param {yy::scanner& Scanner}
+%param {yy::Driver& Driver}
+
+%define parse.trace
+%define parse.error verbose
+%define api.token.prefix {TOKEN_}
+
 %token
-  ASSIGN   '='
-  MUL      '*'
-  DIV      '/'
-  PLUS     '+'
-  MINUS    '-'
-  ERR
+  ASSIGN   "="
+  MUL      "*"
+  DIV      "/"
+  PLUS     "+"
+  MINUS    "-"
+  EOF 0 "end of file"
+  SCOLON  ";"
 ;
-
-%token SCOLON  ";"
 
 // statement tokens
 %token
@@ -59,14 +75,27 @@ parser::token_type yylex(parser::semantic_type* yylval,
   CL_BRACE   "}"
 ;
 
+// logical tokens
+%token
+  EQ  "=="
+  NEQ "!="
+  LESS "<"
+  LESS_EQ "<="
+  GREATER ">"
+  GREATER_EQ ">="
+
+  LOGIC_AND "&&"
+  LOGIC_OR "||"
+;
 
 %token <int> NUMBER
 %token <std::string> VAR
 
-%nonassoc <int> CMP
+%nonassoc LESS LESS_EQ GREATER GREATER_EQ
 %right ASSIGN
 %left PLUS MINUS
 %left MUL DIV
+%left EQ NEQ
 %nonassoc UMINUS
 
 %start program
@@ -101,27 +130,30 @@ print_func: PRINT NUMBER SCOLON       { std::cout << "PRINT " << $2 << std::endl
            | PRINT VAR SCOLON         { std::cout << "PRINT " << $2 << std::endl; }
 ;
 
-exp:    exp CMP exp                  { std::cout << "EXP COMP" << std::endl; }
-      | exp PLUS exp                 { std::cout << "PLUS" << std::endl;     }
+exp:    logical_expression           {}
       | exp MINUS exp                { std::cout << "MINUS" << std::endl;    }
       | exp MUL exp                  { std::cout << "MUL" << std::endl;      }
       | exp DIV exp                  { std::cout << "DIV" << std::endl;      }
       | OP_BRACK exp CL_BRACK        { std::cout << __LINE__ << std::endl;   }
       | MINUS exp %prec UMINUS       { std::cout << __LINE__ << std::endl;   }
+      | VAR ASSIGN exp               { std::cout << $1 << " = " << "EXP" << std::endl; }
+      | VAR PLUS NUMBER              { std::cout << $1 << " + " << $3 << std::endl; }
+      | NUMBER PLUS VAR              { std::cout << $1 << " + " << $3 << std::endl; }
       | NUMBER                       { std::cout << "NUMBER = " << $1 << std::endl; }
       | VAR                          { std::cout << "VAR = " << $1 << std::endl;    }
-      | VAR ASSIGN exp SCOLON        { std::cout << $1 << " = " << "EXP" << std::endl; }
-;
+
+logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl; }
+                    | exp LESS_EQ exp     { std::cout << "LESS EQ" << std::endl; }
+                    | exp GREATER exp     { std::cout << "GREATER " << std::endl; }
+                    | exp GREATER_EQ exp  { std::cout << "GREATER EQ"    << std::endl; }
+                    | exp EQ exp          { std::cout << "EQ"  << std::endl; }
+                    | exp NEQ exp         { std::cout << "NEQ" << std::endl; }
+
 %%
 
 
-namespace yy {
-
-parser::token_type yylex(parser::semantic_type* yylval,
-                         Driver* driver)
-{
-  return driver->yylex(yylval);
-}
-
-void parser::error(const std::string&){}
+void yy::parser::error(const location_type& l, const std::string &msg) {
+  std::cout << "ERROR\n";
+  std::cout << l << std::endl;
+  //throw std::runtime_error{msg};
 }
