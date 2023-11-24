@@ -59,7 +59,6 @@ static my_yy::parser::symbol_type yylex(my_yy::scanner &p_scanner, my_yy::Driver
 %token  DIV      "/"
 %token  PLUS     "+"
 %token  MINUS    "-"
-%token  ERR
 
 %token EOF 0 "end of file"
 %token SCOLON  ";"
@@ -123,13 +122,15 @@ exp:    exp CMP exp                  { std::cout << "EXP COMP" << std::endl; }
       | exp DIV exp                  { std::cout << "DIV" << std::endl;      }
       | OP_BRACK exp CL_BRACK        { std::cout << __LINE__ << std::endl;   }
       | MINUS exp %prec UMINUS       { std::cout << __LINE__ << std::endl;   }
+      | VAR ASSIGN exp SCOLON        { std::cout << $1 << " = " << "EXP" << std::endl; }
       | NUMBER                       { std::cout << "NUMBER = " << $1 << std::endl; }
       | VAR                          { std::cout << "VAR = " << $1 << std::endl;    }
-      | VAR ASSIGN exp SCOLON        { std::cout << $1 << " = " << "EXP" << std::endl; }
 ;
 %%
 
 
-void my_yy::parser::error(const location_type&, const std::string &msg) {
-  throw std::runtime_error{msg};
+void my_yy::parser::error(const location_type& l, const std::string &msg) {
+  std::cout << "ERROR\n";
+  std::cout << l << std::endl;
+  //throw std::runtime_error{msg};
 }

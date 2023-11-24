@@ -22,7 +22,7 @@ public:
   scanner() {}
   parser::symbol_type get_next_token();
 
-  location update_loc() {
+  location update_location() {
     auto old_pos = m_pos;
     auto new_pos = (m_pos += symbol_length());
     return location{old_pos, new_pos};
