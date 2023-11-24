@@ -53,34 +53,49 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 %define parse.error verbose
 %define api.token.prefix {TOKEN_}
 
-
-%token  ASSIGN   "="
-%token  MUL      "*"
-%token  DIV      "/"
-%token  PLUS     "+"
-%token  MINUS    "-"
-
-%token EOF 0 "end of file"
-%token SCOLON  ";"
+%token
+  ASSIGN   "="
+  MUL      "*"
+  DIV      "/"
+  PLUS     "+"
+  MINUS    "-"
+  EOF 0 "end of file"
+  SCOLON  ";"
+;
 
 // statement tokens
-%token  IF         "if"
-%token  WHILE      "while"
-%token  PRINT      "print"
-%token  SCAN       "?"
-%token  OP_BRACK   "("
-%token  CL_BRACK   ")"
-%token  OP_BRACE   "{"
-%token  CL_BRACE   "}"
+%token
+  IF         "if"
+  WHILE      "while"
+  PRINT      "print"
+  SCAN       "?"
+  OP_BRACK   "("
+  CL_BRACK   ")"
+  OP_BRACE   "{"
+  CL_BRACE   "}"
+;
 
+// logical tokens
+%token
+  EQ  "=="
+  NEQ "!="
+  LESS "<"
+  LESS_EQ "<="
+  GREATER ">"
+  GREATER_EQ ">="
+
+  LOGIC_AND "&&"
+  LOGIC_OR "||"
+;
 
 %token <int> NUMBER
 %token <std::string> VAR
 
-%nonassoc <int> CMP
+%nonassoc LESS LESS_EQ GREATER GREATER_EQ
 %right ASSIGN
 %left PLUS MINUS
 %left MUL DIV
+%left EQ NEQ
 %nonassoc UMINUS
 
 %start program
@@ -115,17 +130,25 @@ print_func: PRINT NUMBER SCOLON       { std::cout << "PRINT " << $2 << std::endl
            | PRINT VAR SCOLON         { std::cout << "PRINT " << $2 << std::endl; }
 ;
 
-exp:    exp CMP exp                  { std::cout << "EXP COMP" << std::endl; }
-      | exp PLUS exp                 { std::cout << "PLUS" << std::endl;     }
+exp:    logical_expression           {}
       | exp MINUS exp                { std::cout << "MINUS" << std::endl;    }
       | exp MUL exp                  { std::cout << "MUL" << std::endl;      }
       | exp DIV exp                  { std::cout << "DIV" << std::endl;      }
       | OP_BRACK exp CL_BRACK        { std::cout << __LINE__ << std::endl;   }
       | MINUS exp %prec UMINUS       { std::cout << __LINE__ << std::endl;   }
-      | VAR ASSIGN exp SCOLON        { std::cout << $1 << " = " << "EXP" << std::endl; }
+      | VAR ASSIGN exp               { std::cout << $1 << " = " << "EXP" << std::endl; }
+      | VAR PLUS NUMBER              { std::cout << $1 << " + " << $3 << std::endl; }
+      | NUMBER PLUS VAR              { std::cout << $1 << " + " << $3 << std::endl; }
       | NUMBER                       { std::cout << "NUMBER = " << $1 << std::endl; }
       | VAR                          { std::cout << "VAR = " << $1 << std::endl;    }
-;
+
+logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl; }
+                    | exp LESS_EQ exp     { std::cout << "LESS EQ" << std::endl; }
+                    | exp GREATER exp     { std::cout << "GREATER " << std::endl; }
+                    | exp GREATER_EQ exp  { std::cout << "GREATER EQ"    << std::endl; }
+                    | exp EQ exp          { std::cout << "EQ"  << std::endl; }
+                    | exp NEQ exp         { std::cout << "NEQ" << std::endl; }
+
 %%
 
 

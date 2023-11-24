@@ -6,10 +6,10 @@
 
 
 int main(int argc, char** argv) {
-  std::string Input{std::istreambuf_iterator<char>{std::cin},
-                    std::istreambuf_iterator<char>{}};
-  yy::Driver DRV{};
-  std::istringstream ISS{Input};
-  DRV.switchInputStream(&ISS);
-  DRV.parse();
+  std::string str_input{std::istreambuf_iterator<char>{std::cin},
+                        std::istreambuf_iterator<char>{}};
+  yy::Driver driver{};
+  std::istringstream iss_str{str_input};
+  driver.switchInputStream(&iss_str);
+  driver.parse();
 }
