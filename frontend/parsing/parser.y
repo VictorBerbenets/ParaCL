@@ -88,6 +88,7 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
   LOGIC_OR "||"
 ;
 
+// terminal tokens
 %token <int> NUMBER
 %token <std::string> VAR
 
@@ -95,9 +96,11 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 %right ASSIGN
 %left PLUS MINUS
 %left MUL DIV
-%left EQ NEQ
+%left EQ NEQ LOGIC_AND LOGIC_OR
 %nonassoc UMINUS
 %nonassoc UPLUS
+
+// %nterm <exp> int
 
 %start program
 
@@ -106,12 +109,11 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 program: statement_block
 ;
 
-statement_block: %empty {}
+statement_block:  %empty {}
                 | statement_block statement { std::cout << "statement\n" << std::endl; }
-
 ;
 
-statement: exp SCOLON   {std::cout << "EXPRESSION" << std::endl;}
+statement:  exp SCOLON  {std::cout << "EXPRESSION" << std::endl;}
           | operator    {std::cout << "OPERATOR" << std::endl;}
           | function    {std::cout << "FUNCTION" << std::endl;}
 ;
@@ -125,7 +127,7 @@ exp:    logical_expression           {}
       | VAR                          { std::cout << "VAR = " << $1 << std::endl;    }
 ;
 
-unary_operation:  MINUS exp %prec UMINUS       { std::cout << "UMINUS" << std::endl; }
+unary_operation:   MINUS exp %prec UMINUS      { std::cout << "UMINUS" << std::endl; }
                  | PLUS  exp %prec UPLUS       { std::cout << "UPLUS" <<std::endl;   }
 ;
 
@@ -141,6 +143,8 @@ logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl;
                     | exp GREATER_EQ exp  { std::cout << "GREATER EQ"    << std::endl; }
                     | exp EQ exp          { std::cout << "EQ"  << std::endl; }
                     | exp NEQ exp         { std::cout << "NEQ" << std::endl; }
+                    | exp LOGIC_AND exp   { std::cout << "LOGIC AND" << std::endl;}
+                    | exp LOGIC_OR exp    { std::cout << "LOGIC OR" << std::endl;}
 ;
 
 function:  scan_func
@@ -150,11 +154,11 @@ function:  scan_func
 scan_func: VAR ASSIGN SCAN SCOLON   { std::cout << "SCAN FUNC" << std::endl; }
 ;
 
-print_func:  PRINT NUMBER SCOLON       { std::cout << "PRINT " << $2 << std::endl; }
+print_func:  PRINT NUMBER SCOLON      { std::cout << "PRINT " << $2 << std::endl; }
            | PRINT VAR SCOLON         { std::cout << "PRINT " << $2 << std::endl; }
 ;
 
-operator: IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE          { std::cout << "IF\n"; }
+operator:   IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE        { std::cout << "IF\n"; }
           | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE     { std::cout << "WHILE" << std::endl;}
 ;
 
