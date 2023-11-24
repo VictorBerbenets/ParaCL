@@ -8,7 +8,7 @@
 int main(int argc, char** argv) {
   std::string Input{std::istreambuf_iterator<char>{std::cin},
                     std::istreambuf_iterator<char>{}};
-  my_yy::Driver DRV{};
+  yy::Driver DRV{};
   std::istringstream ISS{Input};
   DRV.switchInputStream(&ISS);
   DRV.parse();

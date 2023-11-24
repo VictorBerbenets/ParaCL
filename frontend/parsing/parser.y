@@ -8,7 +8,7 @@
 %define api.parser.class { parser }
 %define api.value.type variant
 %define api.token.constructor
-%define api.namespace { my_yy }
+%define api.namespace { yy }
 %define parse.lac full
 
 %locations
@@ -22,12 +22,12 @@
 
 #include "syntax.hpp"
 
-namespace my_yy {
+namespace yy {
   class scanner;
   class Driver;
 }
 
-using namespace my_yy;
+using namespace yy;
 
 }
 
@@ -40,14 +40,14 @@ using namespace my_yy;
 #include "paracl_grammar.tab.hh"
 #include "scanner.hpp"
 
-static my_yy::parser::symbol_type yylex(my_yy::scanner &p_scanner, my_yy::Driver &p_driver) {
+static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_driver) {
   return p_scanner.get_next_token();
 }
 
 }
 
-%param {my_yy::scanner& Scanner}
-%param {my_yy::Driver& Driver}
+%param {yy::scanner& Scanner}
+%param {yy::Driver& Driver}
 
 %define parse.trace
 %define parse.error verbose
@@ -129,7 +129,7 @@ exp:    exp CMP exp                  { std::cout << "EXP COMP" << std::endl; }
 %%
 
 
-void my_yy::parser::error(const location_type& l, const std::string &msg) {
+void yy::parser::error(const location_type& l, const std::string &msg) {
   std::cout << "ERROR\n";
   std::cout << l << std::endl;
   //throw std::runtime_error{msg};

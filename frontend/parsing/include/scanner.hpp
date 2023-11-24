@@ -8,12 +8,12 @@
 #endif
 
 #undef YY_DECL
-#define YY_DECL my_yy::parser::symbol_type my_yy::scanner::get_next_token()
+#define YY_DECL yy::parser::symbol_type yy::scanner::get_next_token()
 
 #include "paracl_grammar.tab.hh"
 #include "location.hh"
 
-namespace my_yy {
+namespace yy {
 class scanner : public yyFlexLexer {
   position m_pos;
 

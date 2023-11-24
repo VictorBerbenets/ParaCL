@@ -6,7 +6,7 @@
 
 #define yyterminate()
 
-using namespace my_yy;
+using namespace yy;
 %}
 
 %option noyywrap nounput noinput nodefault

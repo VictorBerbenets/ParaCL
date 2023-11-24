@@ -6,7 +6,7 @@
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
 
-namespace my_yy {
+namespace yy {
 
 class Driver {
 public:
