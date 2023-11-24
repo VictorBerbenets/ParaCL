@@ -2,26 +2,29 @@
 
 #include <string>
 
-
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
 
 namespace yy {
 
 class Driver {
-public:
-    scanner Scan;
-    parser Parser;
+  public:
 
-    std::string file_;
-
-    Driver(): Scan{}, Parser(Scan, *this) {}
+    Driver(): scanner_{}, parser_(scanner_, *this) {}
 
     void parse() {
-        Parser.parse();
+        parser_.parse();
     }
 
-    void switchInputStream(std::istream* Is) { Scan.switch_streams(Is, nullptr); }
+    void switchInputStream(std::istream* Is) {
+        scanner_.switch_streams(Is, nullptr);
+    }
+
+  private:
+    scanner scanner_;
+    parser parser_;
+
+    std::string file_;
 };
 
 } // <--- namespace yy

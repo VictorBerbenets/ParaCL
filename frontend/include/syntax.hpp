@@ -31,17 +31,17 @@ enum class UnOp: char {
 class statement;
 
 class ast {
-public:
+  public:
 
-private:
+  private:
     std::unique_ptr<statement> root_;
 };
 
 class statement {
-public:
+  public:
     virtual ~statement() {}
 
-private:
+  private:
     statement* parent_;
 };
 
@@ -50,14 +50,14 @@ class qualifier: public statement {
 };
 // expr nodes
 class expression: public statement {
-protected:
+  protected:
     using pointer_type = std::unique_ptr<expression>;
 
     virtual pointer_type eval() const = 0;
 };
 
 class bin_operator: public expression{
-protected:
+  protected:
     bin_operator(BinOp type, pointer_type left_, pointer_type right_);
 
     pointer_type eval() const override;
@@ -67,7 +67,7 @@ protected:
 };
 
 class un_operator: public expression {
-protected:
+  protected:
     un_operator(UnOp type, pointer_type child);
 
     pointer_type eval() const override;
@@ -97,7 +97,7 @@ class div_expression: public bin_operator {
 
 // ctrl stmt nodes
 class ctrl_statement: public statement {
-protected:
+  protected:
     using expr_ptr = std::unique_ptr<expression>;
     using stmt_ptr = std::unique_ptr<statement>;
 

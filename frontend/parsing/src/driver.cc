@@ -4,7 +4,6 @@
 
 #include "driver.hpp"
 
-
 int main(int argc, char** argv) {
   std::string str_input{std::istreambuf_iterator<char>{std::cin},
                         std::istreambuf_iterator<char>{}};
