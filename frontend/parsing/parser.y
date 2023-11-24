@@ -116,37 +116,24 @@ statement: exp SCOLON   {std::cout << "EXPRESSION" << std::endl;}
           | function    {std::cout << "FUNCTION" << std::endl;}
 ;
 
-operator: IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE          { std::cout << "IF\n"; }
-          | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE     { std::cout << "WHILE" << std::endl;}
-;
-
-function: scan_func
-         | print_func
-;
-
-scan_func: VAR ASSIGN SCAN SCOLON   { std::cout << "SCAN FUNC" << std::endl; }
-;
-
-print_func: PRINT NUMBER SCOLON       { std::cout << "PRINT " << $2 << std::endl; }
-           | PRINT VAR SCOLON         { std::cout << "PRINT " << $2 << std::endl; }
-;
-
 exp:    logical_expression           {}
-      | bin_operations               {}
-      | unary_operations             {}
+      | bin_operation                {}
+      | unary_operation              {}
       | OP_BRACK exp CL_BRACK        { std::cout << __LINE__ << std::endl;   }
       | VAR ASSIGN exp               { std::cout << $1 << " = " << "EXP" << std::endl; }
       | NUMBER                       { std::cout << "NUMBER = " << $1 << std::endl; }
       | VAR                          { std::cout << "VAR = " << $1 << std::endl;    }
+;
 
+unary_operation:  MINUS exp %prec UMINUS       { std::cout << "UMINUS" << std::endl; }
+                 | PLUS  exp %prec UPLUS       { std::cout << "UPLUS" <<std::endl;   }
+;
 
-unary_operations:  MINUS exp %prec UMINUS       { std::cout << "UMINUS" << std::endl; }
-                 | PLUS  exp %prec UPLUS        { std::cout << "UPLUS" <<std::endl;   }
-
-bin_operations:  exp PLUS  exp                { std::cout << "PLUS" << std::endl;     }
+bin_operation:   exp PLUS  exp                { std::cout << "PLUS" << std::endl;     }
                | exp MINUS exp                { std::cout << "MINUS" << std::endl;    }
                | exp MUL exp                  { std::cout << "MUL" << std::endl;      }
                | exp DIV exp                  { std::cout << "DIV" << std::endl;      }
+;
 
 logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl;  }
                     | exp LESS_EQ exp     { std::cout << "LESS EQ" << std::endl;  }
@@ -154,6 +141,22 @@ logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl;
                     | exp GREATER_EQ exp  { std::cout << "GREATER EQ"    << std::endl; }
                     | exp EQ exp          { std::cout << "EQ"  << std::endl; }
                     | exp NEQ exp         { std::cout << "NEQ" << std::endl; }
+;
+
+function:  scan_func
+         | print_func
+;
+
+scan_func: VAR ASSIGN SCAN SCOLON   { std::cout << "SCAN FUNC" << std::endl; }
+;
+
+print_func:  PRINT NUMBER SCOLON       { std::cout << "PRINT " << $2 << std::endl; }
+           | PRINT VAR SCOLON         { std::cout << "PRINT " << $2 << std::endl; }
+;
+
+operator: IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE          { std::cout << "IF\n"; }
+          | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE     { std::cout << "WHILE" << std::endl;}
+;
 
 %%
 
@@ -162,3 +165,4 @@ void yy::parser::error(const location_type& l, const std::string &msg) {
   std::cout << "error pos: " << l << std::endl;
   throw std::runtime_error{msg};
 }
+
