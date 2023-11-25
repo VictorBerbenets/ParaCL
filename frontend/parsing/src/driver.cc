@@ -14,7 +14,10 @@ int main(int argc, char** argv) {
   driver.switchInputStream(&iss_str);
   driver.parse();
   using namespace frontend::ast;
+  /*
   auto num = number(10);
   auto var = variable("string");
   auto ptr = make_node<bin_operator>(BinOp::ADD, num, var);
+  */
+  ast ast;
 }

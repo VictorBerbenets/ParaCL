@@ -3,8 +3,6 @@
 #include <memory>
 #include <vector>
 #include <concepts>
-#include <type_traits>
-
 
 #include "statement.hpp"
 
@@ -16,31 +14,30 @@ template <typename T>
 concept derived_from = std::derived_from<T, statement>;
 
 class ast final {
+    using size_type    = std::size_t;
+    using pointer_type = std::unique_ptr<statement>;
   public:
+    ast() = default;
+    ast(const ast&) = delete;
+    ast(ast&& other);
 
+    statement *root_ptr() const & noexcept;
+
+    template <derived_from NodeType, typename... Args>
+    NodeType *make_node(Args... args) {
+      auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);
+      auto ret_ptr  = node_ptr.get();
+      statements_.push_back(std::move(node_ptr));
+
+      return ret_ptr;
+    }
+    
+    void set_root(statement* root_id) & noexcept;
   private:
-    std::unique_ptr<statement> root_;
+    statement *root_ = nullptr;
+    size_type size_  = 0;
+    std::vector<pointer_type> statements_;
 };
-
-class qualifier: public statement {
-
-};
-
-template <derived_from NodeType>
-auto make_node(const auto type,
-               const auto left,
-               const auto right) requires (std::is_enum_v<decltype(type)>) {
-  auto ret_ptr = std::make_unique<NodeType>(type, left, right);
-  return ret_ptr;
-}
-
-template <derived_from NodeType>
-auto make_node(const auto type,
-              const auto child) requires (std::is_enum_v<decltype(type)>) { 
-  auto ret_ptr = std::make_unique<NodeType>(type, child);
-  return ret_ptr;
-}
-
 
 } // <--- namespace ast
 

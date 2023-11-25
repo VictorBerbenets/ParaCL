@@ -2,8 +2,12 @@ cmake_minimum_required(VERSION 3.15)
 
 project(paracl)
 
+set(CMAKE_CXX_STANDARD 20)
+
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
+
+aux_source_directory(./frontend/ast/src AST_SOURCES)
 
 flex_target(scanner
   frontend/parsing/lexer.l
@@ -19,10 +23,12 @@ bison_target(parser
 add_flex_bison_dependency(scanner parser)
 
 add_library(bison_parser STATIC ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
-target_include_directories(bison_parser PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(bison_parser PUBLIC frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(bison_parser PUBLIC frontend/ast/include)
 
 add_executable(driver
   frontend/parsing/src/driver.cc
+  ${AST_SOURCES}
   ${BISON_parser_OUTPUTS}
   ${FLEX_scanner_OUTPUTS}
 )
