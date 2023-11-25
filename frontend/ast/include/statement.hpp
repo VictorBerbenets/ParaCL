@@ -3,12 +3,15 @@
 #include <memory>
 #include <list>
 
+// #include "visitor"
+
 namespace frontend {
 
 namespace ast {
 
 class statement {
   public:
+    //virtual void accept(visitor* visitor) = 0;
     virtual ~statement() = default;
 
   private:
@@ -17,7 +20,7 @@ class statement {
 
 class statement_block final {
   private:
-    std::list<std::unique_ptr<statement>> statements_;
+    std::list<statement*> statements_;
 };
 
 } // <--- namespace ast
