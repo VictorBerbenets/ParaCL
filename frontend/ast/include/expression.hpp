@@ -6,12 +6,51 @@ namespace frontend {
 
 namespace ast {
 
+
+enum class BinOp: char {
+    ADD,
+    SUB,
+    MUL,
+    DIV
+};
+
+enum class UnOp: char {
+    PLUS,
+    MINUS
+};
+
+
 // expr nodes
 class expression: public statement {
+  public:
+    ~expression() override = default;
+
   protected:
     using pointer_type = std::unique_ptr<expression>;
 
     virtual pointer_type eval() const = 0;
+
+};
+
+class number: public expression {
+  public:
+    number(int num);
+
+    pointer_type eval() const;
+
+    ~number() override = default;
+  private:
+    int value_;
+};
+
+class variable: public expression {
+  public:
+    variable(const std::string& str);
+    variable(std::string&& str);
+
+    pointer_type eval() const;
+  private:
+  std::string name_;
 };
 
 class ctrl_statement: public statement {
@@ -41,22 +80,6 @@ class un_operator: public expression {
 
     UnOp type_;
     pointer_type child_;
-};
-
-class add_expression: public bin_operator {
-
-};
-
-class sub_expression: public bin_operator {
-
-};
-
-class mul_expression: public bin_operator {
-
-};
-
-class div_expression: public bin_operator {
-
 };
 
 
