@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 
 #include "ast.hpp"
 #include "scanner.hpp"
@@ -9,24 +10,31 @@
 namespace yy {
 
 class Driver {
-  public:
+//  using namespace frontend::ast;
 
-    Driver(): scanner_{}, parser_(scanner_, *this) {}
+ public:
 
-    void parse() {
-        parser_.parse();
-    }
+  Driver(): scanner_{}, parser_(scanner_, *this) {}
 
-    void switchInputStream(std::istream* Is) {
-        scanner_.switch_streams(Is, nullptr);
-    }
+  void parse() {
+      parser_.parse();
+  }
 
-  private:
-    scanner scanner_;
-    parser parser_;
-    std::string file_;
+  void switchInputStream(std::istream* Is) {
+      scanner_.switch_streams(Is, nullptr);
+  }
+  
+  template <frontend::ast::derived_from NodeType, typename... Args>
+  NodeType* make_node(Args... args) {
+    return ast_.make_node<NodeType>(std::forward<Args>(args)...);
+  }
 
-    frontend::ast::ast ast_;
+ private:
+  scanner scanner_;
+  parser parser_;
+  std::string file_;
+
+  frontend::ast::ast ast_;
 };
 
 } // <--- namespace yy

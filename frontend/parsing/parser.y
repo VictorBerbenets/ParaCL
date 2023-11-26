@@ -49,8 +49,8 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 
 }
 
-%param {yy::scanner& Scanner}
-%param {yy::Driver& Driver}
+%param {yy::scanner& scanner}
+%param {yy::Driver& driver}
 
 %define parse.trace
 %define parse.error verbose
@@ -160,12 +160,22 @@ logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl;
 ;
 
 function:  VAR ASSIGN SCAN SCOLON    { std::cout << "SCAN FUNC" << std::endl; }
-         | PRINT NUMBER SCOLON       { std::cout << "PRINT " << $2 << std::endl; }
+         | PRINT NUMBER SCOLON       { /*$$ = driver.make_node<number>()*/ }
          | PRINT VAR SCOLON          { std::cout << "PRINT " << $2 << std::endl; }
 ;
 
-ctrl_statement:   IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE        { std::cout << "IF\n"; }
-                | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE     { std::cout << "WHILE" << std::endl;}
+ctrl_statement:   IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE {
+                    $$ = driver.make_node<ctrl_statement>(
+                          CtrlStatement::IF,
+                          $3,
+                          $6);    
+                  }
+                  | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE {
+                    $$ = driver.make_node<ctrl_statement>(
+                          CtrlStatement::WHILE,
+                          $3,
+                          $6);    
+                  }
 ;
 
 %%

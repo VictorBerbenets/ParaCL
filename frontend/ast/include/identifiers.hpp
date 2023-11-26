@@ -4,6 +4,11 @@ namespace frontend {
 
 namespace ast {
 
+enum class CtrlStatement: char {
+  IF,
+  WHILE
+};
+
 enum class BinOp: char {
     ADD,
     SUB,
