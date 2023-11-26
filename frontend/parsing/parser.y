@@ -62,8 +62,8 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
   DIV      "/"
   PLUS     "+"
   MINUS    "-"
-  EOF 0 "end of file"
-  SCOLON  ";"
+  EOF 0    "end of file"
+  SCOLON   ";"
 ;
 
 // statement tokens
@@ -80,15 +80,15 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 
 // logical tokens
 %token
-  EQ  "=="
-  NEQ "!="
-  LESS "<"
-  LESS_EQ "<="
-  GREATER ">"
+  EQ         "=="
+  NEQ        "!="
+  LESS       "<"
+  LESS_EQ    "<="
+  GREATER    ">"
   GREATER_EQ ">="
 
-  LOGIC_AND "&&"
-  LOGIC_OR "||"
+  LOGIC_AND  "&&"
+  LOGIC_OR   "||"
 ;
 
 // terminal tokens
@@ -159,7 +159,7 @@ logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl;
                     | exp LOGIC_OR exp    { std::cout << "LOGIC OR" << std::endl;}
 ;
 
-function:  VAR ASSIGN SCAN SCOLON    { std::cout << "SCAN FUNC" << std::endl; }
+function:  VAR ASSIGN SCAN SCOLON    { driver.make_node<scan_function>(std::move($1)); }
          | PRINT NUMBER SCOLON       { driver.make_node<print_function<int>>($2); }
          | PRINT VAR SCOLON          { driver.make_node<print_function<std::string>>(std::move($2)); }
 ;

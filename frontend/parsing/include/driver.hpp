@@ -20,7 +20,7 @@ class Driver {
       parser_.parse();
   }
 
-  void switchInputStream(std::istream* Is) {
+  void switchInputStream(std::istream *Is) {
       scanner_.switch_streams(Is, nullptr);
   }
   

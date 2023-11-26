@@ -12,7 +12,7 @@ namespace ast {
 
 template <typename T>
 concept variable_form = std::integral<T> ||
-                   std::convertible_to<T, std::string>;
+                        std::constructible_from<std::string, T>;
 
 class function: public statement {
 
@@ -33,7 +33,15 @@ class print_function: public function {
 };
 
 class scan_function: public function {
+  using value_type = int;
+ public:
+  scan_function(const std::string& var_name);
+  scan_function(std::string&& var_name);
 
+ private:
+  std::string var_name_;
+  value_type value_;
+  
 };
 
 } // <--- namespace ast
