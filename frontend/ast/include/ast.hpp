@@ -29,11 +29,14 @@ class ast final {
     auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);
     auto ret_ptr  = node_ptr.get();
     statements_.push_back(std::move(node_ptr));
-
+    size_++;
     return ret_ptr;
   }
   
   void set_root(statement* root_id) & noexcept;
+
+  size_type size() const noexcept;
+  [[nodiscard]] bool empty() const noexcept;
  private:
   statement *root_ = nullptr;
   size_type size_  = 0;
