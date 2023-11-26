@@ -1,6 +1,5 @@
 #pragma once
 
-
 #if !defined(yyFlexLexerOnce)
 #undef yyFlexLexer
 #define yyFlexLexer graph_FlexLexer
@@ -15,17 +14,19 @@
 
 namespace yy {
 class scanner : public yyFlexLexer {
-  position m_pos;
-
   auto symbol_length() const { return yyleng; }
-public:
-  scanner() {}
-  parser::symbol_type get_next_token();
+  public:
+    scanner() {}
+    parser::symbol_type get_next_token();
 
-  location update_location() {
-    auto old_pos = m_pos;
-    auto new_pos = (m_pos += symbol_length());
-    return location{old_pos, new_pos};
-  }
+    location update_location() {
+      auto old_pos = pos_;
+      auto new_pos = (pos_ += symbol_length());
+      return location{old_pos, new_pos};
+    }
+  private:
+    position pos_;
+
 };
-} // namespace yy
+
+} // <--- namespace yy

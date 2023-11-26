@@ -20,7 +20,9 @@
 #include <stdexcept>
 #include <utility>
 
-#include "syntax.hpp"
+// #include "ast.hpp"
+
+#include "ast_includes.hpp"
 
 namespace yy {
   class scanner;
@@ -28,6 +30,7 @@ namespace yy {
 }
 
 using namespace yy;
+using namespace frontend::ast;
 
 }
 
@@ -37,8 +40,8 @@ using namespace yy;
 #include <string>
 
 #include "driver.hpp"
-#include "paracl_grammar.tab.hh"
 #include "scanner.hpp"
+#include "paracl_grammar.tab.hh"
 
 static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_driver) {
   return p_scanner.get_next_token();
@@ -46,8 +49,8 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 
 }
 
-%param {yy::scanner& Scanner}
-%param {yy::Driver& Driver}
+%param {yy::scanner& scanner}
+%param {yy::Driver& driver}
 
 %define parse.trace
 %define parse.error verbose
@@ -88,72 +91,98 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
   LOGIC_OR "||"
 ;
 
+// terminal tokens
 %token <int> NUMBER
 %token <std::string> VAR
+
+%nterm <statement*>          statement
+%nterm <statement_block*>    statement_block
+%nterm <expression*>         exp
+%nterm <logic_expression*> logical_expression
+%nterm <bin_operator*>       bin_operation
+%nterm <un_operator*>        unary_operation
+%nterm <function*>           function
+%nterm <ctrl_statement*>     ctrl_statement
 
 %nonassoc LESS LESS_EQ GREATER GREATER_EQ
 %right ASSIGN
 %left PLUS MINUS
 %left MUL DIV
-%left EQ NEQ
+%left EQ NEQ LOGIC_AND LOGIC_OR
 %nonassoc UMINUS
+%nonassoc UPLUS
+
+// %nterm <exp> int
 
 %start program
 
 %%
 
-program: statement_block
+program: statement_block {}
 ;
 
-statement_block: %empty {}
+statement_block:  %empty {}
                 | statement_block statement { std::cout << "statement\n" << std::endl; }
-
 ;
 
-statement: exp SCOLON   {std::cout << "EXPRESSION" << std::endl;}
-          | operator    {std::cout << "OPERATOR" << std::endl;}
-          | function    {std::cout << "FUNCTION" << std::endl;}
-;
-
-operator: IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE          { std::cout << "IF\n"; }
-          | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE     { std::cout << "WHILE" << std::endl;}
-;
-
-function: scan_func
-         | print_func
-;
-
-scan_func: VAR ASSIGN SCAN SCOLON   { std::cout << "SCAN FUNC" << std::endl; }
-;
-
-print_func: PRINT NUMBER SCOLON       { std::cout << "PRINT " << $2 << std::endl; }
-           | PRINT VAR SCOLON         { std::cout << "PRINT " << $2 << std::endl; }
+statement:  exp SCOLON        {std::cout << "EXPRESSION" << std::endl;}
+          | ctrl_statement    {std::cout << "OPERATOR" << std::endl;}
+          | function          {std::cout << "FUNCTION" << std::endl;}
 ;
 
 exp:    logical_expression           {}
-      | exp MINUS exp                { std::cout << "MINUS" << std::endl;    }
-      | exp MUL exp                  { std::cout << "MUL" << std::endl;      }
-      | exp DIV exp                  { std::cout << "DIV" << std::endl;      }
+      | bin_operation                {}
+      | unary_operation              {}
       | OP_BRACK exp CL_BRACK        { std::cout << __LINE__ << std::endl;   }
-      | MINUS exp %prec UMINUS       { std::cout << __LINE__ << std::endl;   }
       | VAR ASSIGN exp               { std::cout << $1 << " = " << "EXP" << std::endl; }
-      | VAR PLUS NUMBER              { std::cout << $1 << " + " << $3 << std::endl; }
-      | NUMBER PLUS VAR              { std::cout << $1 << " + " << $3 << std::endl; }
       | NUMBER                       { std::cout << "NUMBER = " << $1 << std::endl; }
       | VAR                          { std::cout << "VAR = " << $1 << std::endl;    }
+;
 
-logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl; }
-                    | exp LESS_EQ exp     { std::cout << "LESS EQ" << std::endl; }
+unary_operation:   MINUS exp %prec UMINUS      { std::cout << "UMINUS" << std::endl; }
+                 | PLUS  exp %prec UPLUS       { std::cout << "UPLUS" <<std::endl;   }
+;
+
+bin_operation:   exp PLUS  exp                { std::cout << "PLUS" << std::endl;     }
+               | exp MINUS exp                { std::cout << "MINUS" << std::endl;    }
+               | exp MUL exp                  { std::cout << "MUL" << std::endl;      }
+               | exp DIV exp                  { std::cout << "DIV" << std::endl;      }
+;
+
+logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl;  }
+                    | exp LESS_EQ exp     { std::cout << "LESS EQ" << std::endl;  }
                     | exp GREATER exp     { std::cout << "GREATER " << std::endl; }
                     | exp GREATER_EQ exp  { std::cout << "GREATER EQ"    << std::endl; }
                     | exp EQ exp          { std::cout << "EQ"  << std::endl; }
                     | exp NEQ exp         { std::cout << "NEQ" << std::endl; }
+                    | exp LOGIC_AND exp   { std::cout << "LOGIC AND" << std::endl;}
+                    | exp LOGIC_OR exp    { std::cout << "LOGIC OR" << std::endl;}
+;
+
+function:  VAR ASSIGN SCAN SCOLON    { std::cout << "SCAN FUNC" << std::endl; }
+         | PRINT NUMBER SCOLON       { /*$$ = driver.make_node<number>()*/ }
+         | PRINT VAR SCOLON          { std::cout << "PRINT " << $2 << std::endl; }
+;
+
+ctrl_statement:   IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE {
+                    $$ = driver.make_node<ctrl_statement>(
+                          CtrlStatement::IF,
+                          $3,
+                          $6);    
+                  }
+                  | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE {
+                    $$ = driver.make_node<ctrl_statement>(
+                          CtrlStatement::WHILE,
+                          $3,
+                          $6);    
+                  }
+;
 
 %%
 
 
 void yy::parser::error(const location_type& l, const std::string &msg) {
-  std::cout << "ERROR\n";
-  std::cout << l << std::endl;
-  //throw std::runtime_error{msg};
+  std::cout << "error pos: " << l << std::endl;
+  throw std::runtime_error{msg};
 }
+
