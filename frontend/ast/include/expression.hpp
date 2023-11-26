@@ -21,10 +21,14 @@ class expression: public statement {
 
 class logic_expression: public expression {
  public:
+  logic_expression(LogicOp type, expression *left, expression *right);
   ~logic_expression() override = default;
 
-  pointer_type eval() const override;
+  logic_expression* eval() const override;
  private:
+  LogicOp type_;
+  expression *left_, *right_;
+
 };
 
 class number: public expression {
@@ -63,24 +67,22 @@ class ctrl_statement: public statement {
 
 class bin_operator: public expression{
  public:
+  bin_operator(BinOp type, pointer_type left, pointer_type right);
   ~bin_operator() override = default;
- protected:
-  bin_operator(BinOp type, pointer_type left_, pointer_type right_);
 
-  pointer_type eval() const override;
-
+  bin_operator* eval() const override;
+ private:
   BinOp type_;
   pointer_type left_, right_;
 };
 
 class un_operator: public expression {
  public:
-  ~un_operator() override = default;
- protected:
   un_operator(UnOp type, pointer_type child);
+  ~un_operator() override = default;
 
-  pointer_type eval() const override;
-
+  un_operator* eval() const override;
+ private:
   UnOp type_;
   pointer_type child_;
 };

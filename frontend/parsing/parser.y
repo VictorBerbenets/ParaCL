@@ -98,9 +98,10 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 %nterm <statement*>          statement
 %nterm <statement_block*>    statement_block
 %nterm <expression*>         exp
-%nterm <logic_expression*> logical_expression
+%nterm <logic_expression*>   logical_expression
 %nterm <bin_operator*>       bin_operation
 %nterm <un_operator*>        unary_operation
+%nterm <definition*>         definition
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
 
@@ -125,43 +126,46 @@ statement_block:  %empty {}
                 | statement_block statement { std::cout << "statement\n" << std::endl; }
 ;
 
-statement:  exp SCOLON        {std::cout << "EXPRESSION" << std::endl;}
-          | ctrl_statement    {std::cout << "OPERATOR" << std::endl;}
-          | function          {std::cout << "FUNCTION" << std::endl;}
+statement:  exp SCOLON        { $$ = $1; }
+          | ctrl_statement    { $$ = $1; }
+          | function          { $$ = $1; }
+          | definition        { $$ = $1; }
 ;
 
-exp:    logical_expression           {}
-      | bin_operation                {}
-      | unary_operation              {}
-      | OP_BRACK exp CL_BRACK        { std::cout << __LINE__ << std::endl;   }
-      | VAR ASSIGN exp               { std::cout << $1 << " = " << "EXP" << std::endl; }
-      | NUMBER                       { std::cout << "NUMBER = " << $1 << std::endl; }
-      | VAR                          { std::cout << "VAR = " << $1 << std::endl;    }
+exp:    logical_expression           { $$ = $1; }
+      | bin_operation                { $$ = $1; }
+      | unary_operation              { $$ = $1; }
+      | OP_BRACK exp CL_BRACK        { $$ = $2; }
+      | NUMBER                       { $$ = driver.make_node<number>($1);   }
+      | VAR                          { $$ = driver.make_node<variable>(std::move($1)); }
 ;
 
-unary_operation:   MINUS exp %prec UMINUS      { std::cout << "UMINUS" << std::endl; }
-                 | PLUS  exp %prec UPLUS       { std::cout << "UPLUS" <<std::endl;   }
+unary_operation:   MINUS exp %prec UMINUS      { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2); }
+                 | PLUS  exp %prec UPLUS       { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2);  }
 ;
 
-bin_operation:   exp PLUS  exp                { std::cout << "PLUS" << std::endl;     }
-               | exp MINUS exp                { std::cout << "MINUS" << std::endl;    }
-               | exp MUL exp                  { std::cout << "MUL" << std::endl;      }
-               | exp DIV exp                  { std::cout << "DIV" << std::endl;      }
+bin_operation:   exp PLUS  exp                { $$ = driver.make_node<bin_operator>(BinOp::ADD, $1, $3); }
+               | exp MINUS exp                { $$ = driver.make_node<bin_operator>(BinOp::SUB, $1, $3); }
+               | exp MUL exp                  { $$ = driver.make_node<bin_operator>(BinOp::MUL, $1, $3); }
+               | exp DIV exp                  { $$ = driver.make_node<bin_operator>(BinOp::DIV, $1, $3); }
 ;
 
-logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl;  }
-                    | exp LESS_EQ exp     { std::cout << "LESS EQ" << std::endl;  }
-                    | exp GREATER exp     { std::cout << "GREATER " << std::endl; }
-                    | exp GREATER_EQ exp  { std::cout << "GREATER EQ"    << std::endl; }
-                    | exp EQ exp          { std::cout << "EQ"  << std::endl; }
-                    | exp NEQ exp         { std::cout << "NEQ" << std::endl; }
-                    | exp LOGIC_AND exp   { std::cout << "LOGIC AND" << std::endl;}
-                    | exp LOGIC_OR exp    { std::cout << "LOGIC OR" << std::endl;}
+logical_expression:   exp LESS exp        { $$ = driver.make_node<logic_expression>(LogicOp::LESS, $1, $3);       }
+                    | exp LESS_EQ exp     { $$ = driver.make_node<logic_expression>(LogicOp::LESS_EQ, $1, $3);    }
+                    | exp GREATER exp     { $$ = driver.make_node<logic_expression>(LogicOp::GREATER, $1, $3);    }
+                    | exp GREATER_EQ exp  { $$ = driver.make_node<logic_expression>(LogicOp::GREATER_EQ, $1, $3); }
+                    | exp EQ exp          { $$ = driver.make_node<logic_expression>(LogicOp::EQ, $1, $3);         }
+                    | exp NEQ exp         { $$ = driver.make_node<logic_expression>(LogicOp::NEQ, $1, $3);        }
+                    | exp LOGIC_AND exp   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3);  }
+                    | exp LOGIC_OR exp    { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3);   }
 ;
 
-function:  VAR ASSIGN SCAN SCOLON    { driver.make_node<scan_function>(std::move($1)); }
-         | PRINT NUMBER SCOLON       { driver.make_node<print_function<int>>($2); }
-         | PRINT VAR SCOLON          { driver.make_node<print_function<std::string>>(std::move($2)); }
+definition: VAR ASSIGN exp           { $$ = driver.make_node<var_definition>(std::move($1), $3); }
+
+
+function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(std::move($1));               }
+         | PRINT NUMBER SCOLON       { $$ = driver.make_node<print_function<int>>($2);                    }
+         | PRINT VAR SCOLON          { $$ = driver.make_node<print_function<std::string>>(std::move($2)); }
 ;
 
 ctrl_statement:   IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE {

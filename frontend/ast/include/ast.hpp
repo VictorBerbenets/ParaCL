@@ -32,7 +32,7 @@ class ast final {
     size_++;
     return ret_ptr;
   }
-  
+
   void set_root(statement* root_id) & noexcept;
 
   size_type size() const noexcept;

@@ -20,7 +20,7 @@ class function: public statement {
 
 template <variable_form Var>
 class print_function: public function {
-  using value_type = Var; 
+  using value_type = Var;
  public:
   print_function(const value_type& val)
     : var_ {val} {}
@@ -41,7 +41,7 @@ class scan_function: public function {
  private:
   std::string var_name_;
   value_type value_;
-  
+
 };
 
 } // <--- namespace ast
