@@ -160,21 +160,15 @@ logical_expression:   exp LESS exp        { std::cout << "LESS"    << std::endl;
 ;
 
 function:  VAR ASSIGN SCAN SCOLON    { std::cout << "SCAN FUNC" << std::endl; }
-         | PRINT NUMBER SCOLON       { /*$$ = driver.make_node<number>()*/ }
-         | PRINT VAR SCOLON          { std::cout << "PRINT " << $2 << std::endl; }
+         | PRINT NUMBER SCOLON       { driver.make_node<print_function<int>>($2); }
+         | PRINT VAR SCOLON          { driver.make_node<print_function<std::string>>(std::move($2)); }
 ;
 
 ctrl_statement:   IF OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE {
-                    $$ = driver.make_node<ctrl_statement>(
-                          CtrlStatement::IF,
-                          $3,
-                          $6);    
+                    $$ = driver.make_node<ctrl_statement>(CtrlStatement::IF, $3, $6);
                   }
                   | WHILE OP_BRACK exp CL_BRACK OP_BRACE statement_block CL_BRACE {
-                    $$ = driver.make_node<ctrl_statement>(
-                          CtrlStatement::WHILE,
-                          $3,
-                          $6);    
+                    $$ = driver.make_node<ctrl_statement>(CtrlStatement::WHILE, $3, $6);
                   }
 ;
 
