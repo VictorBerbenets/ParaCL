@@ -119,11 +119,14 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 
 %%
 
-program: statement_block {}
+program: statement_block { driver.set_ast_root($1); }
 ;
 
-statement_block:  %empty {}
-                | statement_block statement { std::cout << "statement\n" << std::endl; }
+statement_block:  %empty { $$ = driver.make_node<statement_block>(); }
+                | statement_block statement {
+                    $$->add($2);
+                    $$ = $1;
+                  }
 ;
 
 statement:  exp SCOLON        { $$ = $1; }

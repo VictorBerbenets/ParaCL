@@ -19,5 +19,5 @@ int main(int argc, char** argv) {
   auto var = variable("string");
   auto ptr = make_node<bin_operator>(BinOp::ADD, num, var);
   */
-  ast ast;
+  //ast ast;
 }

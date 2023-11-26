@@ -10,14 +10,13 @@ namespace ast {
 ast::ast(ast&& other)
   : root_ {std::exchange(other.root_, nullptr)},
     size_ {std::exchange(other.size_, 0)},
-    statements_ {std::move(other.statements_)} 
-  {}
+    nodes_ {std::move(other.nodes_)} {}
 
-statement *ast::root_ptr() const & noexcept { return root_; }
+const ast_node *ast::root_ptr() const & noexcept { return root_; }
 
-void ast::set_root(statement* root_id) & noexcept { root_ = root_id; };
+void ast::set_root(ast_node* root_id) & noexcept { root_ = root_id; };
 
-ast::size_type ast::size() const noexcept { return size_; }
+ast::size_type ast::size() const noexcept      { return size_; }
 [[nodiscard]] bool ast::empty() const noexcept { return size_ == 0; }
 
 } // <--- namespace ast

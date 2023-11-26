@@ -29,6 +29,10 @@ class Driver {
     return ast_.make_node<NodeType>(std::forward<Args>(args)...);
   }
 
+  void set_ast_root(ast_node* root) & noexcept {
+    ast_.set_root(root);
+  }
+
  private:
   scanner scanner_;
   parser parser_;
