@@ -1,24 +1,11 @@
 #pragma once
 
 #include "statement.hpp"
+#include "identifiers.hpp"
 
 namespace frontend {
 
 namespace ast {
-
-
-enum class BinOp: char {
-    ADD,
-    SUB,
-    MUL,
-    DIV
-};
-
-enum class UnOp: char {
-    PLUS,
-    MINUS
-};
-
 
 // expr nodes
 class expression: public statement {
@@ -30,6 +17,14 @@ class expression: public statement {
 
     virtual pointer_type eval() const = 0;
 
+};
+
+class logic_expression: public expression {
+  public:
+    ~logic_expression() override = default;
+
+    pointer_type eval() const override;
+  private:
 };
 
 class number: public expression {

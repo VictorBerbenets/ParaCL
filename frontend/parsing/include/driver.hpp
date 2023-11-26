@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "ast.hpp"
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
 
@@ -23,8 +24,9 @@ class Driver {
   private:
     scanner scanner_;
     parser parser_;
-
     std::string file_;
+
+    frontend::ast::ast ast_;
 };
 
 } // <--- namespace yy
