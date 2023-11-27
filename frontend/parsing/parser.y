@@ -124,15 +124,16 @@ program: statement_block { /*driver.set_ast_root($1);*/ }
 
 statement_block:  %empty { $$ = driver.make_node<statement_block>(); }
                 | statement_block statement {
-                   //$$->add($2);
-                   //$$ = $1;
+                    $1->add($2);
+                    $$ = $1;
                   }
 ;
 
-statement:  exp SCOLON        { $$ = $1; }
-          | ctrl_statement    { $$ = $1; }
-          | function          { $$ = $1; }
-          | definition        { $$ = $1; }
+statement:  OP_BRACE statement_block CL_BRACE { $$ = $2; }
+          | exp SCOLON                        { $$ = $1; }
+          | ctrl_statement                    { $$ = $1; }
+          | function                          { $$ = $1; }
+          | definition                        { $$ = $1; }
 ;
 
 exp:    logical_expression           { $$ = $1; }
