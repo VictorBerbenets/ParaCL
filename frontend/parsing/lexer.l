@@ -45,9 +45,9 @@ DIGIT1  [1-9]
 "{"               { return parser::make_OP_BRACE(update_location()); }
 "}"               { return parser::make_CL_BRACE(update_location()); }
 
--?{DIGIT1}{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
-[a-zA-Z]+          { return parser::make_VAR(yytext, update_location());               }
-.			             { throw parser::syntax_error{update_location(), "Unknown symbol"};  }
-<<EOF>>            { return parser::make_EOF(update_location());}
+-?{DIGIT1}?{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
+[a-zA-Z]+           { return parser::make_VAR(yytext, update_location());               }
+.			        { throw parser::syntax_error{update_location(), "Unknown symbol"};  }
+<<EOF>>             { return parser::make_EOF(update_location());}
 
 %%

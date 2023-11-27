@@ -22,7 +22,7 @@ concept module_identifier = std::input_iterator<T> &&
 class statement: public i_node {
  public:
   //virtual void accept(visitor* visitor) = 0;
-  virtual ~statement() = default;
+  ~statement() override = default;
 
  private:
   statement* parent_;
@@ -36,7 +36,7 @@ class statement_block: public statement {
   statement_block(InputIt begin ,InputIt end)
       : statements_ {begin, end} {}
 
-  virtual ~statement_block() = default;
+  ~statement_block() override = default;
 
   void add(statement* stm) {
     statements_.push_back(stm);
