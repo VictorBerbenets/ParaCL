@@ -12,17 +12,17 @@ namespace frontend {
 namespace ast {
 
 template <typename T>
-concept derived_from = std::derived_from<T, ast_node>;
+concept derived_from = std::derived_from<T, i_node>;
 
 class ast final {
   using size_type    = std::size_t;
-  using pointer_type = std::unique_ptr<ast_node>;
+  using pointer_type = std::unique_ptr<i_node>;
  public:
   ast() = default;
   ast(const ast&) = delete;
   ast(ast&& other);
 
-  const ast_node *root_ptr() const & noexcept;
+  const i_node *root_ptr() const & noexcept;
 
   template <derived_from NodeType, typename... Args>
   NodeType *make_node(Args... args) {
@@ -33,12 +33,12 @@ class ast final {
     return ret_ptr;
   }
 
-  void set_root(ast_node* root_id) & noexcept;
+  void set_root(i_node* root_id) & noexcept;
 
   size_type size() const noexcept;
   [[nodiscard]] bool empty() const noexcept;
  private:
-  ast_node *root_ = nullptr;
+  i_node *root_ = nullptr;
   size_type size_  = 0;
   std::vector<pointer_type> nodes_;
 };
