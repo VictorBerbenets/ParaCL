@@ -12,8 +12,7 @@ namespace frontend {
 namespace ast {
 
 template <typename T>
-concept derived_from = std::derived_from<T, ast_node> ||
-                       std::same_as<T, statement_block>;
+concept derived_from = std::derived_from<T, ast_node>;
 
 class ast final {
   using size_type    = std::size_t;

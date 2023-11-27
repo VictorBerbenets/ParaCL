@@ -119,13 +119,13 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 
 %%
 
-program: statement_block { driver.set_ast_root($1); }
+program: statement_block { /*driver.set_ast_root($1);*/ }
 ;
 
 statement_block:  %empty { $$ = driver.make_node<statement_block>(); }
                 | statement_block statement {
-                    $$->add($2);
-                    $$ = $1;
+                   //$$->add($2);
+                   //$$ = $1;
                   }
 ;
 
@@ -163,7 +163,7 @@ logical_expression:   exp LESS exp        { $$ = driver.make_node<logic_expressi
                     | exp LOGIC_OR exp    { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3);   }
 ;
 
-definition: VAR ASSIGN exp           { $$ = driver.make_node<var_definition>(std::move($1), $3); }
+definition: VAR ASSIGN exp SCOLON    { $$ = driver.make_node<var_definition>(std::move($1), $3); }
 
 
 function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(std::move($1));               }
