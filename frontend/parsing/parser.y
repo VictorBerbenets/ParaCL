@@ -43,8 +43,8 @@ using namespace frontend::ast;
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
 
-static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::driver &p_driver) {
-  return p_scanner.get_next_token();
+static yy::parser::symbol_type yylex(yy::scanner &scanner, yy::driver &driver) {
+  return scanner.get_token();
 }
 
 }
