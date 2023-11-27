@@ -26,7 +26,7 @@
 
 namespace yy {
   class scanner;
-  class Driver;
+  class driver;
 }
 
 using namespace yy;
@@ -43,14 +43,14 @@ using namespace frontend::ast;
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
 
-static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_driver) {
+static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::driver &p_driver) {
   return p_scanner.get_next_token();
 }
 
 }
 
 %param {yy::scanner& scanner}
-%param {yy::Driver& driver}
+%param {yy::driver& driver}
 
 %define parse.trace
 %define parse.error verbose
@@ -119,7 +119,7 @@ static yy::parser::symbol_type yylex(yy::scanner &p_scanner, yy::Driver &p_drive
 
 %%
 
-program: statement_block { /*driver.set_ast_root($1);*/ }
+program: statement_block { driver.set_ast_root($1); }
 ;
 
 statement_block:  %empty { $$ = driver.make_node<statement_block>(); }

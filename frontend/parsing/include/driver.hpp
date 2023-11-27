@@ -9,12 +9,9 @@
 
 namespace yy {
 
-class Driver {
-//  using namespace frontend::ast;
-
+class driver {
  public:
-
-  Driver(): scanner_{}, parser_(scanner_, *this) {}
+  driver(): scanner_{}, parser_(scanner_, *this) {}
 
   void parse() {
       parser_.parse();
