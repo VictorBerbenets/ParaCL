@@ -15,7 +15,7 @@ class expression: public statement {
  protected:
   using pointer_type = expression*;
 
-  virtual pointer_type eval() const = 0;
+  virtual int eval() const = 0;
 
 };
 
@@ -24,7 +24,7 @@ class logic_expression: public expression {
   logic_expression(LogicOp type, expression *left, expression *right);
   ~logic_expression() override = default;
 
-  logic_expression* eval() const override;
+  int eval() const override;
  private:
   LogicOp type_;
   expression *left_, *right_;
@@ -32,14 +32,15 @@ class logic_expression: public expression {
 };
 
 class number: public expression {
+  using value_type = int;
  public:
   number(int num);
   ~number() override = default;
 
-  pointer_type eval() const;
+  value_type eval() const;
 
  private:
-  int value_;
+  value_type value_;
 };
 
 class variable: public expression {
@@ -48,7 +49,7 @@ class variable: public expression {
   variable(std::string&& str);
   ~variable() override = default;
 
-  pointer_type eval() const;
+  int eval() const;
 
  private:
   std::string name_;
@@ -70,7 +71,7 @@ class bin_operator: public expression{
   bin_operator(BinOp type, pointer_type left, pointer_type right);
   ~bin_operator() override = default;
 
-  bin_operator* eval() const override;
+  int eval() const override;
  private:
   BinOp type_;
   pointer_type left_, right_;
@@ -81,7 +82,7 @@ class un_operator: public expression {
   un_operator(UnOp type, pointer_type child);
   ~un_operator() override = default;
 
-  un_operator* eval() const override;
+  int eval() const override;
  private:
   UnOp type_;
   pointer_type child_;

@@ -4,7 +4,7 @@
 #include <memory>
 #include <list>
 
-#include "visitor.hpp"
+//#include "visitor.hpp"
 
 namespace frontend {
 
@@ -21,7 +21,7 @@ concept module_identifier = std::input_iterator<T> &&
 
 class statement: public i_node {
  public:
-  virtual void accept(visitor* visitor) = 0;
+ // virtual void accept(visitor* visitor) = 0;
   ~statement() override = default;
 
  private:

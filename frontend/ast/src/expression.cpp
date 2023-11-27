@@ -7,7 +7,7 @@ logic_expression::logic_expression(LogicOp type, expression *left, expression *r
     : type_ {type},
       left_ {left},
       right_ {right} {}
-logic_expression* logic_expression::eval() const {
+int logic_expression::eval() const {
   /* declare soon */
   return {};
 }
@@ -17,7 +17,7 @@ bin_operator::bin_operator(BinOp type, pointer_type left, pointer_type right)
       left_  {left},
       right_ {right} {}
 
-bin_operator* bin_operator::eval() const {
+int bin_operator::eval() const {
   /* declare soon */
   return {};
 }
@@ -26,7 +26,7 @@ un_operator::un_operator(UnOp type, pointer_type child)
     : type_  {type},
       child_ {child} {}
 
-un_operator* un_operator::eval() const {
+int un_operator::eval() const {
   /* declare soon */
   return {};
 }
@@ -40,16 +40,16 @@ ctrl_statement::ctrl_statement(CtrlStatement type, expression* cond,
 variable::variable(const std::string& str): name_ {str} {}
 variable::variable(std::string&& str): name_ {std::move(str)} {}
 
-variable::pointer_type variable::eval() const {
+int variable::eval() const {
   /* declare soon */
   return {};
 }
 
 number::number(int num): value_ {num} {}
 
-number::pointer_type number::eval() const {
+int number::eval() const {
   /* declare soon */
-  return {};
+  return value_;
 }
 
 
