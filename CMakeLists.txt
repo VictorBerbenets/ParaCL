@@ -26,6 +26,7 @@ add_library(bison_parser STATIC ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
 target_include_directories(bison_parser PUBLIC frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(bison_parser PUBLIC frontend/ast/include/)
 target_include_directories(bison_parser PUBLIC frontend/ast/)
+target_include_directories(bison_parser PUBLIC frontend/visitor/)
 
 add_executable(driver
   frontend/parsing/src/driver.cc

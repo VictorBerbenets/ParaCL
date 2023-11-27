@@ -38,8 +38,8 @@ class ast final {
   size_type size() const noexcept;
   [[nodiscard]] bool empty() const noexcept;
  private:
-  i_node *root_ = nullptr;
-  size_type size_  = 0;
+  i_node *root_   = nullptr;
+  size_type size_ = 0;
   std::vector<pointer_type> nodes_;
 };
 
