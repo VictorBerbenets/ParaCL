@@ -19,16 +19,14 @@ concept module_identifier = std::input_iterator<T> &&
 class i_node {
  public:
   virtual ~i_node() = default;
-  virtual void accept(visitor* visitor) = 0;
+  virtual void accept(base_visitor* b_visitor) = 0;
 };
 
 
 class statement: public i_node {
  public:
   ~statement() override = default;
-  void accept(visitor* visitor) override {
-
-  }
+  void accept(base_visitor* b_visitor) override;
 
  private:
   statement* parent_;

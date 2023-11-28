@@ -5,6 +5,7 @@
 namespace frontend {
 
 namespace ast {
+
 logic_expression::logic_expression(LogicOp type, expression *left, expression *right)
     : type_ {type},
       left_ {left},
@@ -32,6 +33,14 @@ int logic_expression::eval() const {
   }
 }
 
+expression* logic_expression::left() const noexcept {
+  return left_;
+}
+
+expression* logic_expression::right() const noexcept {
+  return right_;
+}
+
 bin_operator::bin_operator(BinOp type, pointer_type left, pointer_type right)
     : type_  {type},
       left_  {left},
@@ -45,6 +54,14 @@ int bin_operator::eval() const {
     case BinOp::DIV : return left_->eval() / right_->eval();
     default : throw std::logic_error{"invalid logic operator"};
   }
+}
+
+expression* bin_operator::left() const noexcept {
+  return left_;
+}
+
+expression* bin_operator::right() const noexcept {
+  return right_;
 }
 
 un_operator::un_operator(UnOp type, pointer_type child)
@@ -73,6 +90,10 @@ number::number(int num): value_ {num} {}
 
 int number::eval() const {
   /* declare soon */
+  return value_;
+}
+
+const number::value_type &number::get_value() const noexcept {
   return value_;
 }
 

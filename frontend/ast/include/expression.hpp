@@ -17,7 +17,6 @@ class expression: public statement {
  protected:
   using pointer_type = expression*;
 
-
 };
 
 class logic_expression: public expression {
@@ -26,6 +25,8 @@ class logic_expression: public expression {
   ~logic_expression() override = default;
 
   int eval() const override;
+  expression* left() const noexcept;
+  expression* right() const noexcept;
  private:
   LogicOp type_;
   expression *left_, *right_;
@@ -39,15 +40,15 @@ class number: public expression {
   ~number() override = default;
 
   value_type eval() const;
-
+  const value_type &get_value() const noexcept;
  private:
   value_type value_;
 };
 
 class variable: public expression {
  public:
-  variable(const std::string& str);
-  variable(std::string&& str);
+  variable(const std::string &str);
+  variable(std::string &&str);
   ~variable() override = default;
 
   int eval() const;
@@ -60,11 +61,11 @@ class ctrl_statement: public statement {
  public:
   ~ctrl_statement() override = default;
 
-  ctrl_statement(CtrlStatement type, expression* cond, statement_block* body);
+  ctrl_statement(CtrlStatement type, expression *cond, statement_block *body);
  protected:
   CtrlStatement type_;
-  expression* condition_;
-  statement_block* body_;
+  expression *condition_;
+  statement_block *body_;
 };
 
 class bin_operator: public expression {
@@ -73,6 +74,8 @@ class bin_operator: public expression {
   ~bin_operator() override = default;
 
   int eval() const override;
+  expression* left() const noexcept;
+  expression* right() const noexcept;
  private:
   BinOp type_;
   pointer_type left_, right_;
