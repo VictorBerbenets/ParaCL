@@ -12,10 +12,11 @@ class expression: public statement {
  public:
   ~expression() override = default;
 
+  virtual int eval() const = 0;
+
  protected:
   using pointer_type = expression*;
 
-  virtual int eval() const = 0;
 
 };
 
@@ -66,7 +67,7 @@ class ctrl_statement: public statement {
   statement_block* body_;
 };
 
-class bin_operator: public expression{
+class bin_operator: public expression {
  public:
   bin_operator(BinOp type, pointer_type left, pointer_type right);
   ~bin_operator() override = default;

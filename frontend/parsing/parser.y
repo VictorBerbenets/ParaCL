@@ -167,9 +167,9 @@ logical_expression:   expression LESS expression        { $$ = driver.make_node<
 definition: VAR ASSIGN expression SCOLON    { $$ = driver.make_node<var_definition>(std::move($1), $3); }
 
 
-function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(std::move($1));               }
-         | PRINT NUMBER SCOLON       { $$ = driver.make_node<print_function<int>>($2);                    }
-         | PRINT VAR SCOLON          { $$ = driver.make_node<print_function<std::string>>(std::move($2)); }
+function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(std::move($1));  }
+         | PRINT NUMBER SCOLON       { $$ = driver.make_node<print_function>($2);            }
+         | PRINT VAR SCOLON          { $$ = driver.make_node<print_function>(std::move($2)); }
 ;
 
 ctrl_statement:   IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {

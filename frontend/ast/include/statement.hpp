@@ -4,25 +4,31 @@
 #include <memory>
 #include <list>
 
-//#include "visitor.hpp"
+#include "visitor.hpp"
 
 namespace frontend {
 
 namespace ast {
 
-class i_node {
- public:
-  virtual ~i_node() = default;
-};
+class statement;
 
 template <typename T>
 concept module_identifier = std::input_iterator<T> &&
-                            std::derived_from<T, i_node>;
+                            std::derived_from<T, statement>;
+
+class i_node {
+ public:
+  virtual ~i_node() = default;
+  virtual void accept(visitor* visitor) = 0;
+};
+
 
 class statement: public i_node {
  public:
- // virtual void accept(visitor* visitor) = 0;
   ~statement() override = default;
+  void accept(visitor* visitor) override {
+
+  }
 
  private:
   statement* parent_;

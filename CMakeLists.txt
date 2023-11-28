@@ -8,6 +8,7 @@ find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
 aux_source_directory(./frontend/ast/src AST_SOURCES)
+aux_source_directory(./frontend/visitor/src VISITOR_SOURCES)
 
 flex_target(scanner
   frontend/parsing/lexer.l
@@ -26,11 +27,12 @@ add_library(bison_parser STATIC ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
 target_include_directories(bison_parser PUBLIC frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(bison_parser PUBLIC frontend/ast/include/)
 target_include_directories(bison_parser PUBLIC frontend/ast/)
-target_include_directories(bison_parser PUBLIC frontend/visitor/)
+target_include_directories(bison_parser PUBLIC frontend/visitor/include)
 
 add_executable(driver
   frontend/parsing/src/driver.cc
   ${AST_SOURCES}
+  ${VISITOR_SOURCES}
   ${BISON_parser_OUTPUTS}
   ${FLEX_scanner_OUTPUTS}
 )
