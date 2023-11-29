@@ -22,7 +22,7 @@ class ast final {
   ast(const ast&) = delete;
   ast(ast&& other);
 
-  const i_node *root_ptr() const & noexcept;
+  i_node *root_ptr() const & noexcept;
 
   template <derived_from NodeType, typename... Args>
   NodeType *make_node(Args... args) {
@@ -33,7 +33,7 @@ class ast final {
     return ret_ptr;
   }
 
-  void set_root(i_node* root_id) & noexcept;
+  void set_root(i_node *root_id) & noexcept;
 
   size_type size() const noexcept;
   [[nodiscard]] bool empty() const noexcept;

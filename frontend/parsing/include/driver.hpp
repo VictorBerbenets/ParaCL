@@ -6,6 +6,7 @@
 #include "ast.hpp"
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
+#include "print_visitor.hpp"
 
 namespace yy {
 
@@ -26,8 +27,13 @@ class driver {
     return ast_.make_node<NodeType>(std::forward<Args>(args)...);
   }
 
-  void set_ast_root(i_node* root) & noexcept {
+  void set_ast_root(i_node *root) & noexcept {
     ast_.set_root(root);
+  }
+
+  void print_ast(const std::string &file_name) {
+    frontend::print_visitor p_visitor(file_name);
+    p_visitor.visit(static_cast<statement_block*>(ast_.root_ptr()));
   }
 
  private:

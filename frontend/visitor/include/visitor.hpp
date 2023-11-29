@@ -8,17 +8,18 @@ class base_visitor {
  public:
   virtual ~base_visitor() {};
 
-  virtual void visit(ast::statement* stm)        = 0;
-  virtual void visit(ast::statement_block* stm)  = 0;
-  virtual void visit(ast::expression* stm)       = 0;
-  virtual void visit(ast::bin_operator* stm)     = 0;
-  virtual void visit(ast::un_operator* stm)      = 0;
-  virtual void visit(ast::logic_expression* stm) = 0;
-  virtual void visit(ast::number* stm)           = 0;
-  virtual void visit(ast::variable* stm)         = 0;
-  virtual void visit(ast::ctrl_statement* stm)   = 0;
-  virtual void visit(ast::scan_function* stm)    = 0;
-  virtual void visit(ast::print_function* stm)   = 0;
+  virtual void visit(ast::statement *stm)        = 0;
+  virtual void visit(ast::statement_block *stm)  = 0;
+  virtual void visit(ast::expression *stm)       = 0;
+  virtual void visit(ast::bin_operator *stm)     = 0;
+  virtual void visit(ast::un_operator *stm)      = 0;
+  virtual void visit(ast::logic_expression *stm) = 0;
+  virtual void visit(ast::number *stm)           = 0;
+  virtual void visit(ast::variable *stm)         = 0;
+  virtual void visit(ast::var_definition *stm)   = 0;
+  virtual void visit(ast::ctrl_statement *stm)   = 0;
+  virtual void visit(ast::scan_function *stm)    = 0;
+  virtual void visit(ast::print_function *stm)   = 0;
 };
 
 

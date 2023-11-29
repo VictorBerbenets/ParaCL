@@ -2,6 +2,7 @@
 
 #include "statement.hpp"
 #include "identifiers.hpp"
+#include "visitor.hpp"
 
 namespace frontend {
 
@@ -27,10 +28,10 @@ class logic_expression: public expression {
   int eval() const override;
   expression* left() const noexcept;
   expression* right() const noexcept;
+  void accept(base_visitor* b_visitor) override;
  private:
   LogicOp type_;
   expression *left_, *right_;
-
 };
 
 class number: public expression {
@@ -41,6 +42,7 @@ class number: public expression {
 
   value_type eval() const;
   const value_type &get_value() const noexcept;
+  void accept(base_visitor *b_visitor) override;
  private:
   value_type value_;
 };
@@ -52,20 +54,10 @@ class variable: public expression {
   ~variable() override = default;
 
   int eval() const;
-
+  void accept(base_visitor *b_visitor) override;
+  std::string name();
  private:
   std::string name_;
-};
-
-class ctrl_statement: public statement {
- public:
-  ~ctrl_statement() override = default;
-
-  ctrl_statement(CtrlStatement type, expression *cond, statement_block *body);
- protected:
-  CtrlStatement type_;
-  expression *condition_;
-  statement_block *body_;
 };
 
 class bin_operator: public expression {
@@ -74,6 +66,7 @@ class bin_operator: public expression {
   ~bin_operator() override = default;
 
   int eval() const override;
+  void accept(base_visitor *b_visitor) override;
   expression* left() const noexcept;
   expression* right() const noexcept;
  private:
@@ -87,6 +80,8 @@ class un_operator: public expression {
   ~un_operator() override = default;
 
   int eval() const override;
+  void accept(base_visitor *b_visitor) override;
+  expression *arg();
  private:
   UnOp type_;
   pointer_type child_;

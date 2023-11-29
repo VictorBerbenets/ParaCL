@@ -1,6 +1,7 @@
 #include <stdexcept>
 
 #include "expression.hpp"
+#include "visitor.hpp"
 
 namespace frontend {
 
@@ -33,11 +34,15 @@ int logic_expression::eval() const {
   }
 }
 
-expression* logic_expression::left() const noexcept {
+void logic_expression::accept(base_visitor* b_visitor) {
+  b_visitor->visit(this);
+}
+
+expression *logic_expression::left() const noexcept {
   return left_;
 }
 
-expression* logic_expression::right() const noexcept {
+expression *logic_expression::right() const noexcept {
   return right_;
 }
 
@@ -56,11 +61,15 @@ int bin_operator::eval() const {
   }
 }
 
-expression* bin_operator::left() const noexcept {
+void bin_operator::accept(base_visitor* b_visitor) {
+  b_visitor->visit(this);
+}
+
+expression *bin_operator::left() const noexcept {
   return left_;
 }
 
-expression* bin_operator::right() const noexcept {
+expression *bin_operator::right() const noexcept {
   return right_;
 }
 
@@ -73,17 +82,27 @@ int un_operator::eval() const {
   return {};
 }
 
-ctrl_statement::ctrl_statement(CtrlStatement type, expression* cond,
-                              statement_block* body)
-   : type_ {type},
-     condition_ {cond},
-     body_ {body} {}
+void un_operator::accept(base_visitor* b_visitor) {
+  b_visitor->visit(this);
+}
+
+expression *un_operator::arg() {
+  return child_;
+}
 
 variable::variable(const std::string& str): name_ {str} {}
 variable::variable(std::string&& str): name_ {std::move(str)} {}
 
+std::string variable::name() {
+  return name_;
+}
+
 int variable::eval() const {
   return 0;
+}
+
+void variable::accept(base_visitor *b_visitor) {
+  b_visitor->visit(this);
 }
 
 number::number(int num): value_ {num} {}
@@ -93,10 +112,13 @@ int number::eval() const {
   return value_;
 }
 
+void number::accept(base_visitor *b_visitor) {
+  b_visitor->visit(this);
+}
+
 const number::value_type &number::get_value() const noexcept {
   return value_;
 }
-
 
 } // <--- namespace ast
 

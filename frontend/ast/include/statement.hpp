@@ -26,15 +26,17 @@ class i_node {
 class statement: public i_node {
  public:
   ~statement() override = default;
-  void accept(base_visitor* b_visitor) override;
+
+  void accept(base_visitor *b_visitor) override;
 
  private:
   statement* parent_;
 };
 
 class statement_block: public statement {
+  using stmts_store = std::list<statement*>;
  public:
-  statement_block() = default;
+  explicit statement_block(statement_block* parent);
 
   template <module_identifier InputIt>
   statement_block(InputIt begin ,InputIt end)
@@ -42,11 +44,14 @@ class statement_block: public statement {
 
   ~statement_block() override {};
 
-  void add(statement* stm) {
+  void accept(base_visitor *b_visitor) override;
+
+  void add(statement *stm) {
     statements_.push_back(stm);
   }
+  stmts_store &statements();
  private:
-  std::list<statement*> statements_;
+  stmts_store statements_;
 };
 
 } // <--- namespace ast

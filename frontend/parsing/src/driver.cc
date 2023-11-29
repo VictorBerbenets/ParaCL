@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
   std::istringstream iss_str{str_input};
   driver.switchInputStream(&iss_str);
   driver.parse();
+  driver.print_ast("ast.txt");
   using namespace frontend::ast;
   /*
   auto num = number(10);

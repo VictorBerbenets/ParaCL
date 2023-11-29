@@ -4,7 +4,6 @@ namespace frontend {
 
 class interpreter: visitor {
  public:
-
   void visit(ast::statement* stm)        override;
   void visit(ast::statement_block* stm)  override;
   void visit(ast::expression* stm)       override;

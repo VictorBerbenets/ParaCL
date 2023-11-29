@@ -8,6 +8,7 @@ class statement;
 class statement_block;
 class expression;
 class logic_expression;
+class var_definition;
 class bin_operator;
 class un_operator;
 class number;
