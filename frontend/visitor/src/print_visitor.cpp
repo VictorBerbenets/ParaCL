@@ -90,7 +90,7 @@ void print_visitor::visit(ast::print_function *stm) {
 
 }
 
-void print_visitor::visit(ast::var_definition *stm) {
+void print_visitor::visit(ast::assignment *stm) {
   print_tabs();
   ++tabs_number_;
   o_file_ << "var definition: " << stm->name_ << std::endl;

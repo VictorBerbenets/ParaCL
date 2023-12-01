@@ -15,6 +15,8 @@ class interpreter: visitor {
   void visit(ast::ctrl_statement* stm)   override;
   void visit(ast::scan_function* stm)    override;
   void visit(ast::print_function* stm)   override;
+  void visit(ast::assignment *stm)   override;
+
  private:
 
 };

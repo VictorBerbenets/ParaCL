@@ -23,12 +23,24 @@ class driver {
   }
 
   template <frontend::ast::derived_from NodeType, typename... Args>
-  NodeType* make_node(Args... args) {
+  NodeType *make_node(Args... args) {
     return ast_.make_node<NodeType>(std::forward<Args>(args)...);
   }
 
-  void set_ast_root(i_node *root) & noexcept {
+  statement_block *make_block() {
+    return ast_.make_block();
+  }
+
+  void set_ast_root(statement_block *root) & noexcept {
     ast_.set_root(root);
+  }
+
+  void change_scope(statement_block *new_block) noexcept {
+    ast_.set_curr_block(new_block);
+  }
+
+  statement_block *get_current_block() noexcept {
+    return ast_.get_curr_block();
   }
 
   void print_ast(const std::string &file_name) {

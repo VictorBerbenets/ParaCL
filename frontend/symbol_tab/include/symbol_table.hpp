@@ -6,15 +6,23 @@
 
 namespace frontend {
 
-namespace symbol_tab {
-
 class symbol_table {
+  using size_type  = std::size_t;
+  using value_type = int;
  public:
+  bool has(const std::string &var_name) const;
+
+  // template <typename... Args>
+  void add(const std::string &var_name, int value) {
+    names_.insert({var_name, value});
+  }
+
+  value_type &operator[](const std::string &name) {
+    return names_[name];
+  }
 
  private:
-  std::unordered_map<>
-}
-
-} // <--- namespace symbol_tab
+  std::unordered_map<std::string, int> names_;
+};
 
 } // <--- namespace frontend

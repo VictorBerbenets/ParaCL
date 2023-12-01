@@ -38,6 +38,7 @@ using namespace frontend::ast;
 
 #include <iostream>
 #include <string>
+#include <stack>
 
 #include "driver.hpp"
 #include "scanner.hpp"
@@ -48,6 +49,10 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner, yy::driver &driver) {
 }
 
 }
+
+%{
+  std::stack<statement_block*> blocks;
+%}
 
 %param {yy::scanner& scanner}
 %param {yy::driver& driver}
@@ -122,26 +127,38 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner, yy::driver &driver) {
 program: statement_block { driver.set_ast_root($1); }
 ;
 
-statement_block:  %empty { $$ = driver.make_node<statement_block>(); }
+statement_block:  %empty {
+                          blocks.push(driver.make_block());
+                          $$ = blocks.top();
+                          std::cout << "CREATE BLOCK\n";
+                  }
                 | statement_block statement {
                     $1->add($2);
                     $$ = $1;
                   }
 ;
 
-statement:  OP_BRACE statement_block CL_BRACE { $$ = $2; }
+statement:  OP_BRACE statement_block CL_BRACE {
+              $$ = $2;
+              blocks.pop();
+              driver.change_scope(blocks.top());
+            }
+          | ctrl_statement {
+              $$ = $1;
+              blocks.pop();
+              driver.change_scope(blocks.top());
+            }
           | expression SCOLON                 { $$ = $1; }
-          | ctrl_statement                    { $$ = $1; }
-          | function                          { $$ = $1; }
-          | definition                        { $$ = $1; }
+          | function                          { std::cout << "FUNCTION\n"; $$ = $1; }
+          | definition                        { std::cout << "DEFINITION\n"; $$ = $1; }
 ;
 
-expression:   logical_expression              { $$ = $1; }
+expression:   logical_expression              { std::cout << "EXPRESSION\n"; $$ = $1; }
             | bin_operation                   { $$ = $1; }
             | unary_operation                 { $$ = $1; }
             | OP_BRACK expression CL_BRACK    { $$ = $2; }
             | NUMBER                          { $$ = driver.make_node<number>($1);   }
-            | VAR                             { $$ = driver.make_node<variable>(std::move($1)); }
+            | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1)); }
 ;
 
 unary_operation:   MINUS expression %prec UMINUS      { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2); }
@@ -164,7 +181,7 @@ logical_expression:   expression LESS expression        { $$ = driver.make_node<
                     | expression LOGIC_OR  expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3);   }
 ;
 
-definition: VAR ASSIGN expression SCOLON    { $$ = driver.make_node<var_definition>(std::move($1), $3); }
+definition: VAR ASSIGN expression SCOLON    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3); }
 
 
 function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(std::move($1));  }
@@ -173,9 +190,11 @@ function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(std:
 ;
 
 ctrl_statement:   IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
+                    std::cout << "IF\n";
                     $$ = driver.make_node<ctrl_statement>(CtrlStatement::IF, $3, $6);
                   }
                   | WHILE OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
+                    std::cout << "WHILE\n";
                     $$ = driver.make_node<ctrl_statement>(CtrlStatement::WHILE, $3, $6);
                   }
 ;

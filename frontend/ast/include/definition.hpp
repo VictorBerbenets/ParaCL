@@ -13,8 +13,10 @@ namespace ast {
 
 class definition: public statement {
 public:
-    definition(const std::string &name): name_ {name} {}
-    definition(std::string &&name): name_ {std::move(name)} {}
+    definition(statement_block *curr_block, const std::string &name)
+        : statement(curr_block), name_ {name} {}
+    definition(statement_block *curr_block, std::string &&name)
+        : statement(curr_block), name_ {std::move(name)} {}
     ~definition() override = default;
 
     // void accept() override;
@@ -22,11 +24,11 @@ public:
     std::string name_;
 };
 
-class var_definition: public definition {
+class assignment: public definition {
  public:
-    var_definition(const std::string &name, expression *expr);
-    var_definition(std::string &&name, expression *expr);
-    ~var_definition() override = default;
+    assignment(statement_block *curr_block, const std::string &name, expression *expr);
+    assignment(statement_block *curr_block, std::string &&name, expression *expr);
+    ~assignment() override = default;
 
     void accept(base_visitor *base_visitor) override;
 

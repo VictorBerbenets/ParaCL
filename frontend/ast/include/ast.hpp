@@ -6,6 +6,7 @@
 #include <concepts>
 
 #include "statement.hpp"
+#include "symbol_table.hpp"
 
 namespace frontend {
 
@@ -22,7 +23,7 @@ class ast final {
   ast(const ast&) = delete;
   ast(ast&& other);
 
-  i_node *root_ptr() const & noexcept;
+  statement_block *root_ptr() const & noexcept;
 
   template <derived_from NodeType, typename... Args>
   NodeType *make_node(Args... args) {
@@ -33,14 +34,20 @@ class ast final {
     return ret_ptr;
   }
 
-  void set_root(i_node *root_id) & noexcept;
+  statement_block *make_block();
+
+  void set_root(statement_block *root_id) & noexcept;
+  void set_curr_block(statement_block *block) & noexcept;
+  statement_block *get_curr_block() noexcept;
 
   size_type size() const noexcept;
   [[nodiscard]] bool empty() const noexcept;
+
  private:
-  i_node *root_   = nullptr;
-  size_type size_ = 0;
+  statement_block *root_       = nullptr;
+  statement_block *curr_block_ = nullptr;
   std::vector<pointer_type> nodes_;
+  size_type size_ = 0;
 };
 
 } // <--- namespace ast

@@ -19,7 +19,7 @@ class print_visitor: public base_visitor {
   void visit(ast::logic_expression *stm) override;
   void visit(ast::number *stm)           override;
   void visit(ast::variable *stm)         override;
-  void visit(ast::var_definition *stm)   override;
+  void visit(ast::assignment *stm)   override;
   void visit(ast::ctrl_statement *stm)   override;
   void visit(ast::scan_function *stm)    override;
   void visit(ast::print_function *stm)   override;

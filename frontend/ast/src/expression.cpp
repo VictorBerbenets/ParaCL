@@ -90,19 +90,29 @@ expression *un_operator::arg() {
   return child_;
 }
 
-variable::variable(const std::string& str): name_ {str} {}
-variable::variable(std::string&& str): name_ {std::move(str)} {}
+variable::variable(statement_block *curr_block, const std::string& str)
+    : expression(curr_block),
+      name_ {str} {}
 
-std::string variable::name() {
+variable::variable(statement_block *curr_block, std::string&& str)
+    : expression(curr_block),
+      name_ {std::move(str)} {}
+
+std::string variable::name() noexcept {
   return name_;
 }
 
 int variable::eval() const {
+
   return 0;
 }
 
 void variable::accept(base_visitor *b_visitor) {
   b_visitor->visit(this);
+}
+
+statement_block *variable::scope() noexcept {
+  return parent_;
 }
 
 number::number(int num): value_ {num} {}

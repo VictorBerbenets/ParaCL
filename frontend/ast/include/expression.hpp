@@ -11,6 +11,8 @@ namespace ast {
 // expr nodes
 class expression: public statement {
  public:
+ expression() = default;
+   expression(statement_block *curr_block): statement(curr_block) {}
   ~expression() override = default;
 
   virtual int eval() const = 0;
@@ -29,8 +31,9 @@ class logic_expression: public expression {
   expression* left() const noexcept;
   expression* right() const noexcept;
   void accept(base_visitor* b_visitor) override;
- private:
+
   LogicOp type_;
+ private:
   expression *left_, *right_;
 };
 
@@ -49,13 +52,14 @@ class number: public expression {
 
 class variable: public expression {
  public:
-  variable(const std::string &str);
-  variable(std::string &&str);
+  variable(statement_block *curr_block, const std::string &str);
+  variable(statement_block *curr_block, std::string &&str);
   ~variable() override = default;
 
   int eval() const;
   void accept(base_visitor *b_visitor) override;
-  std::string name();
+  std::string name() noexcept;
+  statement_block *scope() noexcept;
  private:
   std::string name_;
 };
@@ -69,8 +73,8 @@ class bin_operator: public expression {
   void accept(base_visitor *b_visitor) override;
   expression* left() const noexcept;
   expression* right() const noexcept;
- private:
   BinOp type_;
+ private:
   pointer_type left_, right_;
 };
 
@@ -82,8 +86,8 @@ class un_operator: public expression {
   int eval() const override;
   void accept(base_visitor *b_visitor) override;
   expression *arg();
- private:
   UnOp type_;
+ private:
   pointer_type child_;
 };
 
