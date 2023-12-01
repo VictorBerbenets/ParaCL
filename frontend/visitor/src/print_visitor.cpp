@@ -78,6 +78,24 @@ void print_visitor::visit(ast::ctrl_statement *stm) {
   --tabs_number_;
 }
 
+void print_visitor::visit(ast::if_operator *stm) {
+  print_tabs();
+  o_file_ << "if_operator" << std::endl;
+  ++tabs_number_;
+  stm->condition_->accept(this);
+  stm->body_->accept(this);
+  --tabs_number_;
+}
+
+void print_visitor::visit(ast::while_operator *stm) {
+  print_tabs();
+  o_file_ << "while operator" << std::endl;
+  ++tabs_number_;
+  stm->condition_->accept(this);
+  stm->body_->accept(this);
+  --tabs_number_;
+}
+
 void print_visitor::visit(ast::scan_function *stm) {
   print_tabs();
   o_file_ << "scan_function" << std::endl;

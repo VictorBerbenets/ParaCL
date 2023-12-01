@@ -14,6 +14,8 @@ class un_operator;
 class number;
 class variable;
 class ctrl_statement;
+class if_operator;
+class while_operator;
 class print_function;
 class scan_function;
 

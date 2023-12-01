@@ -101,8 +101,33 @@ void interpreter::visit(ast::variable *stm) {
 }
 
 void interpreter::visit(ast::ctrl_statement *stm) {
-  stm->condition_->accept(this);
-  stm->body_->accept(this);
+  switch(stm->type_) {
+    case ast::CtrlStatement::IF :
+      if(accept(stm->condition_)) {
+        stm->condition_->accept(this);
+      } break;
+    case ast::CtrlStatement::WHILE :
+      while(accept(stm->condition_)) {
+        std::cout << "CURR_VALUE = " << curr_value_ << std::endl;
+        stm->body_->accept(this);
+      } break;
+    default: throw std::logic_error{"unrecognized logic type"};
+  }
+}
+
+void interpreter::visit(ast::if_operator *stm) {
+  if(accept(stm->condition_)) {
+    stm->condition_->accept(this);
+  }
+}
+
+
+void interpreter::visit(ast::while_operator *stm) {
+  curr_value_ = accept(stm->condition_);
+  while(curr_value_) {
+    stm->condition_->accept(this);
+    curr_value_ = accept(stm->condition_);
+  }
 }
 
 void interpreter::visit(ast::scan_function *stm) {
@@ -126,6 +151,7 @@ void interpreter::visit(ast::print_function *stm) {
     }
     throw std::logic_error{str_val + " was not declared"};
   } else {
+    std::cout << "PRINTING\n";
     std::cout << std::get<int>(print_val) << std::endl;
   }
 }

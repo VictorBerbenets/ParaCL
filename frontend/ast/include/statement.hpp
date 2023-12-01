@@ -55,19 +55,25 @@ class statement_block: public statement {
 
   // template <typename... Args>
   void declare(const std::string &name, int value = 0) {
-    if (!sym_tab_.has(name)) {
-      sym_tab_.add(name, value);
-      std::cout << "ADDED VAR WITH NAME = " << name << std::endl;
-      //throw std::logic_error{"Multiple definition of the: " + name};
+    for (auto curr_scope = this; curr_scope; curr_scope = curr_scope->parent_) {
+      if (curr_scope->has(name)) {
+        return ;
+        //throw std::logic_error{"Multiple definition of the: " + name};
+      }
     }
+    sym_tab_.add(name, value);
+    std::cout << "ADDED VAR WITH NAME = " << name << std::endl;
   }
 
   void redefine(const std::string &name, int value) {
-    if (sym_tab_.has(name)) {
-      sym_tab_[name] = value;
-    } else {
-      std::cout << "error" << std::endl;
+    for (auto curr_scope = this; curr_scope; curr_scope = curr_scope->parent_) {
+      if (curr_scope->has(name)) {
+        sym_tab_[name] = value;
+        return ;
+        //throw std::logic_error{"Multiple definition of the: " + name};
+      }
     }
+    std::cout << "error" << std::endl;
   }
 
   bool has(const std::string &name) const {
