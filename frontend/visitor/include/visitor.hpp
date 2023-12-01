@@ -30,7 +30,7 @@ class visitor: public base_visitor {
   int accept(ast::statement* node);
 
  protected:
-  int curr_value_;
+  int curr_value_ = 0;
 };
 
 } // <--- namespace frontend

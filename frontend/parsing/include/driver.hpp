@@ -6,6 +6,7 @@
 #include "ast.hpp"
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
+#include "interpreter.hpp"
 #include "print_visitor.hpp"
 
 namespace yy {
@@ -41,6 +42,11 @@ class driver {
 
   statement_block *get_current_block() noexcept {
     return ast_.get_curr_block();
+  }
+
+  void evaluate() {
+    frontend::interpreter runner;
+    runner.run_program(ast_.root_ptr());
   }
 
   void print_ast(const std::string &file_name) {

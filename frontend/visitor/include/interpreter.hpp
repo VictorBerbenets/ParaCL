@@ -17,6 +17,10 @@ class interpreter: visitor {
   void visit(ast::print_function* stm)   override;
   void visit(ast::assignment *stm)   override;
 
+  void run_program(ast::statement_block *root) {
+    visit(root);
+    std::cout << "CURR VAL = " << curr_value_ << std::endl;
+  }
  private:
 
 };

@@ -62,6 +62,14 @@ class statement_block: public statement {
     }
   }
 
+  void redefine(const std::string &name, int value) {
+    if (sym_tab_.has(name)) {
+      sym_tab_[name] = value;
+    } else {
+      std::cout << "error" << std::endl;
+    }
+  }
+
   bool has(const std::string &name) const {
     return sym_tab_.has(name);
   }

@@ -107,10 +107,10 @@ void interpreter::visit(ast::ctrl_statement *stm) {
 
 void interpreter::visit(ast::scan_function *stm) {
   for (auto curr_block = stm->scope(); curr_block ; curr_block = curr_block->scope()) {
-    if (curr_block->has(str_val)) {
-      std::cout << str_val << std::endl;
-      return ;
-    }
+    // if (curr_block->has(str_val)) {
+    //   std::cout << str_val << std::endl;
+    //   return ;
+    // }
   }
 }
 
@@ -120,7 +120,7 @@ void interpreter::visit(ast::print_function *stm) {
     const auto &str_val = std::get<std::string>(print_val);
     for (auto curr_block = stm->scope(); curr_block ; curr_block = curr_block->scope()) {
       if (curr_block->has(str_val)) {
-        std::cout << str_val << std::endl;
+        std::cout << curr_block->value(str_val) << std::endl;
         return ;
       }
     }
@@ -131,7 +131,8 @@ void interpreter::visit(ast::print_function *stm) {
 }
 
 void interpreter::visit(ast::assignment *stm) {
-  stm->identifier_->accept(this);
+  curr_value_ = accept(stm->identifier_);
+  stm->scope()->redefine(stm->name_, curr_value_);
 }
 
 } // <--- namespace frontend

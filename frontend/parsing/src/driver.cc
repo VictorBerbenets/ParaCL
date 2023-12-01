@@ -14,6 +14,7 @@ int main(int argc, char** argv) {
   driver.switchInputStream(&iss_str);
   driver.parse();
   driver.print_ast("ast.txt");
+  driver.evaluate();
   using namespace frontend::ast;
   /*
   auto num = number(10);

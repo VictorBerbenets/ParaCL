@@ -130,7 +130,6 @@ program: statement_block { driver.set_ast_root($1); }
 statement_block:  %empty {
                           blocks.push(driver.make_block());
                           $$ = blocks.top();
-                          std::cout << "CREATE BLOCK\n";
                   }
                 | statement_block statement {
                     $1->add($2);
@@ -149,11 +148,11 @@ statement:  OP_BRACE statement_block CL_BRACE {
               driver.change_scope(blocks.top());
             }
           | expression SCOLON                 { $$ = $1; }
-          | function                          { std::cout << "FUNCTION\n"; $$ = $1; }
-          | definition                        { std::cout << "DEFINITION\n"; $$ = $1; }
+          | function                          { $$ = $1; }
+          | definition                        { $$ = $1; }
 ;
 
-expression:   logical_expression              { std::cout << "EXPRESSION\n"; $$ = $1; }
+expression:   logical_expression              { $$ = $1; }
             | bin_operation                   { $$ = $1; }
             | unary_operation                 { $$ = $1; }
             | OP_BRACK expression CL_BRACK    { $$ = $2; }
