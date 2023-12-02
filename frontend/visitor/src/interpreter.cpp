@@ -67,7 +67,7 @@ void interpreter::visit(ast::logic_expression *stm) {
       curr_value_ = accept(stm->left()) || accept(stm->right());
       break;
     case ast::LogicOp::GREATER:
-      curr_value_ = accept(stm->left()) >  accept(stm->right());
+      curr_value_ = accept(stm->left()) > accept(stm->right());
       break;
     case ast::LogicOp::GREATER_EQ :
       curr_value_ = accept(stm->left()) >= accept(stm->right());
@@ -98,36 +98,39 @@ void interpreter::visit(ast::variable *stm) {
     throw std::logic_error{stm->name() + " was not declared"};
   }
   curr_value_ = var_value.value();
+
 }
 
 void interpreter::visit(ast::ctrl_statement *stm) {
+      int val = 0;
   switch(stm->type_) {
     case ast::CtrlStatement::IF :
       if(accept(stm->condition_)) {
-        stm->condition_->accept(this);
+        stm->body_->accept(this);
       } break;
     case ast::CtrlStatement::WHILE :
-      while(accept(stm->condition_)) {
-        std::cout << "CURR_VALUE = " << curr_value_ << std::endl;
+      stm->condition_->accept(this);
+      while(curr_value_) {
         stm->body_->accept(this);
+        stm->condition_->accept(this);
       } break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
 }
 
 void interpreter::visit(ast::if_operator *stm) {
-  if(accept(stm->condition_)) {
-    stm->condition_->accept(this);
-  }
+  // if(accept(stm->condition_)) {
+  //   stm->condition_->accept(this);
+  // }
 }
 
 
 void interpreter::visit(ast::while_operator *stm) {
-  curr_value_ = accept(stm->condition_);
-  while(curr_value_) {
-    stm->condition_->accept(this);
-    curr_value_ = accept(stm->condition_);
-  }
+  // curr_value_ = accept(stm->condition_);
+  // while(curr_value_) {
+  //   stm->condition_->accept(this);
+  //   curr_value_ = accept(stm->condition_);
+  // }
 }
 
 void interpreter::visit(ast::scan_function *stm) {
@@ -151,7 +154,6 @@ void interpreter::visit(ast::print_function *stm) {
     }
     throw std::logic_error{str_val + " was not declared"};
   } else {
-    std::cout << "PRINTING\n";
     std::cout << std::get<int>(print_val) << std::endl;
   }
 }

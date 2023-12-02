@@ -21,10 +21,7 @@ class interpreter: visitor {
 
   void run_program(ast::statement_block *root) {
     visit(root);
-    std::cout << "CURR VAL = " << curr_value_ << std::endl;
   }
- private:
-
 };
 
 } // <--- namespace frontend

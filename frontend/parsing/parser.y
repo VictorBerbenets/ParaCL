@@ -189,11 +189,9 @@ function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(std:
 ;
 
 ctrl_statement:   IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
-                    std::cout << "IF\n";
                     $$ = driver.make_node<ctrl_statement>(CtrlStatement::IF, $3, $6);
                   }
                   | WHILE OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
-                    std::cout << "WHILE\n";
                     $$ = driver.make_node<ctrl_statement>(CtrlStatement::WHILE, $3, $6);
                   }
 ;

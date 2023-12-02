@@ -58,19 +58,16 @@ class statement_block: public statement {
     for (auto curr_scope = this; curr_scope; curr_scope = curr_scope->parent_) {
       if (curr_scope->has(name)) {
         return ;
-        //throw std::logic_error{"Multiple definition of the: " + name};
       }
     }
     sym_tab_.add(name, value);
-    std::cout << "ADDED VAR WITH NAME = " << name << std::endl;
   }
 
   void redefine(const std::string &name, int value) {
     for (auto curr_scope = this; curr_scope; curr_scope = curr_scope->parent_) {
       if (curr_scope->has(name)) {
-        sym_tab_[name] = value;
+        curr_scope->set(name, value);
         return ;
-        //throw std::logic_error{"Multiple definition of the: " + name};
       }
     }
     std::cout << "error" << std::endl;
@@ -78,6 +75,10 @@ class statement_block: public statement {
 
   bool has(const std::string &name) const {
     return sym_tab_.has(name);
+  }
+
+  void set(const std::string &name, int value) {
+    sym_tab_[name] = value;
   }
 
   int value(const std::string &name) noexcept {
