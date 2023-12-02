@@ -32,7 +32,6 @@ class statement: public i_node {
   statement(statement_block *parent) noexcept;
   statement() = default;
 
-  void accept(base_visitor *b_visitor) override;
   void set_parent(statement_block *parent) noexcept;
   statement_block *scope() noexcept { return parent_; }
  protected:

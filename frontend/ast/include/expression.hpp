@@ -8,7 +8,6 @@ namespace frontend {
 
 namespace ast {
 
-// expr nodes
 class expression: public statement {
  public:
  expression() = default;

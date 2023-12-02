@@ -7,10 +7,6 @@ namespace ast {
 statement::statement(statement_block *parent) noexcept
     : parent_ {parent} {}
 
-void statement::accept(base_visitor *b_visitor) {
-  b_visitor->visit(this);
-}
-
 void statement::set_parent(statement_block *parent) noexcept {
   parent_ = parent;
 }

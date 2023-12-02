@@ -6,11 +6,6 @@ namespace frontend {
 print_visitor::print_visitor(const std::string &file_name)
     : o_file_ {file_name} {}
 
-void print_visitor::visit(ast::statement *stm) {
-  o_file_ << "Statement" << std::endl;
-  stm->accept(this);
-}
-
 void print_visitor::visit(ast::statement_block *stm) {
   print_tabs();
   o_file_ << "Statement_block" << std::endl;
@@ -19,16 +14,8 @@ void print_visitor::visit(ast::statement_block *stm) {
     statement->accept(this);
   }
   --tabs_number_;
-  // stm->
 }
 
-void print_visitor::visit(ast::expression *stm) {
-  print_tabs();
-  o_file_ << "Expression" << std::endl;
-  ++tabs_number_;
-  stm->accept(this);
-  --tabs_number_;
-}
 
 void print_visitor::visit(ast::bin_operator *stm) {
   print_tabs();
@@ -69,21 +56,12 @@ void print_visitor::visit(ast::variable *stm) {
 
 }
 
-void print_visitor::visit(ast::ctrl_statement *stm) {
-  print_tabs();
-  o_file_ << "ctrl_statement" << std::endl;
-  ++tabs_number_;
-  stm->condition_->accept(this);
-  stm->body_->accept(this);
-  --tabs_number_;
-}
-
 void print_visitor::visit(ast::if_operator *stm) {
   print_tabs();
   o_file_ << "if_operator" << std::endl;
   ++tabs_number_;
-  stm->condition_->accept(this);
-  stm->body_->accept(this);
+  stm->condition()->accept(this);
+  stm->body()->accept(this);
   --tabs_number_;
 }
 
@@ -91,8 +69,8 @@ void print_visitor::visit(ast::while_operator *stm) {
   print_tabs();
   o_file_ << "while operator" << std::endl;
   ++tabs_number_;
-  stm->condition_->accept(this);
-  stm->body_->accept(this);
+  stm->condition()->accept(this);
+  stm->body()->accept(this);
   --tabs_number_;
 }
 

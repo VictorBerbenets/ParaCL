@@ -18,7 +18,6 @@ void scan_function::accept(base_visitor *b_visitor) {
 }
 
 void print_function::accept(base_visitor *b_visitor) {
-    // std::cout << "PRINTING\n";
   b_visitor->visit(this);
 }
 

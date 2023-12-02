@@ -19,8 +19,6 @@ public:
         : statement(curr_block), name_ {std::move(name)} {}
     ~definition() override = default;
 
-    // void accept() override;
-
     std::string name_;
 };
 

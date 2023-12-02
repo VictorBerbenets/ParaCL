@@ -6,15 +6,10 @@ namespace frontend {
 
 namespace ast {
 
-ctrl_statement::ctrl_statement(CtrlStatement type, expression* cond,
+ctrl_statement::ctrl_statement(expression* cond,
                               statement_block* body)
-   : type_ {type},
-     condition_ {cond},
+   : condition_ {cond},
      body_ {body} {}
-
-void ctrl_statement::accept(base_visitor *b_visitor) {
-  b_visitor->visit(this);
-}
 
 void if_operator::accept(base_visitor *b_visitor) {
   b_visitor->visit(this);

@@ -8,18 +8,10 @@
 
 namespace frontend {
 
-void interpreter::visit(ast::statement *stm) {
-  stm->accept(this);
-}
-
 void interpreter::visit(ast::statement_block *stm) {
   for (auto&& statement : stm->statements()) {
     statement->accept(this);
   }
-}
-
-void interpreter::visit(ast::expression *stm) {
-  stm->accept(this);
 }
 
 void interpreter::visit(ast::bin_operator *stm) {
@@ -101,36 +93,17 @@ void interpreter::visit(ast::variable *stm) {
 
 }
 
-void interpreter::visit(ast::ctrl_statement *stm) {
-      int val = 0;
-  switch(stm->type_) {
-    case ast::CtrlStatement::IF :
-      if(accept(stm->condition_)) {
-        stm->body_->accept(this);
-      } break;
-    case ast::CtrlStatement::WHILE :
-      stm->condition_->accept(this);
-      while(curr_value_) {
-        stm->body_->accept(this);
-        stm->condition_->accept(this);
-      } break;
-    default: throw std::logic_error{"unrecognized logic type"};
-  }
-}
-
 void interpreter::visit(ast::if_operator *stm) {
-  // if(accept(stm->condition_)) {
-  //   stm->condition_->accept(this);
-  // }
+  if(accept(stm->condition())) {
+    stm->body()->accept(this);
+  }
 }
 
 
 void interpreter::visit(ast::while_operator *stm) {
-  // curr_value_ = accept(stm->condition_);
-  // while(curr_value_) {
-  //   stm->condition_->accept(this);
-  //   curr_value_ = accept(stm->condition_);
-  // }
+  while(accept(stm->condition())) {
+    stm->body()->accept(this);
+  }
 }
 
 void interpreter::visit(ast::scan_function *stm) {

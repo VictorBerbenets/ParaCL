@@ -6,14 +6,12 @@ namespace ast {
 
 class statement;
 class statement_block;
-class expression;
 class logic_expression;
 class assignment;
 class bin_operator;
 class un_operator;
 class number;
 class variable;
-class ctrl_statement;
 class if_operator;
 class while_operator;
 class print_function;

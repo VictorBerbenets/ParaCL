@@ -11,23 +11,32 @@ class ctrl_statement: public statement {
  public:
   ~ctrl_statement() override = default;
 
-  void accept(base_visitor *b_visitor) override;
+  expression *condition() const noexcept {
+    return condition_;
+  }
+  statement_block *body() const noexcept {
+    return body_;
+  }
 
-  ctrl_statement(CtrlStatement type, expression *cond, statement_block *body);
-//  protected:
-  CtrlStatement type_;
+ protected:
+  ctrl_statement(expression *cond, statement_block *body);
+
   expression *condition_;
   statement_block *body_;
 };
 
 class while_operator: public ctrl_statement {
  public:
+  while_operator(expression *cond, statement_block *body)
+    : ctrl_statement(cond, body) {}
   void accept(base_visitor *b_visitor) override;
 
 };
 
 class if_operator: public ctrl_statement {
  public:
+   if_operator(expression *cond, statement_block *body)
+    : ctrl_statement(cond, body) {}
   void accept(base_visitor *b_visitor) override;
 };
 

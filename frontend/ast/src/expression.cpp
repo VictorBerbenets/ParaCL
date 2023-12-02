@@ -103,7 +103,6 @@ std::string variable::name() noexcept {
 }
 
 int variable::eval() const {
-
   return 0;
 }
 

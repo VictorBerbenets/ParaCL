@@ -15,11 +15,6 @@ enum class LogicOp: char {
   LOGIC_OR
 };
 
-enum class CtrlStatement: char {
-  IF,
-  WHILE
-};
-
 enum class BinOp: char {
     ADD,
     SUB,
