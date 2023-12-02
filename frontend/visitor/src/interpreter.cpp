@@ -107,12 +107,16 @@ void interpreter::visit(ast::while_operator *stm) {
 }
 
 void interpreter::visit(ast::scan_function *stm) {
-  for (auto curr_block = stm->scope(); curr_block ; curr_block = curr_block->scope()) {
-    // if (curr_block->has(str_val)) {
-    //   std::cout << str_val << std::endl;
-    //   return ;
-    // }
+  auto curr_block = stm->scope();
+  auto var_name   = stm->var_name();
+  for ( ; curr_block ; curr_block = curr_block->scope()) {
+    if (curr_block->has(var_name)) {
+      break;
+    }
   }
+  int tmp = 10;
+  std::cin >> tmp;
+  curr_block->set(var_name, tmp);
 }
 
 void interpreter::visit(ast::print_function *stm) {

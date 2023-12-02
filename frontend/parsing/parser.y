@@ -183,7 +183,7 @@ logical_expression:   expression LESS expression        { $$ = driver.make_node<
 definition: VAR ASSIGN expression SCOLON    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3); }
 
 
-function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(std::move($1));  }
+function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(blocks.top(), std::move($1));  }
          | PRINT NUMBER SCOLON       { $$ = driver.make_node<print_function>($2);            }
          | PRINT VAR SCOLON          { $$ = driver.make_node<print_function>(std::move($2)); }
 ;

@@ -19,9 +19,7 @@ namespace ast {
 
 class function: public statement {
 public:
-  statement_block *curr_block() noexcept {
-    return parent_;
-  }
+
 };
 
 // template <variable_form Var>
@@ -48,17 +46,19 @@ class scan_function: public function {
   using value_type = int;
  public:
   scan_function() = default;
-  scan_function(const std::string &var_name);
-  scan_function(std::string &&var_name);
+
+  template <typename VarType = std::string>
+  scan_function(statement_block *curr_block, VarType&& var)
+      : var_{curr_block, std::forward<VarType>(var)} {
+    var_.scope()->declare(var_.name());
+  }
 
   void accept(base_visitor *b_visitor) override;
-  const auto &get() const noexcept {
-    return var_name_;
+  std::string var_name() {
+    return var_.name();
   }
  private:
-  std::optional<std::string> var_name_;
-  value_type value_;
-
+  variable var_;
 };
 
 } // <--- namespace ast

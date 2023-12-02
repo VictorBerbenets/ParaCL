@@ -59,6 +59,7 @@ class statement_block: public statement {
         return ;
       }
     }
+    std::cout << "DECLARED\n";
     sym_tab_.add(name, value);
   }
 
