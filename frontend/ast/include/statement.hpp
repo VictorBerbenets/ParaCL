@@ -90,7 +90,7 @@ class statement_block: public statement {
 
   ScopeIter begin() noexcept;
   ScopeIter end()   noexcept;
-  ConstScopeIter cbeing() const noexcept;
+  ConstScopeIter cbegin() const noexcept;
   ConstScopeIter cend()   const noexcept;
  private:
   StmtsStore statements_;

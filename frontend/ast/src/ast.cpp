@@ -10,8 +10,8 @@ namespace ast {
 
 ast::ast(ast&& other)
   : root_ {std::exchange(other.root_, nullptr)},
-    size_ {std::exchange(other.size_, 0)},
-    nodes_ {std::move(other.nodes_)} {}
+    nodes_ {std::move(other.nodes_)},
+    size_ {std::exchange(other.size_, 0)} {}
 
 statement_block *ast::root_ptr() const & noexcept { return root_; }
 

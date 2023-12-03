@@ -26,7 +26,7 @@ statement_block::ScopeIter statement_block::end() noexcept {
   return statements_.end();
 }
 
-statement_block::ConstScopeIter statement_block::cbeing() const noexcept {
+statement_block::ConstScopeIter statement_block::cbegin() const noexcept {
   return statements_.cbegin();
 }
 
