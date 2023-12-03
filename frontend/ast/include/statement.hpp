@@ -29,12 +29,14 @@ class statement_block;
 class statement: public i_node {
  public:
   ~statement() override = default;
-  statement(statement_block *parent) noexcept;
-  statement() = default;
 
   void set_parent(statement_block *parent) noexcept;
   statement_block *scope() noexcept { return parent_; }
+
  protected:
+  statement(statement_block *parent) noexcept;
+  statement() = default;
+
   statement_block *parent_;
 };
 

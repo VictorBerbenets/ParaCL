@@ -17,7 +17,7 @@ void print_visitor::visit(ast::statement_block *stm) {
 }
 
 
-void print_visitor::visit(ast::bin_operator *stm) {
+void print_visitor::visit(ast::calc_expression *stm) {
   print_tabs();
   o_file_ << "Bin operator" << std::endl;
   ++tabs_number_;

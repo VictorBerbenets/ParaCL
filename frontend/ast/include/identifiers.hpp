@@ -15,7 +15,7 @@ enum class LogicOp: char {
   LOGIC_OR
 };
 
-enum class BinOp: char {
+enum class CalcOp: char {
     ADD,
     SUB,
     MUL,

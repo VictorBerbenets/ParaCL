@@ -26,7 +26,7 @@ class ast final {
   statement_block *root_ptr() const & noexcept;
 
   template <derived_from NodeType, typename... Args>
-  NodeType *make_node(Args... args) {
+  NodeType *make_node(Args&&... args) {
     auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);
     auto ret_ptr  = node_ptr.get();
     nodes_.push_back(std::move(node_ptr));

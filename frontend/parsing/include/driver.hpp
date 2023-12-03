@@ -24,7 +24,7 @@ class driver {
   }
 
   template <frontend::ast::derived_from NodeType, typename... Args>
-  NodeType *make_node(Args... args) {
+  NodeType *make_node(Args&&... args) {
     return ast_.make_node<NodeType>(std::forward<Args>(args)...);
   }
 

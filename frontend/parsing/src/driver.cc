@@ -19,5 +19,6 @@ int main(int argc, char** argv) {
 
   driver.switch_input_stream(&i_stream);
   driver.parse();
+  driver.print_ast("ast.txt");
   driver.evaluate();
 }

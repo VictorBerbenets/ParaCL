@@ -14,18 +14,18 @@ void interpreter::visit(ast::statement_block *stm) {
   }
 }
 
-void interpreter::visit(ast::bin_operator *stm) {
-  switch(stm->type_) {
-    case ast::BinOp::ADD :
+void interpreter::visit(ast::calc_expression *stm) {
+  switch(stm->type()) {
+    case ast::CalcOp::ADD :
       curr_value_ = accept(stm->left()) + accept(stm->right());
       break;
-    case ast::BinOp::SUB :
+    case ast::CalcOp::SUB :
       curr_value_ = accept(stm->left()) - accept(stm->right());
       break;
-    case ast::BinOp::DIV :
+    case ast::CalcOp::DIV :
       curr_value_ = accept(stm->left()) / accept(stm->right());
       break;
-    case ast::BinOp::MUL :
+    case ast::CalcOp::MUL :
       curr_value_ = accept(stm->left()) * accept(stm->right());
       break;
     default: throw std::logic_error{"unrecognized logic type"};
@@ -45,7 +45,7 @@ void interpreter::visit(ast::un_operator *stm) {
 }
 
 void interpreter::visit(ast::logic_expression *stm) {
-  switch(stm->type_) {
+  switch(stm->type()) {
     case ast::LogicOp::LESS :
       curr_value_ = accept(stm->left()) <  accept(stm->right());
       break;

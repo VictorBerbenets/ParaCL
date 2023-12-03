@@ -102,7 +102,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner, yy::driver &driver) {
 %nterm <statement_block*>    statement_block
 %nterm <expression*>         expression
 %nterm <logic_expression*>   logical_expression
-%nterm <bin_operator*>       bin_operation
+%nterm <calc_expression*>    calc_expression
 %nterm <un_operator*>        unary_operation
 %nterm <definition*>         definition
 %nterm <function*>           function
@@ -151,7 +151,7 @@ statement:  OP_BRACE statement_block CL_BRACE {
 ;
 
 expression:   logical_expression              { $$ = $1; }
-            | bin_operation                   { $$ = $1; }
+            | calc_expression                  { $$ = $1; }
             | unary_operation                 { $$ = $1; }
             | OP_BRACK expression CL_BRACK    { $$ = $2; }
             | NUMBER                          { $$ = driver.make_node<number>($1);   }
@@ -162,10 +162,10 @@ unary_operation:   MINUS expression %prec UMINUS      { $$ = driver.make_node<un
                  | PLUS  expression %prec UPLUS       { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2);  }
 ;
 
-bin_operation:   expression PLUS  expression   { $$ = driver.make_node<bin_operator>(BinOp::ADD, $1, $3); }
-               | expression MINUS expression   { $$ = driver.make_node<bin_operator>(BinOp::SUB, $1, $3); }
-               | expression MUL   expression   { $$ = driver.make_node<bin_operator>(BinOp::MUL, $1, $3); }
-               | expression DIV   expression   { $$ = driver.make_node<bin_operator>(BinOp::DIV, $1, $3); }
+calc_expression: expression PLUS  expression   { $$ = driver.make_node<calc_expression>(CalcOp::ADD, $1, $3); }
+               | expression MINUS expression   { $$ = driver.make_node<calc_expression>(CalcOp::SUB, $1, $3); }
+               | expression MUL   expression   { $$ = driver.make_node<calc_expression>(CalcOp::MUL, $1, $3); }
+               | expression DIV   expression   { $$ = driver.make_node<calc_expression>(CalcOp::DIV, $1, $3); }
 ;
 
 logical_expression:   expression LESS expression        { $$ = driver.make_node<logic_expression>(LogicOp::LESS, $1, $3);       }

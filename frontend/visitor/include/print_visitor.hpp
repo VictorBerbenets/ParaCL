@@ -13,7 +13,7 @@ class print_visitor: public base_visitor {
   print_visitor(const std::string &file_name);
 
   void visit(ast::statement_block *stm)  override;
-  void visit(ast::bin_operator *stm)     override;
+  void visit(ast::calc_expression *stm)  override;
   void visit(ast::un_operator *stm)      override;
   void visit(ast::logic_expression *stm) override;
   void visit(ast::number *stm)           override;

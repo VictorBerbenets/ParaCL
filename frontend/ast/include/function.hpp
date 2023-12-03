@@ -13,16 +13,11 @@ namespace frontend {
 
 namespace ast {
 
-// template <typename T>
-// concept variable_form = std::integral<T> ||
-//                         std::constructible_from<std::string, T>;
-
 class function: public statement {
 public:
 
 };
 
-// template <variable_form Var>
 class print_function: public function {
  public:
   print_function(int val)

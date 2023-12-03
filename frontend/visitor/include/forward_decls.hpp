@@ -7,8 +7,8 @@ namespace ast {
 class statement;
 class statement_block;
 class logic_expression;
+class calc_expression;
 class assignment;
-class bin_operator;
 class un_operator;
 class number;
 class variable;

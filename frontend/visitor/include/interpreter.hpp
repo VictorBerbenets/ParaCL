@@ -5,7 +5,7 @@ namespace frontend {
 class interpreter: visitor {
  public:
   void visit(ast::statement_block *stm)  override;
-  void visit(ast::bin_operator *stm)     override;
+  void visit(ast::calc_expression *stm)  override;
   void visit(ast::un_operator *stm)      override;
   void visit(ast::logic_expression *stm) override;
   void visit(ast::number *stm)           override;

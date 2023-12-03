@@ -9,16 +9,16 @@ namespace frontend {
 namespace ast {
 
 assignment::assignment(statement_block *curr_block,
-                               const std::string &name,
-                               expression *expr)
+                       const std::string &name,
+                       expression *expr)
     : definition(curr_block, name),
       identifier_ {expr} {
   parent_->declare(name_);
 }
 
 assignment::assignment(statement_block *curr_block,
-                               std::string &&name,
-                               expression *expr)
+                       std::string &&name,
+                       expression *expr)
     : definition(curr_block, std::move(name)),
       identifier_ {expr} {
   parent_->declare(name_);
