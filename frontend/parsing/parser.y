@@ -20,8 +20,6 @@
 #include <stdexcept>
 #include <utility>
 
-// #include "ast.hpp"
-
 #include "ast_includes.hpp"
 
 namespace yy {
@@ -198,9 +196,7 @@ ctrl_statement:   IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BR
 
 %%
 
-
 void yy::parser::error(const location_type &l, const std::string &msg) {
   std::cout << "error pos: " << l << std::endl;
   throw std::runtime_error{msg};
 }
-

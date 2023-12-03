@@ -18,8 +18,20 @@ void statement_block::accept(base_visitor *b_visitor) {
   b_visitor->visit(this);
 }
 
-statement_block::stmts_store &statement_block::statements() {
-  return statements_;
+statement_block::ScopeIter statement_block::begin() noexcept {
+  return statements_.begin();
+}
+
+statement_block::ScopeIter statement_block::end() noexcept {
+  return statements_.end();
+}
+
+statement_block::ConstScopeIter statement_block::cbeing() const noexcept {
+  return statements_.cbegin();
+}
+
+statement_block::ConstScopeIter statement_block::cend() const noexcept {
+  return statements_.cend();
 }
 
 void statement_block::add(statement *stm)  {

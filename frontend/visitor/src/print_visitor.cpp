@@ -10,7 +10,7 @@ void print_visitor::visit(ast::statement_block *stm) {
   print_tabs();
   o_file_ << "Statement_block" << std::endl;
   ++tabs_number_;
-  for (auto&& statement : stm->statements()) {
+  for (auto&& statement : *stm) {
     statement->accept(this);
   }
   --tabs_number_;

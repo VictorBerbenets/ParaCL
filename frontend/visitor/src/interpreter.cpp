@@ -9,7 +9,7 @@
 namespace frontend {
 
 void interpreter::visit(ast::statement_block *stm) {
-  for (auto&& statement : stm->statements()) {
+  for (auto&& statement : *stm) {
     statement->accept(this);
   }
 }
@@ -114,7 +114,7 @@ void interpreter::visit(ast::scan_function *stm) {
       break;
     }
   }
-  int tmp = 10;
+  int tmp;
   std::cin >> tmp;
   curr_block->set(var_name, tmp);
 }

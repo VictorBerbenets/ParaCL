@@ -39,7 +39,9 @@ class statement: public i_node {
 };
 
 class statement_block: public statement {
-  using stmts_store = std::vector<statement*>;
+  using StmtsStore       = std::vector<statement*>;
+  using ScopeIter        = StmtsStore::iterator;
+  using ConstScopeIter   = StmtsStore::const_iterator;
  public:
   explicit statement_block(statement_block *parent);
   statement_block() = default;
@@ -59,7 +61,6 @@ class statement_block: public statement {
         return ;
       }
     }
-    std::cout << "DECLARED\n";
     sym_tab_.add(name, value);
   }
 
@@ -86,9 +87,13 @@ class statement_block: public statement {
   }
 
   void add(statement *stm);
-  stmts_store &statements();
+
+  ScopeIter begin() noexcept;
+  ScopeIter end()   noexcept;
+  ConstScopeIter cbeing() const noexcept;
+  ConstScopeIter cend()   const noexcept;
  private:
-  stmts_store statements_;
+  StmtsStore statements_;
   symbol_table sym_tab_;
 };
 

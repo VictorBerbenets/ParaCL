@@ -7,19 +7,11 @@
 #include "expression.hpp"
 
 int main(int argc, char** argv) {
-  std::string str_input{std::istreambuf_iterator<char>{std::cin},
-                        std::istreambuf_iterator<char>{}};
+  std::ifstream i_stream{argv[1]};
   yy::driver driver{};
-  std::istringstream iss_str{str_input};
-  driver.switchInputStream(&iss_str);
+
+  driver.switch_input_stream(&i_stream);
   driver.parse();
-  driver.print_ast("ast.txt");
+  // driver.print_ast("ast.txt");
   driver.evaluate();
-  using namespace frontend::ast;
-  /*
-  auto num = number(10);
-  auto var = variable("string");
-  auto ptr = make_node<bin_operator>(BinOp::ADD, num, var);
-  */
-  //ast ast;
 }
