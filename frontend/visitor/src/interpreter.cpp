@@ -28,6 +28,9 @@ void interpreter::visit(ast::calc_expression *stm) {
     case ast::CalcOp::MUL :
       curr_value_ = accept(stm->left()) * accept(stm->right());
       break;
+    case ast::CalcOp::PERCENT :
+      curr_value_ = accept(stm->left()) % accept(stm->right());
+      break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
 }

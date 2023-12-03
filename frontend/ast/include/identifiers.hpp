@@ -16,6 +16,7 @@ enum class LogicOp: char {
 };
 
 enum class CalcOp: char {
+    PERCENT,
     ADD,
     SUB,
     MUL,

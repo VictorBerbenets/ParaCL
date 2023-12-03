@@ -65,6 +65,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner, yy::driver &driver) {
   DIV      "/"
   PLUS     "+"
   MINUS    "-"
+  PERCENT  "%"
   EOF 0    "end of file"
   SCOLON   ";"
 ;
@@ -111,7 +112,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner, yy::driver &driver) {
 %nonassoc LESS LESS_EQ GREATER GREATER_EQ
 %right ASSIGN
 %left PLUS MINUS
-%left MUL DIV
+%left MUL DIV PERCENT
 %left EQ NEQ LOGIC_AND LOGIC_OR
 %nonassoc UMINUS
 %nonassoc UPLUS
@@ -162,10 +163,11 @@ unary_operation:   MINUS expression %prec UMINUS      { $$ = driver.make_node<un
                  | PLUS  expression %prec UPLUS       { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2);  }
 ;
 
-calc_expression: expression PLUS  expression   { $$ = driver.make_node<calc_expression>(CalcOp::ADD, $1, $3); }
-               | expression MINUS expression   { $$ = driver.make_node<calc_expression>(CalcOp::SUB, $1, $3); }
-               | expression MUL   expression   { $$ = driver.make_node<calc_expression>(CalcOp::MUL, $1, $3); }
-               | expression DIV   expression   { $$ = driver.make_node<calc_expression>(CalcOp::DIV, $1, $3); }
+calc_expression: expression PLUS    expression   { $$ = driver.make_node<calc_expression>(CalcOp::ADD, $1, $3); }
+               | expression MINUS   expression   { $$ = driver.make_node<calc_expression>(CalcOp::SUB, $1, $3); }
+               | expression MUL     expression   { $$ = driver.make_node<calc_expression>(CalcOp::MUL, $1, $3); }
+               | expression DIV     expression   { $$ = driver.make_node<calc_expression>(CalcOp::DIV, $1, $3); }
+               | expression PERCENT expression   { $$ = driver.make_node<calc_expression>(CalcOp::PERCENT, $1, $3); }
 ;
 
 logical_expression:   expression LESS expression        { $$ = driver.make_node<logic_expression>(LogicOp::LESS, $1, $3);       }

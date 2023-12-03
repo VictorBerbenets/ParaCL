@@ -20,12 +20,13 @@ DIGIT1  [1-9]
 %%
 ([/][/].*)        { update_location(); }
 {WS}              { update_location(); }
-"+"               { return parser::make_PLUS(update_location());   }
-"-"               { return parser::make_MINUS(update_location());  }
-"*"               { return parser::make_MUL(update_location());    }
-"/"               { return parser::make_DIV(update_location());    }
-"="               { return parser::make_ASSIGN(update_location()); }
-";"               { return parser::make_SCOLON(update_location()); }
+"+"               { return parser::make_PLUS(update_location());    }
+"-"               { return parser::make_MINUS(update_location());   }
+"*"               { return parser::make_MUL(update_location());     }
+"/"               { return parser::make_DIV(update_location());     }
+"%"               { return parser::make_PERCENT(update_location()); }
+"="               { return parser::make_ASSIGN(update_location());  }
+";"               { return parser::make_SCOLON(update_location());  }
 
 ">"               { return parser::make_GREATER(update_location());    }
 "<"               { return parser::make_LESS(update_location());       }
