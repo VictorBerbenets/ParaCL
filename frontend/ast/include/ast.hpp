@@ -13,11 +13,11 @@ namespace frontend {
 namespace ast {
 
 template <typename T>
-concept derived_from = std::derived_from<T, i_node>;
+concept derived_from = std::derived_from<T, statement>;
 
 class ast final {
   using size_type    = std::size_t;
-  using pointer_type = std::unique_ptr<i_node>;
+  using pointer_type = std::unique_ptr<statement>;
  public:
   ast() = default;
   ast(const ast&) = delete;

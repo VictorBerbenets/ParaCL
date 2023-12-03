@@ -11,7 +11,7 @@
 
 namespace yy {
 
-class driver {
+class driver final {
  public:
   driver(): scanner_{}, parser_(scanner_, *this) {}
 

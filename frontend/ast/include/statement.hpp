@@ -18,17 +18,13 @@ template <typename T>
 concept module_identifier = std::input_iterator<T> &&
                             std::derived_from<T, statement>;
 
-class i_node {
- public:
-  virtual ~i_node() = default;
-  virtual void accept(base_visitor *b_visitor) = 0;
-};
-
 class statement_block;
 
-class statement: public i_node {
+class statement {
  public:
-  ~statement() override = default;
+  virtual ~statement() = default;
+
+  virtual void accept(base_visitor *b_visitor) = 0;
 
   void set_parent(statement_block *parent) noexcept;
   statement_block *scope() noexcept { return parent_; }
@@ -40,10 +36,10 @@ class statement: public i_node {
   statement_block *parent_;
 };
 
-class statement_block: public statement {
-  using StmtsStore       = std::vector<statement*>;
-  using ScopeIter        = StmtsStore::iterator;
-  using ConstScopeIter   = StmtsStore::const_iterator;
+class statement_block final: public statement {
+  using StmtsStore     = std::vector<statement*>;
+  using ScopeIter      = StmtsStore::iterator;
+  using ConstScopeIter = StmtsStore::const_iterator;
  public:
   explicit statement_block(statement_block *parent);
   statement_block() = default;

@@ -15,7 +15,7 @@ namespace ast {
 
 class function: public statement {
 public:
-
+/* place for next levels */
 };
 
 class print_function: public function {

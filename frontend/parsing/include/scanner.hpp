@@ -13,7 +13,7 @@
 #include "location.hh"
 
 namespace yy {
-class scanner : public yyFlexLexer {
+class scanner final: public yyFlexLexer {
  public:
   scanner() {}
   parser::symbol_type get_token();
