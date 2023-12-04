@@ -21,8 +21,8 @@ void print_visitor::visit(ast::calc_expression *stm) {
   print_tabs();
   o_file_ << "Bin operator" << std::endl;
   ++tabs_number_;
-  stm->left()->accept(this);
-  stm->right()->accept(this);
+  stm->accept_left(this);
+  stm->accept_right(this);
   --tabs_number_;
 
 }
@@ -31,7 +31,7 @@ void print_visitor::visit(ast::un_operator *stm) {
   print_tabs();
   o_file_ << "Un operator" << std::endl;
   ++tabs_number_;
-  stm->arg()->accept(this);
+  stm->accept_arg(this);
   --tabs_number_;
 }
 
@@ -39,8 +39,8 @@ void print_visitor::visit(ast::logic_expression *stm) {
   print_tabs();
   o_file_ << "Logic expression" << std::endl;
   ++tabs_number_;
-  stm->left()->accept(this);
-  stm->right()->accept(this);
+  stm->accept_left(this);
+  stm->accept_right(this);
   --tabs_number_;
 }
 
@@ -60,8 +60,8 @@ void print_visitor::visit(ast::if_operator *stm) {
   print_tabs();
   o_file_ << "if_operator" << std::endl;
   ++tabs_number_;
-  stm->condition()->accept(this);
-  stm->body()->accept(this);
+  stm->accept_condition(this);
+  stm->accept_body(this);
   --tabs_number_;
 }
 
@@ -69,8 +69,8 @@ void print_visitor::visit(ast::while_operator *stm) {
   print_tabs();
   o_file_ << "while operator" << std::endl;
   ++tabs_number_;
-  stm->condition()->accept(this);
-  stm->body()->accept(this);
+  stm->accept_condition(this);
+  stm->accept_body(this);
   --tabs_number_;
 }
 
@@ -89,8 +89,8 @@ void print_visitor::visit(ast::print_function*) {
 void print_visitor::visit(ast::assignment *stm) {
   print_tabs();
   ++tabs_number_;
-  o_file_ << "var definition: " << stm->name_ << std::endl;
-  stm->identifier_->accept(this);
+  o_file_ << "var definition: " << stm->name() << std::endl;
+  stm->accept_exp(this);
   --tabs_number_;
 }
 

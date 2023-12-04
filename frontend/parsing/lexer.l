@@ -16,6 +16,7 @@ using namespace yy;
 WS      [ \t\n\v]+
 DIGIT   [0-9]
 DIGIT1  [1-9]
+VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 
 %%
 ([/][/].*)        { update_location(); }
@@ -47,7 +48,7 @@ DIGIT1  [1-9]
 "}"               { return parser::make_CL_BRACE(update_location()); }
 
 -?{DIGIT1}?{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
-[a-zA-Z]+           { return parser::make_VAR(yytext, update_location());               }
+{VAR}               { return parser::make_VAR(yytext, update_location());               }
 .			        { throw parser::syntax_error{update_location(), "Unknown symbol"};  }
 <<EOF>>             { return parser::make_EOF(update_location());}
 

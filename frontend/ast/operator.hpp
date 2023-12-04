@@ -9,35 +9,49 @@ namespace ast {
 
 class ctrl_statement: public statement {
  public:
+   ctrl_statement(expression *cond, statement_block *body)
+      : condition_ {cond},
+        body_ {body} {}
+
   ~ctrl_statement() override = default;
 
   expression *condition() const noexcept {
     return condition_;
   }
+
   statement_block *body() const noexcept {
     return body_;
   }
 
- protected:
-  ctrl_statement(expression *cond, statement_block *body);
+  void accept_body(base_visitor *b_visitor) {
+    body_->accept(b_visitor);
+  }
 
+  void accept_condition(base_visitor *b_visitor) {
+    condition_->accept(b_visitor);
+  }
+
+ protected:
   expression *condition_;
   statement_block *body_;
 };
 
 class while_operator: public ctrl_statement {
  public:
-  while_operator(expression *cond, statement_block *body)
-    : ctrl_statement(cond, body) {}
-  void accept(base_visitor *b_visitor) override;
+  using ctrl_statement::ctrl_statement;
 
+  void accept(base_visitor *b_visitor) override {
+    b_visitor->visit(this);
+  }
 };
 
 class if_operator: public ctrl_statement {
  public:
-   if_operator(expression *cond, statement_block *body)
-    : ctrl_statement(cond, body) {}
-  void accept(base_visitor *b_visitor) override;
+  using ctrl_statement::ctrl_statement;
+
+  void accept(base_visitor *b_visitor) override {
+    b_visitor->visit(this);
+  }
 };
 
 } // <--- namespace ast

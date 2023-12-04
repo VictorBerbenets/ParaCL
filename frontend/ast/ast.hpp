@@ -21,9 +21,12 @@ class ast final {
  public:
   ast() = default;
   ast(const ast&) = delete;
-  ast(ast&& other);
+  ast(ast&& other)
+      : root_  {std::exchange(other.root_, nullptr)},
+        nodes_ {std::move(other.nodes_)},
+        size_  {std::exchange(other.size_, 0)} {}
 
-  statement_block *root_ptr() const & noexcept;
+  statement_block *root_ptr() const & noexcept { return root_; }
 
   template <derived_from NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
@@ -34,14 +37,22 @@ class ast final {
     return ret_ptr;
   }
 
-  statement_block *make_block();
+  statement_block *make_block() {
+    return curr_block_ = make_node<statement_block>(curr_block_);
+  }
 
-  void set_root(statement_block *root_id) & noexcept;
-  void set_curr_block(statement_block *block) & noexcept;
-  statement_block *get_curr_block() noexcept;
+  void set_root(statement_block *root_id) & noexcept {
+    root_ = root_id;
+  }
 
-  size_type size() const noexcept;
-  [[nodiscard]] bool empty() const noexcept;
+  void set_curr_block(statement_block *block) & noexcept {
+    curr_block_ = block;
+  }
+
+  statement_block *get_curr_block() noexcept { return curr_block_; }
+
+  size_type size() const noexcept { return size_; }
+  [[nodiscard]] bool empty() const noexcept { return size_ == 0; }
 
  private:
   statement_block *root_       = nullptr;

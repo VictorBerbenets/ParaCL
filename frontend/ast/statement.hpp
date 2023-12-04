@@ -26,11 +26,18 @@ class statement {
 
   virtual void accept(base_visitor *b_visitor) = 0;
 
-  void set_parent(statement_block *parent) noexcept;
-  statement_block *scope() noexcept { return parent_; }
+  void set_parent(statement_block *parent) noexcept {
+    parent_ = parent;
+  }
+
+  statement_block *scope() noexcept {
+    return parent_;
+  }
 
  protected:
-  explicit statement(statement_block *parent) noexcept;
+  explicit statement(statement_block *parent) noexcept
+      : parent_ {parent} {}
+
   statement() = default;
 
   statement_block *parent_;
@@ -41,7 +48,9 @@ class statement_block final: public statement {
   using ScopeIter      = StmtsStore::iterator;
   using ConstScopeIter = StmtsStore::const_iterator;
  public:
-  explicit statement_block(statement_block *parent);
+  explicit statement_block(statement_block *parent)
+      : statement {parent} {}
+
   statement_block() = default;
 
   template <module_identifier InputIt>
@@ -50,7 +59,9 @@ class statement_block final: public statement {
 
   ~statement_block() override {};
 
-  void accept(base_visitor *b_visitor) override;
+  void accept(base_visitor *b_visitor) override {
+    b_visitor->visit(this);
+  }
 
   // template <typename... Args>
   void declare(const std::string &name, int value = 0) {
@@ -84,12 +95,16 @@ class statement_block final: public statement {
     return sym_tab_[name];
   }
 
-  void add(statement *stm);
+  void add(statement *stm) {
+    stm->set_parent(this);
+    statements_.push_back(stm);
+  }
 
-  ScopeIter begin() noexcept;
-  ScopeIter end()   noexcept;
-  ConstScopeIter cbegin() const noexcept;
-  ConstScopeIter cend()   const noexcept;
+  ScopeIter begin() noexcept { return statements_.begin(); }
+  ScopeIter end()   noexcept { return statements_.end(); }
+  ConstScopeIter cbegin() const noexcept { return statements_.cbegin(); }
+  ConstScopeIter cend()   const noexcept { return statements_.cend(); }
+
  private:
   StmtsStore statements_;
   symbol_table sym_tab_;

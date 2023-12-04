@@ -36,7 +36,7 @@ void interpreter::visit(ast::calc_expression *stm) {
 }
 
 void interpreter::visit(ast::un_operator *stm) {
-  switch(stm->type_) {
+  switch(stm->type()) {
     case ast::UnOp::PLUS :
       curr_value_ = +(accept(stm->arg()));
       break;
@@ -98,14 +98,14 @@ void interpreter::visit(ast::variable *stm) {
 
 void interpreter::visit(ast::if_operator *stm) {
   if(accept(stm->condition())) {
-    stm->body()->accept(this);
+    stm->accept_body(this);
   }
 }
 
 
 void interpreter::visit(ast::while_operator *stm) {
   while(accept(stm->condition())) {
-    stm->body()->accept(this);
+    stm->accept_body(this);
   }
 }
 
@@ -139,8 +139,8 @@ void interpreter::visit(ast::print_function *stm) {
 }
 
 void interpreter::visit(ast::assignment *stm) {
-  curr_value_ = accept(stm->identifier_);
-  stm->scope()->redefine(stm->name_, curr_value_);
+  curr_value_ = accept(stm->ident_exp());
+  stm->redefine(curr_value_);
 }
 
 } // <--- namespace frontend
