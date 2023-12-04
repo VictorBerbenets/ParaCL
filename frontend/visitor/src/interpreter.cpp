@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdexcept>
-#include <optional>
 
 #include "ast_includes.hpp"
 #include "interpreter.hpp"
@@ -22,14 +21,16 @@ void interpreter::visit(ast::calc_expression *stm) {
     case ast::CalcOp::SUB :
       curr_value_ = accept(stm->left()) - accept(stm->right());
       break;
-    case ast::CalcOp::DIV :
-      curr_value_ = accept(stm->left()) / accept(stm->right());
-      break;
     case ast::CalcOp::MUL :
       curr_value_ = accept(stm->left()) * accept(stm->right());
       break;
     case ast::CalcOp::PERCENT :
       curr_value_ = accept(stm->left()) % accept(stm->right());
+      break;
+    case ast::CalcOp::DIV :
+      curr_value_ = accept(stm->right());
+      if (curr_value_ == 0) { throw std::runtime_error{"trying to divide by 0"}; }
+      curr_value_ = accept(stm->left()) / curr_value_;
       break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
@@ -82,18 +83,12 @@ void interpreter::visit(ast::number *stm) {
 }
 
 void interpreter::visit(ast::variable *stm) {
-  std::optional<int> var_value;
-  for (auto curr_scope = stm->scope(); curr_scope; curr_scope = curr_scope->scope()) {
-    if (curr_scope->has(stm->name())) {
-      var_value = curr_scope->value(stm->name());
-      break;
-    }
-  }
-  if (var_value == std::nullopt) {
+  auto curr_scope = stm->scope();
+  if (auto right_scope = curr_scope->find(stm->name()); right_scope) {
+    curr_value_ = right_scope->value(stm->name());
+  } else {
     throw std::logic_error{stm->name() + " was not declared"};
   }
-  curr_value_ = var_value.value();
-
 }
 
 void interpreter::visit(ast::if_operator *stm) {
@@ -110,29 +105,27 @@ void interpreter::visit(ast::while_operator *stm) {
 }
 
 void interpreter::visit(ast::scan_function *stm) {
-  auto curr_block = stm->scope();
-  auto var_name   = stm->var_name();
-  for ( ; curr_block ; curr_block = curr_block->scope()) {
-    if (curr_block->has(var_name)) {
-      break;
-    }
+  auto var_name    = stm->var_name();
+  auto curr_scope  = stm->scope();
+  if (auto final_scope = curr_scope->find(var_name); final_scope) {
+    int tmp;
+    std::cin >> tmp;
+    final_scope->set(var_name, tmp);
+  } else {
+    throw std::runtime_error{var_name + " was not declared in this scope"};
   }
-  int tmp;
-  std::cin >> tmp;
-  curr_block->set(var_name, tmp);
 }
 
 void interpreter::visit(ast::print_function *stm) {
   auto print_val = stm->get();
   if (std::holds_alternative<std::string>(print_val)) {
     const auto &str_val = std::get<std::string>(print_val);
-    for (auto curr_block = stm->scope(); curr_block ; curr_block = curr_block->scope()) {
-      if (curr_block->has(str_val)) {
-        std::cout << curr_block->value(str_val) << std::endl;
-        return ;
-      }
+    auto curr_block = stm->scope();
+    if (auto right_scope = curr_block->find(str_val); right_scope) {
+      std::cout << right_scope->value(str_val) << std::endl;
+    } else {
+      throw std::logic_error{str_val + " was not declared"};
     }
-    throw std::logic_error{str_val + " was not declared"};
   } else {
     std::cout << std::get<int>(print_val) << std::endl;
   }

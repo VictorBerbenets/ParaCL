@@ -47,6 +47,11 @@ class statement_block final: public statement {
   using StmtsStore     = std::vector<statement*>;
   using ScopeIter      = StmtsStore::iterator;
   using ConstScopeIter = StmtsStore::const_iterator;
+
+  bool has(const std::string &name) const { // find in current scope
+    return sym_tab_.has(name);
+  }
+
  public:
   explicit statement_block(statement_block *parent)
       : statement {parent} {}
@@ -65,26 +70,30 @@ class statement_block final: public statement {
 
   // template <typename... Args>
   void declare(const std::string &name, int value = 0) {
-    for (auto curr_scope = this; curr_scope; curr_scope = curr_scope->parent_) {
-      if (curr_scope->has(name)) {
-        return ;
-      }
+    if (auto curr_scope = find(name); !curr_scope) {
+      sym_tab_.add(name, value);
     }
-    sym_tab_.add(name, value);
   }
 
   void redefine(const std::string &name, int value) {
+    if (auto curr_scope = find(name); curr_scope) {
+      curr_scope->set(name, value);
+    } else {
+      std::cout << "error" << std::endl;
+    }
+  }
+  // finding declaration in parent's scopes
+  statement_block *find(const std::string &name) {
     for (auto curr_scope = this; curr_scope; curr_scope = curr_scope->parent_) {
       if (curr_scope->has(name)) {
-        curr_scope->set(name, value);
-        return ;
+        return curr_scope;
       }
     }
-    std::cout << "error" << std::endl;
+    return nullptr;
   }
 
-  bool has(const std::string &name) const {
-    return sym_tab_.has(name);
+  const statement_block *find(const std::string &name) const {
+    return find(name);
   }
 
   void set(const std::string &name, int value) {
