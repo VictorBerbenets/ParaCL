@@ -14,7 +14,7 @@ class expression: public statement {
 
  protected:
   expression() = default;
-  expression(statement_block *curr_block): statement(curr_block) {}
+  explicit expression(statement_block *curr_block): statement(curr_block) {}
 
   using pointer_type = expression*;
 };
@@ -22,7 +22,7 @@ class expression: public statement {
 class number: public expression {
   using value_type = int;
  public:
-  number(int num);
+  explicit number(int num);
   ~number() override = default;
 
   const value_type &get_value() const noexcept;

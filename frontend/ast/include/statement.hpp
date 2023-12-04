@@ -30,7 +30,7 @@ class statement {
   statement_block *scope() noexcept { return parent_; }
 
  protected:
-  statement(statement_block *parent) noexcept;
+  explicit statement(statement_block *parent) noexcept;
   statement() = default;
 
   statement_block *parent_;

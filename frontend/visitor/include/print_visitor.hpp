@@ -10,7 +10,7 @@ namespace frontend {
 class print_visitor: public base_visitor {
   void print_tabs();
  public:
-  print_visitor(const std::string &file_name);
+  explicit print_visitor(const std::string &file_name);
 
   void visit(ast::statement_block *stm)  override;
   void visit(ast::calc_expression *stm)  override;

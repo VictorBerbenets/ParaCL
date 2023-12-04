@@ -20,13 +20,13 @@ public:
 
 class print_function: public function {
  public:
-  print_function(int val)
+  explicit print_function(int val)
     : var_ {val} {}
 
-  print_function(std::string &&val)
+  explicit print_function(std::string &&val)
     : var_ {std::move(val)} {}
 
-  print_function(const std::string &val)
+  explicit print_function(const std::string &val)
     : var_ {val} {}
 
   void accept(base_visitor *b_visitor) override;
