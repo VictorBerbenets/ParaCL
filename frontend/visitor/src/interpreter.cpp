@@ -97,7 +97,6 @@ void interpreter::visit(ast::if_operator *stm) {
   }
 }
 
-
 void interpreter::visit(ast::while_operator *stm) {
   while(accept(stm->condition())) {
     stm->accept_body(this);
@@ -109,7 +108,7 @@ void interpreter::visit(ast::scan_function *stm) {
   auto curr_scope  = stm->scope();
   if (auto final_scope = curr_scope->find(var_name); final_scope) {
     int tmp;
-    std::cin >> tmp;
+    input_stream_ >> tmp;
     final_scope->set(var_name, tmp);
   } else {
     throw std::runtime_error{var_name + " was not declared in this scope"};
@@ -122,12 +121,12 @@ void interpreter::visit(ast::print_function *stm) {
     const auto &str_val = std::get<std::string>(print_val);
     auto curr_block = stm->scope();
     if (auto right_scope = curr_block->find(str_val); right_scope) {
-      std::cout << right_scope->value(str_val) << std::endl;
+      output_stream_ << right_scope->value(str_val) << std::endl;
     } else {
       throw std::logic_error{str_val + " was not declared"};
     }
   } else {
-    std::cout << std::get<int>(print_val) << std::endl;
+    output_stream_ << std::get<int>(print_val) << std::endl;
   }
 }
 

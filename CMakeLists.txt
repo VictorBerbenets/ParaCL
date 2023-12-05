@@ -4,10 +4,16 @@ project(paracl)
 
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(GTest REQUIRED)
+enable_testing()
+
+find_package(Threads REQUIRED)
+
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
 aux_source_directory(./frontend/ast/src AST_SOURCES)
+aux_source_directory(./frontend/examples EXAMPLES)
 aux_source_directory(./frontend/visitor/src VISITOR_SOURCES)
 aux_source_directory(./frontend/symbol_tab/src SYMBOL_TAB_SOURCES)
 
@@ -39,6 +45,15 @@ add_executable(driver
   ${FLEX_scanner_OUTPUTS}
 )
 
+add_executable(example
+  examples/main.cpp
+  examples/examples.cpp
+  ${AST_SOURCES}
+  ${VISITOR_SOURCES}
+  ${SYMBOL_TAB_SOURCES}
+  ${BISON_parser_OUTPUTS}
+  ${FLEX_scanner_OUTPUTS}
+)
 
 set_target_properties(
     driver PROPERTIES
@@ -46,5 +61,8 @@ set_target_properties(
 )
 
 target_link_libraries(driver PUBLIC bison_parser)
-target_include_directories(driver PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(example PUBLIC bison_parser)
+target_link_libraries(example PRIVATE ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
+target_include_directories(driver PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(example PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})

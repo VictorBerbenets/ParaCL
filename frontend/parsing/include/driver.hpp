@@ -44,8 +44,8 @@ class driver final {
     return ast_.get_curr_block();
   }
 
-  void evaluate() {
-    frontend::interpreter runner;
+  void evaluate(std::ostream &output = std::cout, std::istream &input = std::cin) {
+    frontend::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }
 
