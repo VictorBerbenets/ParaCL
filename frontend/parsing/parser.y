@@ -110,11 +110,11 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
 
-%nonassoc LESS LESS_EQ GREATER GREATER_EQ
 %right ASSIGN
 %left PLUS MINUS
 %left MUL DIV PERCENT
 %left EQ NEQ LOGIC_AND LOGIC_OR
+%nonassoc LESS LESS_EQ GREATER GREATER_EQ
 %nonassoc UMINUS
 %nonassoc UPLUS
 
@@ -156,7 +156,7 @@ expression:   logical_expression              { $$ = $1; }
             | calc_expression                 { $$ = $1; }
             | unary_operation                 { $$ = $1; }
             | OP_BRACK expression CL_BRACK    { $$ = $2; }
-            | NUMBER                          { $$ = driver.make_node<number>($1); std::cout << "FIRST LINE = " << @1 << std::endl; }
+            | NUMBER                          { $$ = driver.make_node<number>($1); }
             | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1)); }
 ;
 
