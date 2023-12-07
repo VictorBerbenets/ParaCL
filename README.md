@@ -1,7 +1,7 @@
 # Para C Language
 
 ## About
-It is a simple language, similar in syntax to the C language. The following operations are supported at early levels:  
+It is a simple programming language, similar in syntax to the C. The following operations are supported at early levels:  
 while()  
 if()  
 print  
