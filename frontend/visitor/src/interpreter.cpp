@@ -28,9 +28,11 @@ void interpreter::visit(ast::calc_expression *stm) {
       curr_value_ = accept(stm->left()) % accept(stm->right());
       break;
     case ast::CalcOp::DIV :
-      curr_value_ = accept(stm->right());
-      if (curr_value_ == 0) { throw std::runtime_error{"trying to divide by 0"}; }
-      curr_value_ = accept(stm->left()) / curr_value_;
+      if (auto check = accept(stm->right()); check) {
+        curr_value_ = accept(stm->left()) / check;
+      } else {
+        throw std::runtime_error{"trying to divide by 0"};
+      }
       break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
