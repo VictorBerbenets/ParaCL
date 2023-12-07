@@ -13,3 +13,20 @@ All types are integer (so far).
 3. Gtest must be installed
 ## How to build
 ```bash
+git clone --recurse-submodules https://github.com/VictorBerbenets/ParaCL.git
+cd ParaCL
+cmake -S ./ -B build/
+cd build/
+cmake --build .
+```
+
+## To Run the program do
+```bash
+./driver [file]
+```
+The program will be waiting for input file as command line argument with para C
+code.
+## How to run tests:
+```bash
+./example
+```
