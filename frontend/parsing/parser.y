@@ -150,7 +150,6 @@ statement:  OP_BRACE statement_block CL_BRACE {
           | expression SCOLON                 { $$ = $1; }
           | function                          { $$ = $1; }
           | definition                        { $$ = $1; }
-          | SCOLON                            {}
 ;
 
 expression:   logical_expression              { $$ = $1; }
