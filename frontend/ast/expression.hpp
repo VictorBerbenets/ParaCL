@@ -140,6 +140,48 @@ class logic_expression: public bin_operator<LogicOp> {
   }
 };
 
+class assignment: public expression {
+ public:
+  assignment(statement_block *curr_block, const std::string &name, expression *expr)
+    : expression {curr_block},
+      name_ {name},
+      identifier_ {expr} {
+    parent_->declare(name_);
+  }
+
+  assignment(statement_block *curr_block, std::string &&name, expression *expr)
+      : expression {curr_block},
+        name_ {std::move(name)},
+        identifier_ {expr} {
+    parent_->declare(name_);
+  }
+
+  ~assignment() override = default;
+
+  void accept(base_visitor *base_visitor) override {
+    base_visitor->visit(this);
+  }
+
+  void accept_exp(base_visitor *b_visitor) {
+    identifier_->accept(b_visitor);
+  }
+
+  expression *ident_exp() noexcept {
+    return identifier_;
+  }
+
+  void redefine(int value) {
+    parent_->redefine(name_, value);
+  }
+
+  const std::string &name() const noexcept {
+    return name_;
+  }
+ private:
+  std::string name_;
+  expression* identifier_;
+};
+
 } // <--- namespace ast
 
 } // <--- namespace frontend

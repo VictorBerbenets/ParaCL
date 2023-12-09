@@ -106,7 +106,6 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <logic_expression*>   logical_expression
 %nterm <calc_expression*>    calc_expression
 %nterm <un_operator*>        unary_operation
-%nterm <definition*>         definition
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
 
@@ -149,13 +148,13 @@ statement:  OP_BRACE statement_block CL_BRACE {
             }
           | expression SCOLON                 { $$ = $1; }
           | function                          { $$ = $1; }
-          | definition                        { $$ = $1; }
 ;
 
 expression:   logical_expression              { $$ = $1; }
             | calc_expression                 { $$ = $1; }
             | unary_operation                 { $$ = $1; }
             | OP_BRACK expression CL_BRACK    { $$ = $2; }
+            | VAR ASSIGN expression           { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3); }
             | NUMBER                          { $$ = driver.make_node<number>($1); }
             | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1)); }
 ;
@@ -180,9 +179,6 @@ logical_expression:   expression LESS expression        { $$ = driver.make_node<
                     | expression LOGIC_AND expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3);  }
                     | expression LOGIC_OR  expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3);   }
 ;
-
-definition: VAR ASSIGN expression SCOLON    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3); }
-
 
 function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(blocks.top(), std::move($1));  }
          | PRINT NUMBER SCOLON       { $$ = driver.make_node<print_function>($2);            }
