@@ -154,7 +154,7 @@ expression:   logical_expression              { $$ = $1; }
             | calc_expression                 { $$ = $1; }
             | unary_operation                 { $$ = $1; }
             | OP_BRACK expression CL_BRACK    { $$ = $2; }
-            | VAR ASSIGN expression           { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3); }
+            | VAR ASSIGN expression           { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3); std::cout << @$ << std::endl; }
             | NUMBER                          { $$ = driver.make_node<number>($1); }
             | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1)); }
 ;

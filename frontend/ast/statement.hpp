@@ -7,6 +7,7 @@
 
 #include "visitor.hpp"
 #include "symbol_table.hpp"
+#include "location.hh"
 
 namespace frontend {
 
@@ -34,6 +35,10 @@ class statement {
     return parent_;
   }
 
+  void print_error(const std::string &err_message) const {
+    std::cout << loc_ << " : " << err_message << std::endl;
+  }
+
  protected:
   explicit statement(statement_block *parent) noexcept
       : parent_ {parent} {}
@@ -41,6 +46,7 @@ class statement {
   statement() = default;
 
   statement_block *parent_;
+  yy::location loc_;
 };
 
 class statement_block final: public statement {
@@ -61,8 +67,6 @@ class statement_block final: public statement {
   template <module_identifier InputIt>
   statement_block(InputIt begin ,InputIt end)
       : statements_ {begin, end} {}
-
-  ~statement_block() override {};
 
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);

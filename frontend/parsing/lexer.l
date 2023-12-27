@@ -12,6 +12,7 @@ using namespace yy;
 %option noyywrap nounput noinput nodefault
 %option c++
 %option yyclass="scanner"
+%option yylineno
 
 WS      [ \t\n\v]+
 DIGIT   [0-9]

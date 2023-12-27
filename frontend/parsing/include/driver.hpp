@@ -53,9 +53,9 @@ class driver final {
     frontend::print_visitor p_visitor(file_name);
     p_visitor.visit(static_cast<statement_block*>(ast_.root_ptr()));
   }
+  scanner scanner_;
 
  private:
-  scanner scanner_;
   parser parser_;
   std::string file_;
 

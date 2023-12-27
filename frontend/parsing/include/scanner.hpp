@@ -19,12 +19,19 @@ class scanner final: public yyFlexLexer {
   parser::symbol_type get_token();
 
   location update_location() {
+    if (curr_line_ != yylineno) {
+      curr_line_ = yylineno;
+    }
     auto old_pos = pos_;
     auto new_pos = (pos_ += yyleng);
-    return {old_pos, new_pos};
+    std::cout << yylineno << std::endl;
+    location loc_val {old_pos, new_pos};
+    loc_val.lines(curr_line_);
+    return loc_val;
   }
  private:
   position pos_;
+  int curr_line_ = 1;
 
 };
 
