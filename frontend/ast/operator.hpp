@@ -2,6 +2,7 @@
 
 #include "expression.hpp"
 #include "visitor.hpp"
+#include "location.hh"
 
 namespace frontend {
 
@@ -9,8 +10,9 @@ namespace ast {
 
 class ctrl_statement: public statement {
  public:
-   ctrl_statement(expression *cond, statement_block *body)
-      : condition_ {cond},
+   ctrl_statement(expression *cond, statement_block *body, yy::location loc)
+      : statement {loc},
+        condition_ {cond},
         body_ {body} {}
 
   ~ctrl_statement() override = default;

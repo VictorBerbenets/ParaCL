@@ -3,18 +3,18 @@
 #include "statement.hpp"
 #include "identifiers.hpp"
 #include "visitor.hpp"
+#include "location.hh"
 
 namespace frontend {
 
 namespace ast {
 
 class expression: public statement {
- public:
-  ~expression() override = default;
-
  protected:
+  using statement::statement;
+
   expression() = default;
-  explicit expression(statement_block *curr_block): statement(curr_block) {}
+  //expression(statement_block *curr_block): statement(curr_block) {}
 
   using pointer_type = expression*;
 };
@@ -22,10 +22,9 @@ class expression: public statement {
 class number: public expression {
   using value_type = int;
  public:
-  explicit number(int num)
-      : value_ {num} {}
-
-  ~number() override = default;
+  number(value_type num, yy::location loc)
+      : expression {loc},
+        value_ {num} {}
 
   const value_type &get_value() const noexcept {
     return value_;
@@ -41,15 +40,15 @@ class number: public expression {
 
 class variable: public expression {
  public:
-  variable(statement_block *curr_block, const std::string &var_name)
-      : expression {curr_block},
+  variable(statement_block *curr_block, const std::string &var_name,
+           yy::location l)
+      : expression {curr_block, l},
         name_ {var_name} {}
 
-  variable(statement_block *curr_block, std::string &&var_name)
-      : expression {curr_block},
-        name_ {var_name} {}
-
-  ~variable() override = default;
+  variable(statement_block *curr_block, std::string &&var_name,
+           yy::location l)
+      : expression {curr_block, l},
+        name_ {std::move(var_name)} {}
 
   void declare() {
     scope()->declare(name_);
@@ -69,11 +68,10 @@ class variable: public expression {
 
 class un_operator: public expression {
  public:
-  un_operator(UnOp type, pointer_type arg)
-      : type_ {type},
+  un_operator(UnOp type, pointer_type arg, yy::location loc)
+      : expression {loc},
+        type_ {type},
         arg_ {arg} {}
-
-  ~un_operator() override = default;
 
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
@@ -94,16 +92,16 @@ class un_operator: public expression {
 template <typename BinType>
 class bin_operator: public expression {
  public:
-   bin_operator(BinType type, pointer_type left, pointer_type right)
-      : type_ {type},
-        left_ {left},
-        right_ {right} {}
-
-  ~bin_operator() override = default;
+   bin_operator(BinType type, pointer_type left, pointer_type right,
+                yy::location loc)
+    : expression {loc},
+      type_ {type},
+      left_ {left},
+      right_ {right} {}
 
   pointer_type left()  noexcept { return left_;  }
   pointer_type right() noexcept { return right_; }
-  BinType type() const noexcept { return type_; }
+  BinType type() const noexcept { return type_;  }
 
   void accept_left(base_visitor *b_visitor) {
     left_->accept(b_visitor);
@@ -122,8 +120,6 @@ class calc_expression: public bin_operator<CalcOp> {
  public:
   using bin_operator::bin_operator;
 
-  ~calc_expression() override = default;
-
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
@@ -133,8 +129,6 @@ class logic_expression: public bin_operator<LogicOp> {
  public:
   using bin_operator::bin_operator;
 
-  ~logic_expression() override = default;
-
   void accept(base_visitor* b_visitor) override {
     b_visitor->visit(this);
   }
@@ -142,21 +136,21 @@ class logic_expression: public bin_operator<LogicOp> {
 
 class assignment: public expression {
  public:
-  assignment(statement_block *curr_block, const std::string &name, expression *expr)
-    : expression {curr_block},
+  assignment(statement_block *curr_block, const std::string &name,
+             expression *expr, yy::location loc)
+    : expression {curr_block, loc},
       name_ {name},
       identifier_ {expr} {
     parent_->declare(name_);
   }
 
-  assignment(statement_block *curr_block, std::string &&name, expression *expr)
-      : expression {curr_block},
+  assignment(statement_block *curr_block, std::string &&name,
+             expression *expr, yy::location loc)
+      : expression {curr_block, loc},
         name_ {std::move(name)},
         identifier_ {expr} {
     parent_->declare(name_);
   }
-
-  ~assignment() override = default;
 
   void accept(base_visitor *base_visitor) override {
     base_visitor->visit(this);
@@ -166,6 +160,13 @@ class assignment: public expression {
     identifier_->accept(b_visitor);
   }
 
+  void set_parent(statement_block *parent) noexcept {
+    parent_ = parent;
+  }
+
+  statement_block *scope() noexcept {
+    return parent_;
+  }
   expression *ident_exp() noexcept {
     return identifier_;
   }
@@ -185,3 +186,4 @@ class assignment: public expression {
 } // <--- namespace ast
 
 } // <--- namespace frontend
+

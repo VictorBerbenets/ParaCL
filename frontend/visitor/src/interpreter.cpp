@@ -31,6 +31,7 @@ void interpreter::visit(ast::calc_expression *stm) {
       if (auto check = accept(stm->right()); check) {
         curr_value_ = accept(stm->left()) / check;
       } else {
+        stm->print_error("division by zero");
         throw std::runtime_error{"trying to divide by 0"};
       }
       break;
@@ -113,7 +114,8 @@ void interpreter::visit(ast::scan_function *stm) {
     input_stream_ >> tmp;
     final_scope->set(var_name, tmp);
   } else {
-    throw std::runtime_error{var_name + " was not declared in this scope"};
+    stm->print_error(var_name + " was not declared in this scope");
+    throw std::runtime_error("not known variable");
   }
 }
 
@@ -125,7 +127,8 @@ void interpreter::visit(ast::print_function *stm) {
     if (auto right_scope = curr_block->find(str_val); right_scope) {
       output_stream_ << right_scope->value(str_val) << std::endl;
     } else {
-      throw std::logic_error{str_val + " was not declared"};
+      stm->print_error(str_val + " was not declared in this scope");
+      throw std::runtime_error("not known variable");
     }
   } else {
     output_stream_ << std::get<int>(print_val) << std::endl;

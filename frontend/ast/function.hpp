@@ -9,26 +9,31 @@
 #include "statement.hpp"
 #include "expression.hpp"
 #include "visitor.hpp"
+#include "location.hh"
 
 namespace frontend {
 
 namespace ast {
 
 class function: public statement {
-public:
+ protected:
+  using statement::statement;
 /* place for next levels */
 };
 
 class print_function: public function {
  public:
-  explicit print_function(int val)
-    : var_ {val} {}
+  print_function(int val, yy::location loc)
+    : function {loc},
+      var_ {val} {}
 
-  explicit print_function(std::string &&val)
-    : var_ {std::move(val)} {}
+  print_function(std::string &&val, yy::location loc)
+    : function {loc},
+      var_ {std::move(val)} {}
 
-  explicit print_function(const std::string &val)
-    : var_ {val} {}
+  print_function(const std::string &val, yy::location loc)
+    : function {loc},
+      var_ {val} {}
 
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
@@ -45,11 +50,11 @@ class print_function: public function {
 class scan_function: public function {
   using value_type = int;
  public:
-  scan_function() = default;
+//  scan_function() = default;
 
   template <typename VarType = std::string>
-  scan_function(statement_block *curr_block, VarType&& var)
-      : var_{curr_block, std::forward<VarType>(var)} {
+  scan_function(statement_block *curr_block, VarType&& var, yy::location loc)
+      : var_ {curr_block, std::forward<VarType>(var), loc} {
     var_.declare();
   }
 

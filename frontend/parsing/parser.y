@@ -154,42 +154,42 @@ expression:   logical_expression              { $$ = $1; }
             | calc_expression                 { $$ = $1; }
             | unary_operation                 { $$ = $1; }
             | OP_BRACK expression CL_BRACK    { $$ = $2; }
-            | VAR ASSIGN expression           { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3); std::cout << @$ << std::endl; }
-            | NUMBER                          { $$ = driver.make_node<number>($1); }
-            | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1)); }
+            | VAR ASSIGN expression           { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+            | NUMBER                          { $$ = driver.make_node<number>($1, @$); }
+            | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
 ;
 
-unary_operation:   MINUS expression %prec UMINUS      { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2); }
-                 | PLUS  expression %prec UPLUS       { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2);  }
+unary_operation:   MINUS expression %prec UMINUS      { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$); }
+                 | PLUS  expression %prec UPLUS       { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2, @$);  }
 ;
 
-calc_expression: expression PLUS    expression   { $$ = driver.make_node<calc_expression>(CalcOp::ADD, $1, $3);     }
-               | expression MINUS   expression   { $$ = driver.make_node<calc_expression>(CalcOp::SUB, $1, $3);     }
-               | expression MUL     expression   { $$ = driver.make_node<calc_expression>(CalcOp::MUL, $1, $3);     }
-               | expression DIV     expression   { $$ = driver.make_node<calc_expression>(CalcOp::DIV, $1, $3);     }
-               | expression PERCENT expression   { $$ = driver.make_node<calc_expression>(CalcOp::PERCENT, $1, $3); }
+calc_expression: expression PLUS    expression   { $$ = driver.make_node<calc_expression>(CalcOp::ADD, $1, $3, @$);     }
+               | expression MINUS   expression   { $$ = driver.make_node<calc_expression>(CalcOp::SUB, $1, $3, @$);     }
+               | expression MUL     expression   { $$ = driver.make_node<calc_expression>(CalcOp::MUL, $1, $3, @$);     }
+               | expression DIV     expression   { $$ = driver.make_node<calc_expression>(CalcOp::DIV, $1, $3, @$);     }
+               | expression PERCENT expression   { $$ = driver.make_node<calc_expression>(CalcOp::PERCENT, $1, $3, @$); }
 ;
 
-logical_expression:   expression LESS expression        { $$ = driver.make_node<logic_expression>(LogicOp::LESS, $1, $3);       }
-                    | expression LESS_EQ expression     { $$ = driver.make_node<logic_expression>(LogicOp::LESS_EQ, $1, $3);    }
-                    | expression GREATER expression     { $$ = driver.make_node<logic_expression>(LogicOp::GREATER, $1, $3);    }
-                    | expression GREATER_EQ expression  { $$ = driver.make_node<logic_expression>(LogicOp::GREATER_EQ, $1, $3); }
-                    | expression EQ  expression         { $$ = driver.make_node<logic_expression>(LogicOp::EQ, $1, $3);         }
-                    | expression NEQ expression         { $$ = driver.make_node<logic_expression>(LogicOp::NEQ, $1, $3);        }
-                    | expression LOGIC_AND expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3);  }
-                    | expression LOGIC_OR  expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3);   }
+logical_expression:   expression LESS expression        { $$ = driver.make_node<logic_expression>(LogicOp::LESS, $1, $3, @$);       }
+                    | expression LESS_EQ expression     { $$ = driver.make_node<logic_expression>(LogicOp::LESS_EQ, $1, $3, @$);    }
+                    | expression GREATER expression     { $$ = driver.make_node<logic_expression>(LogicOp::GREATER, $1, $3, @$);    }
+                    | expression GREATER_EQ expression  { $$ = driver.make_node<logic_expression>(LogicOp::GREATER_EQ, $1, $3, @$); }
+                    | expression EQ  expression         { $$ = driver.make_node<logic_expression>(LogicOp::EQ, $1, $3, @$);         }
+                    | expression NEQ expression         { $$ = driver.make_node<logic_expression>(LogicOp::NEQ, $1, $3, @$);        }
+                    | expression LOGIC_AND expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3, @$);  }
+                    | expression LOGIC_OR  expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3, @$);   }
 ;
 
-function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(blocks.top(), std::move($1));  }
-         | PRINT NUMBER SCOLON       { $$ = driver.make_node<print_function>($2);            }
-         | PRINT VAR SCOLON          { $$ = driver.make_node<print_function>(std::move($2)); }
+function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(blocks.top(), std::move($1), @$);  }
+         | PRINT NUMBER SCOLON       { $$ = driver.make_node<print_function>($2, @$);                          }
+         | PRINT VAR SCOLON          { $$ = driver.make_node<print_function>(std::move($2), @$);               }
 ;
 
 ctrl_statement:   IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
-                    $$ = driver.make_node<if_operator>($3, $6);
+                    $$ = driver.make_node<if_operator>($3, $6, @$);
                   }
                   | WHILE OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
-                    $$ = driver.make_node<while_operator>($3, $6);
+                    $$ = driver.make_node<while_operator>($3, $6, @$);
                   }
 ;
 

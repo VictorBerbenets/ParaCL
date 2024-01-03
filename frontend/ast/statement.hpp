@@ -14,18 +14,21 @@ namespace frontend {
 namespace ast {
 
 class statement;
+class statement_block;
 
 template <typename T>
 concept module_identifier = std::input_iterator<T> &&
                             std::derived_from<T, statement>;
-
-class statement_block;
 
 class statement {
  public:
   virtual ~statement() = default;
 
   virtual void accept(base_visitor *b_visitor) = 0;
+
+  void print_error(const std::string &err_message) const {
+    std::cout << loc_ << " : " << err_message << std::endl;
+  }
 
   void set_parent(statement_block *parent) noexcept {
     parent_ = parent;
@@ -35,13 +38,13 @@ class statement {
     return parent_;
   }
 
-  void print_error(const std::string &err_message) const {
-    std::cout << loc_ << " : " << err_message << std::endl;
-  }
-
  protected:
-  explicit statement(statement_block *parent) noexcept
-      : parent_ {parent} {}
+  explicit statement(yy::location loc)
+    : loc_ {loc} {}
+
+  statement(statement_block *parent, yy::location loc = yy::location{})
+    : parent_ {parent},
+      loc_ {loc} {}
 
   statement() = default;
 
@@ -59,8 +62,10 @@ class statement_block final: public statement {
   }
 
  public:
-  explicit statement_block(statement_block *parent)
-      : statement {parent} {}
+  explicit statement_block(statement_block *parent): statement {parent} {}
+
+  statement_block(statement_block *parent, yy::location loc)
+      : statement {parent, loc} {}
 
   statement_block() = default;
 

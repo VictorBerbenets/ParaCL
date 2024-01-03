@@ -14,13 +14,14 @@ using namespace yy;
 %option yyclass="scanner"
 %option yylineno
 
-WS      [ \t\n\v]+
+WS      [ \t\v]+
 DIGIT   [0-9]
 DIGIT1  [1-9]
 VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 
 %%
 ([/][/].*)        { update_location(); }
+([\n]+)           { update_location(); }
 {WS}              { update_location(); }
 "+"               { return parser::make_PLUS(update_location());    }
 "-"               { return parser::make_MINUS(update_location());   }
