@@ -25,6 +25,7 @@ class interpreter: visitor {
   void run_program(ast::statement_block *root) {
     visit(root);
   }
+
  private:
   std::istream &input_stream_;
   std::ostream &output_stream_;

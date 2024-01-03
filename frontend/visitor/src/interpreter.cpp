@@ -90,7 +90,8 @@ void interpreter::visit(ast::variable *stm) {
   if (auto right_scope = curr_scope->find(stm->name()); right_scope) {
     curr_value_ = right_scope->value(stm->name());
   } else {
-    throw std::logic_error{stm->name() + " was not declared"};
+    stm->print_error(stm->name() + " was not declared in this scope");
+    throw std::runtime_error("not known variable");
   }
 }
 
