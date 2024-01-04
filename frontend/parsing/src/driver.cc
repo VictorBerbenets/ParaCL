@@ -10,8 +10,9 @@
 
 int main(int argc, char** argv) {
   if (argc != 2) {
-    throw std::runtime_error{"invalid arguments number: expected 2, "
-                             "got " + std::to_string(argc)};
+    std::cerr << "paraCL: fatal error: no input file" << std::endl <<
+                 "Program terminated" << std::endl;
+    return -1;
   }
 
   std::ifstream i_stream{argv[1]};
