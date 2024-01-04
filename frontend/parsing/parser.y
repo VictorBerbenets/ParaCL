@@ -74,6 +74,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 // statement tokens
 %token
   IF         "if"
+  ELSE       "else"
   WHILE      "while"
   PRINT      "print"
   SCAN       "?"
@@ -100,6 +101,8 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %token <int> NUMBER
 %token <std::string> VAR
 
+// nterminals
+
 %nterm <statement*>          statement
 %nterm <statement_block*>    statement_block
 %nterm <expression*>         expression
@@ -108,6 +111,8 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <un_operator*>        unary_operation
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
+%nterm <if_operator*>        if_operator
+%nterm <ctrl_statement*>     else_operator
 
 %right ASSIGN
 %left PLUS MINUS
@@ -117,7 +122,6 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nonassoc UMINUS
 %nonassoc UPLUS
 
-// %nterm <exp> int
 
 %start program
 
@@ -148,6 +152,7 @@ statement:  OP_BRACE statement_block CL_BRACE {
             }
           | expression SCOLON                 { $$ = $1; }
           | function                          { $$ = $1; }
+          | SCOLON                            { blocks.push(driver.make_block()); $$ = blocks.top();}
 ;
 
 expression:   logical_expression              { $$ = $1; }
@@ -157,6 +162,7 @@ expression:   logical_expression              { $$ = $1; }
             | VAR ASSIGN expression           { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
             | NUMBER                          { $$ = driver.make_node<number>($1, @$); }
             | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+            | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
 ;
 
 unary_operation:   MINUS expression %prec UMINUS      { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$); }
@@ -180,16 +186,26 @@ logical_expression:   expression LESS expression        { $$ = driver.make_node<
                     | expression LOGIC_OR  expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3, @$);   }
 ;
 
-function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(blocks.top(), std::move($1), @$);  }
-         | PRINT expression SCOLON   { $$ = driver.make_node<print_function>($2, @$); }
+function:  PRINT expression SCOLON   { $$ = driver.make_node<print_function>($2, @$); }
 ;
 
-ctrl_statement:   IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
-                    $$ = driver.make_node<if_operator>($3, $6, @$);
-                  }
-                  | WHILE OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
+ctrl_statement: WHILE OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
                     $$ = driver.make_node<while_operator>($3, $6, @$);
-                  }
+                }
+              | if_operator      { $$ = $1; }
+;
+
+if_operator:  IF OP_BRACK expression CL_BRACK statement ELSE else_operator {
+                $$ = driver.make_node<if_operator>();
+              }            
+            | IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE
+                ELSE else_operator {
+
+             }
+;
+
+else_operator:
+
 ;
 
 %%

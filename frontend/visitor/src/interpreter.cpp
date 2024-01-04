@@ -107,17 +107,8 @@ void interpreter::visit(ast::while_operator *stm) {
   }
 }
 
-void interpreter::visit(ast::scan_function *stm) {
-  auto var_name    = stm->var_name();
-  auto curr_scope  = stm->scope();
-  if (auto final_scope = curr_scope->find(var_name); final_scope) {
-    int tmp;
-    input_stream_ >> tmp;
-    final_scope->set(var_name, tmp);
-  } else {
-    stm->print_error(var_name + " was not declared in this scope");
-    throw std::runtime_error("not known variable");
-  }
+void interpreter::visit(ast::read_expression *stm) {
+  input_stream_ >> curr_value_;
 }
 
 void interpreter::visit(ast::print_function *stm) {

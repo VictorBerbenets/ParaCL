@@ -74,13 +74,13 @@ void print_visitor::visit(ast::while_operator *stm) {
   --tabs_number_;
 }
 
-void print_visitor::visit(ast::scan_function*) {
+void print_visitor::visit(ast::read_expression* /* */) {
   print_tabs();
   o_file_ << "scan_function" << std::endl;
 
 }
 
-void print_visitor::visit(ast::print_function*) {
+void print_visitor::visit(ast::print_function* /* */) {
   print_tabs();
   o_file_ << "print_function" << std::endl;
 

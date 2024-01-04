@@ -39,26 +39,6 @@ class print_function: public function {
   expression *print_expr_;
 };
 
-class scan_function: public function {
-  using value_type = int;
- public:
-  template <typename VarType = std::string>
-  scan_function(statement_block *curr_block, VarType&& var, yy::location loc)
-      : var_ {curr_block, std::forward<VarType>(var), loc} {
-    var_.declare();
-  }
-
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
-
-  std::string var_name() {
-    return var_.name();
-  }
- private:
-  variable var_;
-};
-
 } // <--- namespace ast
 
 } // <--- namespace frontend

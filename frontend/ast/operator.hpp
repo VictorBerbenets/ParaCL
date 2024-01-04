@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "expression.hpp"
 #include "visitor.hpp"
 #include "location.hh"
@@ -48,13 +50,31 @@ class while_operator: public ctrl_statement {
 };
 
 class if_operator: public ctrl_statement {
+  using else_if_vector = std::vector<ctrl_statement>
  public:
   using ctrl_statement::ctrl_statement;
+  
+  if_operator(expression *cond, statement_block *body, else_if_vector &&vec, 
+              statement_block *else_node, yy::location loc)
+      : ctrl_statement {cond, body, loc},
+        else_if_nodes_ {std::move(vec)},
+        else_node_ {else_node} {}
 
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
+  
+  statement_block *else_node() noexcept { return else_node_; }
+
+  auto begin()  noexcept { return else_if_nodes_.begin();  }
+  auto end()    noexcept { return else_if_nodes_.end();    }
+  auto cbegin() noexcept { return else_if_nodes_.cbegin(); }
+  auto cend()   noexcept { return else_if_nodes_.cend();   }
+ private:
+  else_if_vector else_if_nodes_;
+  statement_block *else_node_;
 };
+
 
 } // <--- namespace ast
 

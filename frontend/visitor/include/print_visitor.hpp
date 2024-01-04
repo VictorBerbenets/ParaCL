@@ -21,7 +21,7 @@ class print_visitor: public base_visitor {
   void visit(ast::assignment *stm)       override;
   void visit(ast::if_operator *stm)      override;
   void visit(ast::while_operator *stm)   override;
-  void visit(ast::scan_function *stm)    override;
+  void visit(ast::read_expression *stm)  override;
   void visit(ast::print_function *stm)   override;
  private:
   std::ofstream o_file_;

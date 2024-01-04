@@ -41,6 +41,7 @@ VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 "||"              { return parser::make_LOGIC_OR(update_location());   }
 
 "if"              { return parser::make_IF(update_location());       }
+"else"            { return parser::make_ELSE(update_location());     }
 "while"           { return parser::make_WHILE(update_location());    }
 "print"           { return parser::make_PRINT(update_location());    }
 "?"               { return parser::make_SCAN(update_location());     }

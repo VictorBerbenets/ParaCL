@@ -17,7 +17,7 @@ class base_visitor {
   virtual void visit(ast::assignment *stm)       = 0;
   virtual void visit(ast::if_operator *stm)      = 0;
   virtual void visit(ast::while_operator *stm)   = 0;
-  virtual void visit(ast::scan_function *stm)    = 0;
+  virtual void visit(ast::read_expression *stm)  = 0;
   virtual void visit(ast::print_function *stm)   = 0;
 };
 

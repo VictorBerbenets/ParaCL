@@ -15,7 +15,7 @@ class variable;
 class if_operator;
 class while_operator;
 class print_function;
-class scan_function;
+class read_expression;
 
 }
 
