@@ -23,35 +23,25 @@ class function: public statement {
 
 class print_function: public function {
  public:
-  print_function(int val, yy::location loc)
-    : function {loc},
-      var_ {val} {}
-
-  print_function(std::string &&val, yy::location loc)
-    : function {loc},
-      var_ {std::move(val)} {}
-
-  print_function(const std::string &val, yy::location loc)
-    : function {loc},
-      var_ {val} {}
+  print_function(expression *expr, yy::location loc)
+      : function {loc},
+        print_expr_ {expr} {}
 
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 
-  const auto &get() const noexcept {
-    return var_;
+  expression *get() const noexcept {
+    return print_expr_;
   }
 
  private:
-  std::variant<int, std::string> var_;
+  expression *print_expr_;
 };
 
 class scan_function: public function {
   using value_type = int;
  public:
-//  scan_function() = default;
-
   template <typename VarType = std::string>
   scan_function(statement_block *curr_block, VarType&& var, yy::location loc)
       : var_ {curr_block, std::forward<VarType>(var), loc} {

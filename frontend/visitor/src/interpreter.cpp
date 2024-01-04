@@ -121,19 +121,8 @@ void interpreter::visit(ast::scan_function *stm) {
 }
 
 void interpreter::visit(ast::print_function *stm) {
-  auto print_val = stm->get();
-  if (std::holds_alternative<std::string>(print_val)) {
-    const auto &str_val = std::get<std::string>(print_val);
-    auto curr_block = stm->scope();
-    if (auto right_scope = curr_block->find(str_val); right_scope) {
-      output_stream_ << right_scope->value(str_val) << std::endl;
-    } else {
-      stm->print_error(str_val + " was not declared in this scope");
-      throw std::runtime_error("not known variable");
-    }
-  } else {
-    output_stream_ << std::get<int>(print_val) << std::endl;
-  }
+  accept(stm->get());
+  output_stream_ << curr_value_ << std::endl;
 }
 
 void interpreter::visit(ast::assignment *stm) {

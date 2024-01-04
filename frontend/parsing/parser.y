@@ -181,8 +181,7 @@ logical_expression:   expression LESS expression        { $$ = driver.make_node<
 ;
 
 function:  VAR ASSIGN SCAN SCOLON    { $$ = driver.make_node<scan_function>(blocks.top(), std::move($1), @$);  }
-         | PRINT NUMBER SCOLON       { $$ = driver.make_node<print_function>($2, @$);                          }
-         | PRINT VAR SCOLON          { $$ = driver.make_node<print_function>(std::move($2), @$);               }
+         | PRINT expression SCOLON   { $$ = driver.make_node<print_function>($2, @$); }
 ;
 
 ctrl_statement:   IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
