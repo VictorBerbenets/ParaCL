@@ -160,13 +160,6 @@ class assignment: public expression {
     identifier_->accept(b_visitor);
   }
 
-  void set_parent(statement_block *parent) noexcept {
-    parent_ = parent;
-  }
-
-  statement_block *scope() noexcept {
-    return parent_;
-  }
   expression *ident_exp() noexcept {
     return identifier_;
   }
