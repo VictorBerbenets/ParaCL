@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
     return -1;
   } else if (!fs::is_regular_file(argv[1])) {
     std::cerr << "paraCL: error: can't oppen file: " << argv[1] << std::endl;
+    return -1;
   }
 
   std::ifstream i_stream{argv[1]};
