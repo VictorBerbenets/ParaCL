@@ -98,6 +98,8 @@ void interpreter::visit(ast::variable *stm) {
 void interpreter::visit(ast::if_operator *stm) {
   if(accept(stm->condition())) {
     stm->accept_body(this);
+  } else if (stm->else_block()) {
+    stm->accept_else(this);
   }
 }
 
@@ -107,7 +109,7 @@ void interpreter::visit(ast::while_operator *stm) {
   }
 }
 
-void interpreter::visit(ast::read_expression *stm) {
+void interpreter::visit(ast::read_expression* /* unused */) {
   input_stream_ >> curr_value_;
 }
 

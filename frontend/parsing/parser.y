@@ -111,8 +111,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <un_operator*>        unary_operation
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
-%nterm <if_operator*>        if_operator
-%nterm <ctrl_statement*>     else_operator
+//%nterm <std::vector<else_node*>> else_operator
 
 %right ASSIGN
 %left PLUS MINUS
@@ -122,6 +121,8 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nonassoc UMINUS
 %nonassoc UPLUS
 
+%precedence THEN
+%precedence ELSE
 
 %start program
 
@@ -137,6 +138,7 @@ statement_block:  %empty {
                 | statement_block statement {
                     $1->add($2);
                     $$ = $1;
+
                   }
 ;
 
@@ -152,7 +154,7 @@ statement:  OP_BRACE statement_block CL_BRACE {
             }
           | expression SCOLON                 { $$ = $1; }
           | function                          { $$ = $1; }
-          | SCOLON                            { blocks.push(driver.make_block()); $$ = blocks.top();}
+          | SCOLON                            { blocks.push(driver.make_block()); $$ = blocks.top(); }
 ;
 
 expression:   logical_expression              { $$ = $1; }
@@ -189,23 +191,21 @@ logical_expression:   expression LESS expression        { $$ = driver.make_node<
 function:  PRINT expression SCOLON   { $$ = driver.make_node<print_function>($2, @$); }
 ;
 
-ctrl_statement: WHILE OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE {
-                    $$ = driver.make_node<while_operator>($3, $6, @$);
+ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
+                    blocks.push(driver.make_block());
+                    driver.change_scope(blocks.top());
+                    $$ = driver.make_node<while_operator>($3, $5, @$);
                 }
-              | if_operator      { $$ = $1; }
-;
-
-if_operator:  IF OP_BRACK expression CL_BRACK statement ELSE else_operator {
-                $$ = driver.make_node<if_operator>();
-              }            
-            | IF OP_BRACK expression CL_BRACK OP_BRACE statement_block CL_BRACE
-                ELSE else_operator {
-
-             }
-;
-
-else_operator:
-
+              | IF OP_BRACK expression CL_BRACK statement %prec THEN {
+                  blocks.push(driver.make_block());
+                  driver.change_scope(blocks.top());
+                  $$ = driver.make_node<if_operator>($3, $5, @$);
+              }
+              | IF OP_BRACK expression CL_BRACK statement ELSE statement {
+                  blocks.push(driver.make_block());
+                  driver.change_scope(blocks.top());
+                  $$ = driver.make_node<if_operator>($3, $5, $7, @$);
+              }
 ;
 
 %%
@@ -214,3 +214,4 @@ void yy::parser::error(const location_type &l, const std::string &msg) {
   std::cout << "error pos: " << l << std::endl;
   throw std::runtime_error{msg};
 }
+

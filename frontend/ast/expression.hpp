@@ -14,7 +14,6 @@ class expression: public statement {
   using statement::statement;
 
   expression() = default;
-  //expression(statement_block *curr_block): statement(curr_block) {}
 
   using pointer_type = expression*;
 };

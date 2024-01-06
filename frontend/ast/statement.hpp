@@ -27,7 +27,7 @@ class statement {
   virtual void accept(base_visitor *b_visitor) = 0;
 
   void print_error(const std::string &err_message) const {
-    std::cout << loc_ << " : " << err_message << std::endl;
+    std::cerr << loc_ << " : " << err_message << std::endl;
   }
 
   void set_parent(statement_block *parent) noexcept {
