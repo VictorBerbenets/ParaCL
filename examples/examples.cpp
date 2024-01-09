@@ -59,7 +59,9 @@ TEST(TEST3, LCM) {
   std::stringstream input_data;
   input_data << a << ' ' << b << std::endl;
 
-  cpp_ans << std::lcm(a, b) << std::endl;
+  auto ans = std::lcm(a, b);
+  cpp_ans << ans << std::endl;
+  std::cout << "correct answer is " << ans << std::endl;
 
   ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/lcm.txt", input_data).view());
 }
@@ -72,8 +74,10 @@ TEST(TEST4, GCD) {
   std::ostringstream cpp_ans;
   std::stringstream input_data;
   input_data << a << ' ' << b << std::endl;
-
-  cpp_ans << std::gcd(a, b) << std::endl;
+  
+  auto ans = std::gcd(a, b);
+  cpp_ans << ans << std::endl;
+  std::cout << "correct answer is " << ans << std::endl;
 
   ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/gcd.txt", input_data).view());
 }
@@ -86,7 +90,6 @@ TEST(TEST5, FIBONAGHI) {
   std::stringstream input_data;
   input_data << n << std::endl;
 
-  std::ifstream i_stream {"../examples/data/fibonachi.txt"};
   std::ostringstream cpp_ans;
 
   auto fib = [](int n) {
@@ -98,10 +101,42 @@ TEST(TEST5, FIBONAGHI) {
     }
     return b;
   };
-
-  cpp_ans << fib(n) << std::endl;
+  
+  auto ans = fib(n);
+  cpp_ans << ans << std::endl;
+  std::cout << "correct answer is " << ans << std::endl;
 
   ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/fibonachi.txt", input_data).view());
+}
+
+TEST(TEST6, PRIME_FACTORS) {
+  std::cout << "Enter number for finding its prime factors" << std::endl;
+  int n;
+  std::cin >> n;
+
+  std::stringstream input_data;
+  input_data << n << std::endl;
+
+  std::ostringstream cpp_ans;
+
+  auto print_prime_factors = [](std::ostream &os, int n) {
+    int div = 2;
+    while (n > 1)
+    {
+      while (n % div == 0)
+      {
+        os << div << std::endl;
+        n = n / div;
+      }
+      div++;
+    }
+  };
+
+  print_prime_factors(cpp_ans, n);
+  ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/prime_factors.txt", input_data).view());
+
+  std::cout << "prime factors of " << n << ": " << std::endl;
+  print_prime_factors(std::cout, n);
 }
 
 } // <--- namespace paracl_testing
