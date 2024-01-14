@@ -95,6 +95,8 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 
   LOGIC_AND  "&&"
   LOGIC_OR   "||"
+
+  NEGATE     "!"
 ;
 
 // terminal tokens
@@ -118,11 +120,11 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %left MUL DIV PERCENT
 %left EQ NEQ LOGIC_AND LOGIC_OR
 %nonassoc LESS LESS_EQ GREATER GREATER_EQ
-%nonassoc UMINUS
-%nonassoc UPLUS
+%nonassoc UPLUS UMINUS
 
 %precedence THEN
 %precedence ELSE
+%precedence NEGATE
 
 %start program
 
@@ -167,9 +169,11 @@ expression:   logical_expression              { $$ = $1; }
             | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
 ;
 
-unary_operation:   MINUS expression %prec UMINUS      { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$); }
-                 | PLUS  expression %prec UPLUS       { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2, @$);  }
+unary_operation:   MINUS  expression %prec UMINUS      { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
+                 | PLUS   expression %prec UPLUS       { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2, @$);   }
+                 | NEGATE expression %prec NEGATE      { $$ = driver.make_node<un_operator>(UnOp::NEGATE, $2, @$); }
 ;
+
 
 calc_expression: expression PLUS    expression   { $$ = driver.make_node<calc_expression>(CalcOp::ADD, $1, $3, @$);     }
                | expression MINUS   expression   { $$ = driver.make_node<calc_expression>(CalcOp::SUB, $1, $3, @$);     }
@@ -211,7 +215,7 @@ ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
 %%
 
 void yy::parser::error(const location_type &l, const std::string &msg) {
-  std::cout << "error pos: " << l << std::endl;
+  std::cout << "error position: " << l << std::endl;
   throw std::runtime_error{msg};
 }
 

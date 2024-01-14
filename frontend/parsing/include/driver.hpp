@@ -2,12 +2,14 @@
 
 #include <string>
 #include <utility>
+#include <optional>
 
 #include "ast.hpp"
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
 #include "interpreter.hpp"
 #include "print_visitor.hpp"
+#include "error_handler.hpp"
 
 namespace yy {
 
@@ -44,7 +46,17 @@ class driver final {
     return ast_.get_curr_block();
   }
 
-  void evaluate(std::ostream &output = std::cout, std::istream &input = std::cin) {
+  std::optional<frontend::error_handler> check_for_errors() const {
+    frontend::error_handler handler;
+    handler.run(ast_.root_ptr());
+
+    if (handler.empty()) {
+      return {};
+    }
+    return {std::move(handler)};
+  }
+
+  void evaluate(std::ostream &output = std::cout, std::istream &input = std::cin) const {
     frontend::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }

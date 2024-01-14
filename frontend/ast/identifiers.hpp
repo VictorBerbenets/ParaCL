@@ -25,7 +25,8 @@ enum class CalcOp: char {
 
 enum class UnOp: char {
     PLUS,
-    MINUS
+    MINUS,
+    NEGATE
 };
 
 } // <--- namespace ast

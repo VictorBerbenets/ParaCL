@@ -39,6 +39,7 @@ VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 "!="              { return parser::make_NEQ(update_location());        }
 "&&"              { return parser::make_LOGIC_AND(update_location());  }
 "||"              { return parser::make_LOGIC_OR(update_location());   }
+"!"               { return parser::make_NEGATE(update_location());     }
 
 "if"              { return parser::make_IF(update_location());       }
 "else"            { return parser::make_ELSE(update_location());     }
@@ -50,7 +51,7 @@ VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 "{"               { return parser::make_OP_BRACE(update_location()); }
 "}"               { return parser::make_CL_BRACE(update_location()); }
 
--?{DIGIT1}?{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
+{DIGIT1}?{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
 {VAR}               { return parser::make_VAR(yytext, update_location());               }
 .			        { throw parser::syntax_error{update_location(), "Unknown symbol"};  }
 <<EOF>>             { return parser::make_EOF(update_location());}

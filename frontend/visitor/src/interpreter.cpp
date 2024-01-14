@@ -31,7 +31,6 @@ void interpreter::visit(ast::calc_expression *stm) {
       if (auto check = accept(stm->right()); check) {
         curr_value_ = accept(stm->left()) / check;
       } else {
-        stm->print_error("division by zero");
         throw std::runtime_error{"trying to divide by 0"};
       }
       break;
@@ -46,6 +45,9 @@ void interpreter::visit(ast::un_operator *stm) {
       break;
     case ast::UnOp::MINUS :
       curr_value_ = -(accept(stm->arg()));
+      break;
+    case ast::UnOp::NEGATE :
+      curr_value_ = !(accept(stm->arg()));
       break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
@@ -89,9 +91,6 @@ void interpreter::visit(ast::variable *stm) {
   auto curr_scope = stm->scope();
   if (auto right_scope = curr_scope->find(stm->name()); right_scope) {
     curr_value_ = right_scope->value(stm->name());
-  } else {
-    stm->print_error(stm->name() + " was not declared in this scope");
-    throw std::runtime_error("not known variable");
   }
 }
 

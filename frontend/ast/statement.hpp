@@ -26,10 +26,6 @@ class statement {
 
   virtual void accept(base_visitor *b_visitor) = 0;
 
-  void print_error(const std::string &err_message) const {
-    std::cerr << loc_ << " : " << err_message << std::endl;
-  }
-
   void set_parent(statement_block *parent) noexcept {
     parent_ = parent;
   }
@@ -37,6 +33,8 @@ class statement {
   statement_block *scope() noexcept {
     return parent_;
   }
+
+  yy::location location() const { return loc_; }
 
  protected:
   explicit statement(yy::location loc)
@@ -131,3 +129,4 @@ class statement_block final: public statement {
 } // <--- namespace ast
 
 } // <--- namespace frontend
+

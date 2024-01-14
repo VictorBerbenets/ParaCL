@@ -27,6 +27,12 @@ int main(int argc, char** argv) {
 
   driver.switch_input_stream(&i_stream);
   driver.parse();
-  driver.print_ast("ast.txt");
+
+  if (auto errors = driver.check_for_errors(); errors) {
+    std::cerr << "The program has been stopped. Found errors:" << std::endl;
+    errors.value().print_errors(std::cerr);
+    return -1;
+  }
   driver.evaluate();
 }
+
