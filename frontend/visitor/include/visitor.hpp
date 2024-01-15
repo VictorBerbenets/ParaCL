@@ -24,9 +24,6 @@ class base_visitor {
 class visitor: public base_visitor {
  public:
   int accept(ast::statement* node);
-    //node->accept(this);
-    //return curr_value_;
- // }
 
  protected:
   int curr_value_ = 0;

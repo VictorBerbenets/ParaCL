@@ -3,6 +3,7 @@
 #include <string>
 #include <utility>
 #include <optional>
+#include <concepts>
 
 #include "ast.hpp"
 #include "scanner.hpp"
@@ -27,7 +28,11 @@ class driver final {
 
   template <frontend::ast::derived_from NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
-    return ast_.make_node<NodeType>(std::forward<Args>(args)...);
+    auto node = ast_.make_node<NodeType>(std::forward<Args>(args)...);
+    if (std::same_as<variable, NodeType>) {
+      handler_.visit(node);
+    }
+    return node;
   }
 
   statement_block *make_block() {
@@ -47,13 +52,10 @@ class driver final {
   }
 
   std::optional<frontend::error_handler> check_for_errors() const {
-    frontend::error_handler handler;
-    handler.run(ast_.root_ptr());
-
-    if (handler.empty()) {
+    if (handler_.empty()) {
       return {};
     }
-    return {std::move(handler)};
+    return {handler_};
   }
 
   void evaluate(std::ostream &output = std::cout, std::istream &input = std::cin) const {
@@ -71,6 +73,7 @@ class driver final {
   parser parser_;
   std::string file_;
 
+  frontend::error_handler handler_;
   frontend::ast::ast ast_;
 };
 
