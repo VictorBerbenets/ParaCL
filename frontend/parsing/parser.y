@@ -113,7 +113,6 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <un_operator*>        unary_operation
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
-//%nterm <std::vector<else_node*>> else_operator
 
 %right ASSIGN
 %left PLUS MINUS
