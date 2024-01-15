@@ -156,7 +156,7 @@ statement:  OP_BRACE statement_block CL_BRACE {
             }
           | expression SCOLON                 { $$ = $1; }
           | function                          { $$ = $1; }
-          //| SCOLON                            { $$ = driver.make_node<scolon>(@1); }
+          | SCOLON                            { $$ = driver.make_node<statement_block>(); }
 ;
 
 expression:   logical_expression              { $$ = $1; }
