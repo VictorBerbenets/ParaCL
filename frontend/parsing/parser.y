@@ -108,6 +108,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <statement*>          statement
 %nterm <statement_block*>    statement_block
 %nterm <expression*>         expression
+%nterm <expression*>         base_expression
 %nterm <expression*>         logical_expression
 %nterm <expression*>         calc_expression
 %nterm <expression*>         unary_expression
@@ -115,7 +116,6 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         assignment_expression
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
-%nterm <expression*>         base_expression
 
 %left LESS LESS_EQ GREATER GREATER_EQ
 %left EQ NEQ

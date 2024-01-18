@@ -45,9 +45,20 @@ add_executable(paraCL
   ${FLEX_scanner_OUTPUTS}
 )
 
-add_executable(example
-  examples/main.cpp
-  examples/examples.cpp
+aux_source_directory(./examples/interactive_tests INTERACTIVE_SOURCES)
+aux_source_directory(./examples/unit UNIT_SOURCES)
+
+add_executable(interactive
+  ${INTERACTIVE_SOURCES}
+  ${AST_SOURCES}
+  ${VISITOR_SOURCES}
+  ${SYMBOL_TAB_SOURCES}
+  ${BISON_parser_OUTPUTS}
+  ${FLEX_scanner_OUTPUTS}
+)
+
+add_executable(unit
+  ${UNIT_SOURCES}
   ${AST_SOURCES}
   ${VISITOR_SOURCES}
   ${SYMBOL_TAB_SOURCES}
@@ -61,8 +72,11 @@ set_target_properties(
 )
 
 target_link_libraries(paraCL PUBLIC bison_parser)
-target_link_libraries(example PUBLIC bison_parser)
-target_link_libraries(example PRIVATE ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(interactive PUBLIC bison_parser)
+target_link_libraries(interactive PRIVATE ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(unit PUBLIC bison_parser)
+target_link_libraries(unit PRIVATE ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 target_include_directories(paraCL PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
-target_include_directories(example PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(interactive PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(unit PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
