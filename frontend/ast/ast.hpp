@@ -20,7 +20,7 @@ class ast final {
   using pointer_type = std::unique_ptr<statement>;
  public:
   ast() = default;
-  ast(const ast&) = delete;
+  ast(const ast &rhs) = delete;
   ast(ast&& other)
       : root_  {std::exchange(other.root_, nullptr)},
         nodes_ {std::move(other.nodes_)},
@@ -53,7 +53,6 @@ class ast final {
 
   size_type size() const noexcept { return size_; }
   [[nodiscard]] bool empty() const noexcept { return size_ == 0; }
-
  private:
   statement_block *root_       = nullptr;
   statement_block *curr_block_ = nullptr;
