@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
+#include <string_view>
 #include <stdexcept>
 #include <algorithm>
 #include <sstream>
@@ -12,6 +13,8 @@
 #include "expression.hpp"
 
 namespace paracl_testing {
+
+static const std::string data_path = "../examples/interactive_tests/data/";
 
 auto get_paracl_ans(const std::string &input_name, std::istream &input_data = std::cin) {
   std::ostringstream para_cl_ans;
@@ -33,7 +36,7 @@ TEST(TEST1, PRINT) {
     cpp_ans << i << std::endl;
   }
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/print.txt").view());
+  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "print.txt").view());
 }
 
 
@@ -47,7 +50,7 @@ TEST(TEST2, SCAN) {
   input_data << tmp;
   cpp_ans << tmp + 1 << std::endl;
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/scan.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "scan.txt", input_data).view());
 }
 
 TEST(TEST3, LCM) {
@@ -63,7 +66,7 @@ TEST(TEST3, LCM) {
   cpp_ans << ans << std::endl;
   std::cout << "correct answer is " << ans << std::endl;
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/lcm.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "lcm.txt", input_data).view());
 }
 
 TEST(TEST4, GCD) {
@@ -79,7 +82,7 @@ TEST(TEST4, GCD) {
   cpp_ans << ans << std::endl;
   std::cout << "correct answer is " << ans << std::endl;
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/gcd.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "gcd.txt", input_data).view());
 }
 
 TEST(TEST5, FIBONAGHI) {
@@ -106,7 +109,7 @@ TEST(TEST5, FIBONAGHI) {
   cpp_ans << ans << std::endl;
   std::cout << "correct answer is " << ans << std::endl;
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/fibonachi.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "fibonachi.txt", input_data).view());
 }
 
 TEST(TEST6, PRIME_FACTORS) {
@@ -133,7 +136,7 @@ TEST(TEST6, PRIME_FACTORS) {
   };
 
   print_prime_factors(cpp_ans, n);
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans("../examples/data/prime_factors.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "prime_factors.txt", input_data).view());
 
   std::cout << "prime factors of " << n << ": " << std::endl;
   print_prime_factors(std::cout, n);
