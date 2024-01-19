@@ -179,7 +179,7 @@ class read_expression: public expression {
   using value_type = int;
  public:
   read_expression(yy::location loc): expression {loc} {}
-  
+
   void accept(base_visitor *base_visitor) override {
     base_visitor->visit(this);
   }

@@ -50,7 +50,7 @@ class while_operator: public ctrl_statement {
 class if_operator final: public ctrl_statement {
  public:
   using ctrl_statement::ctrl_statement;
- 
+
   if_operator(expression *cond, statement *body, statement *else_block,
               yy::location loc)
       : ctrl_statement {cond, body, loc},

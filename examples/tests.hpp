@@ -33,7 +33,7 @@ std::vector<T> random_data(std::size_t data_size, T low_val, T max_val) {
 
   std::vector<int> vec(data_size);
   std::generate(vec.begin(), vec.end(), [&dist, &engine]() {
-                                        return dist(engine); 
+                                        return dist(engine);
                                       } );
   return vec;
 }

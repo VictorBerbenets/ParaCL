@@ -34,7 +34,7 @@ TEST(CTRL_STATEMENTS, IF) {
   } else {
     ans << 1000 << std::endl;
   }
-  
+
   ASSERT_EQ(ans.view(), get_paracl_ans(data_path + "if.txt", input_data).view());
 }
 
@@ -56,7 +56,7 @@ TEST(CTRL_STATEMENTS, WHILE) {
       ans << 5 << std::endl;
     ans << a << std::endl;
   }
- 
+
   ASSERT_EQ(ans.view(), get_paracl_ans(data_path + "while.txt", input_data).view());
 }
 
@@ -83,7 +83,7 @@ TEST(CTRL_STATEMENTS, WHILE_IF) {
   }
 
   ans << a << std::endl;
- 
+
   ASSERT_EQ(ans.view(), get_paracl_ans(data_path + "while_if.txt", input_data).view());
 }
 

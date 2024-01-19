@@ -21,16 +21,16 @@ class ast final {
   using pointer_type = std::unique_ptr<statement>;
 
   void swap(ast &rhs) {
-    std::swap(size_, rhs.size_);  
-    std::swap(root_, rhs.root_);  
-    std::swap(curr_block_, rhs.curr_block_);  
-    std::swap(nodes_, rhs.nodes_);  
+    std::swap(size_, rhs.size_);
+    std::swap(root_, rhs.root_);
+    std::swap(curr_block_, rhs.curr_block_);
+    std::swap(nodes_, rhs.nodes_);
   }
 
  public:
   ast() = default;
   ast(const ast &rhs): size_ {rhs.size_} { /*TODO*/ }
-  
+
   ast &operator=(const ast &rhs) {
     if (this == std::addressof(rhs)) {
       return *this;

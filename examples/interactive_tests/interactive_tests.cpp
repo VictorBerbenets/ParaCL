@@ -24,7 +24,7 @@ TEST(TEST1, PRINT) {
 TEST(TEST2, SCAN) {
   std::ostringstream cpp_ans;
   std::stringstream input_data;
-  
+
   std::cout << "Enter number" << std::endl;
   int tmp {};
   std::cin >> tmp;
@@ -58,7 +58,7 @@ TEST(TEST4, GCD) {
   std::ostringstream cpp_ans;
   std::stringstream input_data;
   input_data << a << ' ' << b << std::endl;
-  
+
   auto ans = std::gcd(a, b);
   cpp_ans << ans << std::endl;
   std::cout << "correct answer is " << ans << std::endl;
@@ -85,7 +85,7 @@ TEST(TEST5, FIBONAGHI) {
     }
     return b;
   };
-  
+
   auto ans = fib(n);
   cpp_ans << ans << std::endl;
   std::cout << "correct answer is " << ans << std::endl;

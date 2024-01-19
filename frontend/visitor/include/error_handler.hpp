@@ -13,7 +13,7 @@ class error_handler: public base_visitor {
   using error_type = std::pair<const std::string, yy::location>;
   using size_type  = std::size_t;
 
- public: 
+ public:
   void visit(ast::statement_block *stm) override {
     for (auto&& statement : *stm) {
       statement->accept(this);
@@ -84,7 +84,7 @@ class error_handler: public base_visitor {
   auto cend() const noexcept { return errors_.cend(); }
 
  private:
-  std::vector<error_type> errors_;   
+  std::vector<error_type> errors_;
 };
 
 } // <--- namespace frontend

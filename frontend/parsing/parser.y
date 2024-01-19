@@ -112,7 +112,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         logical_expression
 %nterm <expression*>         calc_expression
 %nterm <expression*>         unary_expression
-%nterm <expression*>         multiply_expression 
+%nterm <expression*>         multiply_expression
 %nterm <expression*>         equality_expression
 %nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
@@ -180,7 +180,7 @@ multiply_expression:   multiply_expression MUL     unary_expression   { $$ = dri
 
 calc_expression: calc_expression PLUS    multiply_expression   { $$ = driver.make_node<calc_expression>(CalcOp::ADD, $1, $3, @$); }
                | calc_expression MINUS   multiply_expression   { $$ = driver.make_node<calc_expression>(CalcOp::SUB, $1, $3, @$); }
-               | multiply_expression                           { $$ = $1; } 
+               | multiply_expression                           { $$ = $1; }
 ;
 
 comparable_expression:   comparable_expression LESS calc_expression        { $$= driver.make_node<logic_expression>(LogicOp::LESS, $1, $3, @$);        }
