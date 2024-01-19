@@ -45,7 +45,7 @@ TEST(CTRL_STATEMENTS, WHILE) {
   input_data << data[0] << std::endl;
 
   auto a = data[0];
-// testing if part
+// testing while part
   while(a) {
     if (a > 0) {
       a = a - 1;

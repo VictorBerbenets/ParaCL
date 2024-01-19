@@ -32,7 +32,7 @@ std::vector<T> random_data(std::size_t data_size, T low_val, T max_val) {
   std::uniform_int_distribution<T> dist {low_val, max_val};
 
   std::vector<int> vec(data_size);
-  std::generate(begin(vec), end(vec), [&dist, &engine]() {
+  std::generate(vec.begin(), vec.end(), [&dist, &engine]() {
                                         return dist(engine); 
                                       } );
   return vec;
