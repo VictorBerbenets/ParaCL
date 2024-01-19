@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 #include <concepts>
+#include <memory>
 
 #include "statement.hpp"
 #include "symbol_table.hpp"
@@ -18,13 +19,30 @@ concept derived_from = std::derived_from<T, statement>;
 class ast final {
   using size_type    = std::size_t;
   using pointer_type = std::unique_ptr<statement>;
+
+  void swap(ast &rhs) {
+    std::swap(size_, rhs.size_);  
+    std::swap(root_, rhs.root_);  
+    std::swap(curr_block_, rhs.curr_block_);  
+    std::swap(nodes_, rhs.nodes_);  
+  }
+
  public:
   ast() = default;
-  ast(const ast &rhs) = delete;
-  ast(ast&& other)
-      : root_  {std::exchange(other.root_, nullptr)},
-        nodes_ {std::move(other.nodes_)},
-        size_  {std::exchange(other.size_, 0)} {}
+  ast(const ast &rhs): size_ {rhs.size_} { /*TODO*/ }
+  
+  ast &operator=(const ast &rhs) {
+    if (this == std::addressof(rhs)) {
+      return *this;
+    }
+    auto tmp = rhs;
+    swap(tmp);
+    return *this;
+  }
+
+  ast(ast&& ) = default;
+  ast &operator=(ast&& ) = default;
+  ~ast() = default;
 
   statement_block *root_ptr() const & noexcept { return root_; }
 
