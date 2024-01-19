@@ -113,6 +113,8 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         calc_expression
 %nterm <expression*>         unary_expression
 %nterm <expression*>         multiply_expression 
+%nterm <expression*>         equality_expression
+%nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
@@ -181,16 +183,22 @@ calc_expression: calc_expression PLUS    multiply_expression   { $$ = driver.mak
                | multiply_expression                           { $$ = $1; } 
 ;
 
-logical_expression:   logical_expression LESS calc_expression        { $$= driver.make_node<logic_expression>(LogicOp::LESS, $1, $3, @$);        }
-                    | logical_expression LESS_EQ calc_expression     { $$ = driver.make_node<logic_expression>(LogicOp::LESS_EQ, $1, $3, @$);    }
-                    | logical_expression GREATER calc_expression     { $$ = driver.make_node<logic_expression>(LogicOp::GREATER, $1, $3, @$);    }
-                    | logical_expression GREATER_EQ calc_expression  { $$ = driver.make_node<logic_expression>(LogicOp::GREATER_EQ, $1, $3, @$); }
-                    | logical_expression EQ  calc_expression         { $$ = driver.make_node<logic_expression>(LogicOp::EQ, $1, $3, @$);         }
-                    | logical_expression NEQ calc_expression         { $$ = driver.make_node<logic_expression>(LogicOp::NEQ, $1, $3, @$);        }
-                    | logical_expression LOGIC_AND calc_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3, @$);  }
-                    | logical_expression LOGIC_OR  calc_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3, @$);   }
-                    | calc_expression                                { $$ = $1; }
+comparable_expression:   comparable_expression LESS calc_expression        { $$= driver.make_node<logic_expression>(LogicOp::LESS, $1, $3, @$);        }
+                       | comparable_expression LESS_EQ calc_expression     { $$ = driver.make_node<logic_expression>(LogicOp::LESS_EQ, $1, $3, @$);    }
+                       | comparable_expression GREATER calc_expression     { $$ = driver.make_node<logic_expression>(LogicOp::GREATER, $1, $3, @$);    }
+                       | comparable_expression GREATER_EQ calc_expression  { $$ = driver.make_node<logic_expression>(LogicOp::GREATER_EQ, $1, $3, @$); }
+                       | calc_expression                                   { $$ = $1; }
 ;
+
+equality_expression:  equality_expression EQ  comparable_expression        { $$ = driver.make_node<logic_expression>(LogicOp::EQ, $1, $3, @$);         }
+                    | equality_expression NEQ comparable_expression        { $$ = driver.make_node<logic_expression>(LogicOp::NEQ, $1, $3, @$);        }
+                    | comparable_expression                                { $$ = $1; }
+;
+
+
+logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3, @$);  }
+                    | logical_expression LOGIC_OR  equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3, @$);   }
+                    | equality_expression                                { $$ =$1; }
 
 assignment_expression:   VAR ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
                        | VAR ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
