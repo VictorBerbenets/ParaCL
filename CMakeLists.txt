@@ -48,6 +48,8 @@ add_executable(paraCL
 aux_source_directory(./examples/interactive_tests INTERACTIVE_SOURCES)
 aux_source_directory(./examples/unit UNIT_SOURCES)
 
+set(TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/examples/)
+
 add_executable(interactive
   ${INTERACTIVE_SOURCES}
   ${AST_SOURCES}
@@ -67,7 +69,7 @@ add_executable(unit
 )
 
 set_target_properties(
-  paraCL PROPERTIES
+  paraCL unit interactive PROPERTIES
     COMPILE_FLAGS " -Wall -Wextra "
 )
 
@@ -78,5 +80,7 @@ target_link_libraries(unit PUBLIC bison_parser)
 target_link_libraries(unit PRIVATE ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 target_include_directories(paraCL PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
-target_include_directories(interactive PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
-target_include_directories(unit PUBLIC frontend/include frontend/parsing/include ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(interactive PUBLIC frontend/include frontend/parsing/include
+                           ${CMAKE_CURRENT_BINARY_DIR} ${TESTS_DIR})
+target_include_directories(unit PUBLIC frontend/include frontend/parsing/include
+                           ${CMAKE_CURRENT_BINARY_DIR} ${TESTS_DIR})

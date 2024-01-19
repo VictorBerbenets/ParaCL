@@ -1,0 +1,1 @@
+// all program is an empty scope
