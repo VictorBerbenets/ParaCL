@@ -1,0 +1,21 @@
+
+a = ?;
+b = ?;
+
+if (a + 1 < b - 1) {
+  print a;
+} else if (a * 10 > b * 5) {
+  print b;
+} else {
+  a = a + b;
+  print a + b;
+}
+
+if (a == b) {
+  print a * b;
+} else if (b != 0) {
+  print a / b;
+} else {
+  print 1000;
+}
+
