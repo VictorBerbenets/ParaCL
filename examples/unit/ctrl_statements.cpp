@@ -60,5 +60,32 @@ TEST(CTRL_STATEMENTS, WHILE) {
   ASSERT_EQ(ans.view(), get_paracl_ans(data_path + "while.txt", input_data).view());
 }
 
+TEST(CTRL_STATEMENTS, WHILE_IF) {
+  std::ostringstream ans;
+  std::stringstream input_data;
+  auto data = random_data(1, -1000, 1000);
+  input_data << data[0] << std::endl;
+
+  auto a = data[0];
+// testing while part
+  int b = 0;
+  while (a > 0) {
+      ans << a << std::endl;
+      if (a / 2 == a - 1) {
+          ans << 10 << std::endl;
+      }
+      while (b < a) {
+          ans << b << std::endl;
+          b = b + 1;
+      }
+      a = a - 1;
+      b = 0;
+  }
+
+  ans << a << std::endl;
+ 
+  ASSERT_EQ(ans.view(), get_paracl_ans(data_path + "while_if.txt", input_data).view());
+}
+
 } // <--- namespace paracl_testing
 
