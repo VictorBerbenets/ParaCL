@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 #include <random>
 #include <vector>
 #include <FlexLexer.h>
@@ -38,11 +39,11 @@ std::vector<T> random_data(std::size_t data_size, T low_val, T max_val) {
   return vec;
 }
 
-template <typename Container>
-void print_to(std::ostream &os, const Container &cont) {
-  for (auto &&val: cont) {
-    os << val << std::endl;
-  }
+template <std::input_iterator InputIt>
+void print_to(std::ostream &os, InputIt begin, InputIt end) {
+  std::for_each(begin, end, [&os](auto &&val) {
+                              os << val << std::endl;
+                            });
 }
 
 } // <--- namespace paracl_testing

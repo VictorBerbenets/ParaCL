@@ -40,7 +40,7 @@ TEST(BASE_OPERATIONS, SCAN1) {
   std::ostringstream ans;
   std::stringstream input_data;
   auto data = random_data(2, -100000, 100000);
-  print_to(input_data, data);
+  print_to(input_data, data.begin(), data.end());
 
   ans << data[0] << std::endl <<
          data[1] + data[0] << std::endl;
@@ -52,7 +52,7 @@ TEST(BASE_OPERATIONS, SCAN2) {
   std::ostringstream ans;
   std::stringstream input_data;
   auto data = random_data(2, -1, 1);
-  print_to(input_data, data);
+  print_to(input_data, data.begin(), data.end());
 
   if (data[0]) {
     if (data[1]) {
