@@ -16,20 +16,20 @@ void interpreter::visit(ast::statement_block *stm) {
 void interpreter::visit(ast::calc_expression *stm) {
   switch(stm->type()) {
     case ast::CalcOp::ADD :
-      curr_value_ = accept(stm->left()) + accept(stm->right());
+      curr_value_ = evaluate(stm->left()) + evaluate(stm->right());
       break;
     case ast::CalcOp::SUB :
-      curr_value_ = accept(stm->left()) - accept(stm->right());
+      curr_value_ = evaluate(stm->left()) - evaluate(stm->right());
       break;
     case ast::CalcOp::MUL :
-      curr_value_ = accept(stm->left()) * accept(stm->right());
+      curr_value_ = evaluate(stm->left()) * evaluate(stm->right());
       break;
     case ast::CalcOp::PERCENT :
-      curr_value_ = accept(stm->left()) % accept(stm->right());
+      curr_value_ = evaluate(stm->left()) % evaluate(stm->right());
       break;
     case ast::CalcOp::DIV :
-      if (auto check = accept(stm->right()); check) {
-        curr_value_ = accept(stm->left()) / check;
+      if (auto check = evaluate(stm->right()); check) {
+        curr_value_ = evaluate(stm->left()) / check;
       } else {
         throw std::runtime_error{"trying to divide by 0"};
       }
@@ -41,13 +41,13 @@ void interpreter::visit(ast::calc_expression *stm) {
 void interpreter::visit(ast::un_operator *stm) {
   switch(stm->type()) {
     case ast::UnOp::PLUS :
-      curr_value_ = +(accept(stm->arg()));
+      curr_value_ = +(evaluate(stm->arg()));
       break;
     case ast::UnOp::MINUS :
-      curr_value_ = -(accept(stm->arg()));
+      curr_value_ = -(evaluate(stm->arg()));
       break;
     case ast::UnOp::NEGATE :
-      curr_value_ = !(accept(stm->arg()));
+      curr_value_ = !(evaluate(stm->arg()));
       break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
@@ -56,28 +56,28 @@ void interpreter::visit(ast::un_operator *stm) {
 void interpreter::visit(ast::logic_expression *stm) {
   switch(stm->type()) {
     case ast::LogicOp::LESS :
-      curr_value_ = accept(stm->left()) <  accept(stm->right());
+      curr_value_ = evaluate(stm->left()) <  evaluate(stm->right());
       break;
     case ast::LogicOp::LESS_EQ :
-      curr_value_ = accept(stm->left()) <= accept(stm->right());
+      curr_value_ = evaluate(stm->left()) <= evaluate(stm->right());
       break;
     case ast::LogicOp::LOGIC_AND :
-      curr_value_ = accept(stm->left()) && accept(stm->right());
+      curr_value_ = evaluate(stm->left()) && evaluate(stm->right());
       break;
     case ast::LogicOp::LOGIC_OR :
-      curr_value_ = accept(stm->left()) || accept(stm->right());
+      curr_value_ = evaluate(stm->left()) || evaluate(stm->right());
       break;
     case ast::LogicOp::GREATER:
-      curr_value_ = accept(stm->left()) > accept(stm->right());
+      curr_value_ = evaluate(stm->left()) > evaluate(stm->right());
       break;
     case ast::LogicOp::GREATER_EQ :
-      curr_value_ = accept(stm->left()) >= accept(stm->right());
+      curr_value_ = evaluate(stm->left()) >= evaluate(stm->right());
       break;
     case ast::LogicOp::EQ :
-      curr_value_ = accept(stm->left()) == accept(stm->right());
+      curr_value_ = evaluate(stm->left()) == evaluate(stm->right());
       break;
     case ast::LogicOp::NEQ :
-      curr_value_ = accept(stm->left()) != accept(stm->right());
+      curr_value_ = evaluate(stm->left()) != evaluate(stm->right());
       break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
@@ -95,16 +95,16 @@ void interpreter::visit(ast::variable *stm) {
 }
 
 void interpreter::visit(ast::if_operator *stm) {
-  if(accept(stm->condition())) {
-    stm->accept_body(this);
+  if(evaluate(stm->condition())) {
+    stm->body()->accept(this);
   } else if (stm->else_block()) {
-    stm->accept_else(this);
+    stm->else_block()->accept(this);
   }
 }
 
 void interpreter::visit(ast::while_operator *stm) {
-  while(accept(stm->condition())) {
-    stm->accept_body(this);
+  while(evaluate(stm->condition())) {
+    stm->body()->accept(this);
   }
 }
 
@@ -113,12 +113,12 @@ void interpreter::visit(ast::read_expression* /* unused */) {
 }
 
 void interpreter::visit(ast::print_function *stm) {
-  accept(stm->get());
+  evaluate(stm->get());
   output_stream_ << curr_value_ << std::endl;
 }
 
 void interpreter::visit(ast::assignment *stm) {
-  curr_value_ = accept(stm->ident_exp());
+  curr_value_ = evaluate(stm->ident_exp());
   stm->redefine(curr_value_);
 }
 

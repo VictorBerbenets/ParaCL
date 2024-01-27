@@ -3,7 +3,7 @@
 
 namespace frontend {
 
-int visitor::accept(ast::statement* node) {
+int visitor::evaluate(ast::statement* node) {
     node->accept(this);
     return curr_value_;
 }

@@ -21,7 +21,6 @@ class ast final {
   using pointer_type = std::unique_ptr<statement>;
 
   void swap(ast &rhs) {
-    std::swap(size_, rhs.size_);
     std::swap(root_, rhs.root_);
     std::swap(curr_block_, rhs.curr_block_);
     std::swap(nodes_, rhs.nodes_);
@@ -29,7 +28,7 @@ class ast final {
 
  public:
   ast() = default;
-  ast(const ast &rhs): size_ {rhs.size_} { /*TODO*/ }
+  ast(const ast& ) { /*TODO*/ }
 
   ast &operator=(const ast &rhs) {
     if (this == std::addressof(rhs)) {
@@ -51,7 +50,6 @@ class ast final {
     auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);
     auto ret_ptr  = node_ptr.get();
     nodes_.push_back(std::move(node_ptr));
-    size_++;
     return ret_ptr;
   }
 
@@ -69,13 +67,12 @@ class ast final {
 
   statement_block *get_curr_block() noexcept { return curr_block_; }
 
-  size_type size() const noexcept { return size_; }
-  [[nodiscard]] bool empty() const noexcept { return size_ == 0; }
+  size_type size() const noexcept { return nodes_.size(); }
+  [[nodiscard]] bool empty() const noexcept { return nodes_.size() == 0; }
  private:
   statement_block *root_       = nullptr;
   statement_block *curr_block_ = nullptr;
   std::vector<pointer_type> nodes_;
-  size_type size_ = 0;
 };
 
 } // <--- namespace ast

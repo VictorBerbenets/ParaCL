@@ -79,10 +79,6 @@ class un_operator: public expression {
   expression *arg() noexcept { return arg_; }
   UnOp type() const noexcept { return type_; }
 
-  void accept_arg(base_visitor *b_visitor) {
-    arg_->accept(b_visitor);
-  }
-
  private:
   UnOp type_;
   pointer_type arg_;
@@ -101,14 +97,6 @@ class bin_operator: public expression {
   pointer_type left()  noexcept { return left_;  }
   pointer_type right() noexcept { return right_; }
   BinType type() const noexcept { return type_;  }
-
-  void accept_left(base_visitor *b_visitor) {
-    left_->accept(b_visitor);
-  }
-
-  void accept_right(base_visitor *b_visitor) {
-    right_->accept(b_visitor);
-  }
 
  protected:
   BinType type_;
@@ -153,10 +141,6 @@ class assignment: public expression {
 
   void accept(base_visitor *base_visitor) override {
     base_visitor->visit(this);
-  }
-
-  void accept_exp(base_visitor *b_visitor) {
-    identifier_->accept(b_visitor);
   }
 
   expression *ident_exp() noexcept {

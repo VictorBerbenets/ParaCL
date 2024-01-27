@@ -12,7 +12,6 @@ namespace frontend {
 class error_handler: public base_visitor {
   using error_type = std::pair<const std::string, yy::location>;
   using size_type  = std::size_t;
-
  public:
   void visit(ast::statement_block *stm) override {
     for (auto&& statement : *stm) {
@@ -21,17 +20,17 @@ class error_handler: public base_visitor {
   }
 
   void visit(ast::calc_expression *stm) override {
-    stm->accept_left(this);
-    stm->accept_right(this);
+    stm->left()->accept(this);
+    stm->right()->accept(this);
   }
 
   void visit(ast::logic_expression *stm) override {
-    stm->accept_left(this);
-    stm->accept_right(this);
+    stm->left()->accept(this);
+    stm->right()->accept(this);
   }
 
   void visit(ast::un_operator *stm) override {
-    stm->accept_arg(this);
+    stm->arg()->accept(this);
   }
 
   void visit(ast::number * /*unused*/) override {}
@@ -45,17 +44,17 @@ class error_handler: public base_visitor {
   }
 
   void visit(ast::assignment *stm) override {
-    stm->accept_exp(this);
+    stm->ident_exp()->accept(this);
   }
 
   void visit(ast::if_operator *stm) override {
-    stm->accept_condition(this);
-    stm->accept_body(this);
+    stm->condition()->accept(this);
+    stm->body()->accept(this);
   }
 
   void visit(ast::while_operator *stm) override {
-    stm->accept_condition(this);
-    stm->accept_body(this);
+    stm->condition()->accept(this);
+    stm->body()->accept(this);
   }
 
   void visit(ast::read_expression * /*unused*/) override {}

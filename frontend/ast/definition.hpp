@@ -28,8 +28,6 @@ class definition: public statement {
     parent_->declare(name_);
   }
 
-  ~definition() override = default;
-
   const std::string &name() const noexcept {
     return name_;
   }

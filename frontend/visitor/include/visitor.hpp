@@ -23,7 +23,7 @@ class base_visitor {
 
 class visitor: public base_visitor {
  public:
-  int accept(ast::statement* node);
+  int evaluate(ast::statement* node);
 
  protected:
   int curr_value_ = 0;
