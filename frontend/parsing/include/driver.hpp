@@ -9,7 +9,6 @@
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
 #include "interpreter.hpp"
-#include "print_visitor.hpp"
 #include "error_handler.hpp"
 
 namespace yy {
@@ -62,12 +61,6 @@ class driver final {
     frontend::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }
-
-  void print_ast(const std::string &file_name) {
-    frontend::print_visitor p_visitor(file_name);
-    p_visitor.visit(static_cast<statement_block*>(ast_.root_ptr()));
-  }
-
  private:
   scanner scanner_;
   parser parser_;

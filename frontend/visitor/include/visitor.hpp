@@ -23,7 +23,13 @@ class base_visitor {
 
 class visitor: public base_visitor {
  public:
-  int evaluate(ast::statement* node);
+  int get_value() const noexcept {
+    return curr_value_;
+  }
+
+  void set_value(int val) noexcept {
+    curr_value_ = val;
+  }
 
  protected:
   int curr_value_ = 0;

@@ -14,22 +14,27 @@ void interpreter::visit(ast::statement_block *stm) {
 }
 
 void interpreter::visit(ast::calc_expression *stm) {
+  stm->left()->accept(this);
+  auto lhs = get_value();
+  stm->right()->accept(this);
+  auto rhs = get_value();
+
   switch(stm->type()) {
     case ast::CalcOp::ADD :
-      curr_value_ = evaluate(stm->left()) + evaluate(stm->right());
+      set_value(lhs + rhs);
       break;
     case ast::CalcOp::SUB :
-      curr_value_ = evaluate(stm->left()) - evaluate(stm->right());
+      set_value(lhs - rhs);
       break;
     case ast::CalcOp::MUL :
-      curr_value_ = evaluate(stm->left()) * evaluate(stm->right());
+      set_value(lhs * rhs);
       break;
     case ast::CalcOp::PERCENT :
-      curr_value_ = evaluate(stm->left()) % evaluate(stm->right());
+      set_value(lhs % rhs);
       break;
     case ast::CalcOp::DIV :
-      if (auto check = evaluate(stm->right()); check) {
-        curr_value_ = evaluate(stm->left()) / check;
+      if (auto check = rhs; check) {
+        set_value(lhs / check);
       } else {
         throw std::runtime_error{"trying to divide by 0"};
       }
@@ -39,63 +44,71 @@ void interpreter::visit(ast::calc_expression *stm) {
 }
 
 void interpreter::visit(ast::un_operator *stm) {
+  stm->arg()->accept(this);
+
   switch(stm->type()) {
     case ast::UnOp::PLUS :
-      curr_value_ = +(evaluate(stm->arg()));
+      set_value(+get_value());
       break;
     case ast::UnOp::MINUS :
-      curr_value_ = -(evaluate(stm->arg()));
+      set_value(-get_value());
       break;
     case ast::UnOp::NEGATE :
-      curr_value_ = !(evaluate(stm->arg()));
+      set_value(!get_value());
       break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
 }
 
 void interpreter::visit(ast::logic_expression *stm) {
+  stm->left()->accept(this);
+  auto lhs = get_value();
+  stm->right()->accept(this);
+  auto rhs = get_value();
+
   switch(stm->type()) {
     case ast::LogicOp::LESS :
-      curr_value_ = evaluate(stm->left()) <  evaluate(stm->right());
+      set_value(lhs <  rhs);
       break;
     case ast::LogicOp::LESS_EQ :
-      curr_value_ = evaluate(stm->left()) <= evaluate(stm->right());
+      set_value(lhs <= rhs);
       break;
     case ast::LogicOp::LOGIC_AND :
-      curr_value_ = evaluate(stm->left()) && evaluate(stm->right());
+      set_value(lhs && rhs);
       break;
     case ast::LogicOp::LOGIC_OR :
-      curr_value_ = evaluate(stm->left()) || evaluate(stm->right());
+      set_value(lhs || rhs);
       break;
     case ast::LogicOp::GREATER:
-      curr_value_ = evaluate(stm->left()) > evaluate(stm->right());
+      set_value(lhs > rhs);
       break;
     case ast::LogicOp::GREATER_EQ :
-      curr_value_ = evaluate(stm->left()) >= evaluate(stm->right());
+      set_value(lhs >= rhs);
       break;
     case ast::LogicOp::EQ :
-      curr_value_ = evaluate(stm->left()) == evaluate(stm->right());
+      set_value(lhs == rhs);
       break;
     case ast::LogicOp::NEQ :
-      curr_value_ = evaluate(stm->left()) != evaluate(stm->right());
+      set_value(lhs != rhs);
       break;
     default: throw std::logic_error{"unrecognized logic type"};
   }
 }
 
 void interpreter::visit(ast::number *stm) {
-  curr_value_ = stm->get_value();
+  set_value(stm->get_value());
 }
 
 void interpreter::visit(ast::variable *stm) {
-  auto curr_scope = stm->scope();
-  if (auto right_scope = curr_scope->find(stm->name()); right_scope) {
-    curr_value_ = right_scope->value(stm->name());
-  }
+  auto curr_scope  = stm->scope();
+  auto right_scope = curr_scope->find(stm->name());
+  set_value(right_scope->value(stm->name()));
 }
 
 void interpreter::visit(ast::if_operator *stm) {
-  if(evaluate(stm->condition())) {
+  stm->condition()->accept(this);
+
+  if(get_value()) {
     stm->body()->accept(this);
   } else if (stm->else_block()) {
     stm->else_block()->accept(this);
@@ -103,23 +116,29 @@ void interpreter::visit(ast::if_operator *stm) {
 }
 
 void interpreter::visit(ast::while_operator *stm) {
-  while(evaluate(stm->condition())) {
+  stm->condition()->accept(this);
+
+  while(get_value()) {
     stm->body()->accept(this);
+    stm->condition()->accept(this);
   }
 }
 
 void interpreter::visit(ast::read_expression* /* unused */) {
-  input_stream_ >> curr_value_;
+  int tmp {0};
+  input_stream_ >> tmp;
+  set_value(tmp);
 }
 
 void interpreter::visit(ast::print_function *stm) {
-  evaluate(stm->get());
-  output_stream_ << curr_value_ << std::endl;
+  stm->get()->accept(this);
+  output_stream_ << get_value() << std::endl;
 }
 
 void interpreter::visit(ast::assignment *stm) {
-  curr_value_ = evaluate(stm->ident_exp());
-  stm->redefine(curr_value_);
+//  set_value(evaluate(stm->ident_exp());
+  stm->ident_exp()->accept(this);
+  stm->redefine(get_value());
 }
 
 } // <--- namespace frontend
