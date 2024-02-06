@@ -5,7 +5,6 @@
 #include <vector>
 #include <concepts>
 #include <memory>
-#include <queue>
 
 #include "statement.hpp"
 #include "symbol_table.hpp"
