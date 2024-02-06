@@ -5,6 +5,7 @@
 #include <vector>
 #include <concepts>
 #include <memory>
+#include <queue>
 
 #include "statement.hpp"
 #include "symbol_table.hpp"
@@ -28,17 +29,8 @@ class ast final {
 
  public:
   ast() = default;
-  ast(const ast& ) { /*TODO*/ }
-
-  ast &operator=(const ast &rhs) {
-    if (this == std::addressof(rhs)) {
-      return *this;
-    }
-    auto tmp = rhs;
-    swap(tmp);
-    return *this;
-  }
-
+  ast(const ast& ) = delete;
+  ast &operator=(const ast&) = delete;
   ast(ast&& ) = default;
   ast &operator=(ast&& ) = default;
   ~ast() = default;
