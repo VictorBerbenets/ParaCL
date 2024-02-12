@@ -82,6 +82,8 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
   CL_BRACK   ")"
   OP_BRACE   "{"
   CL_BRACE   "}"
+  OPSQ_BRACK "["
+  CLSQ_BRACK "]"
 ;
 
 // logical tokens
@@ -99,9 +101,16 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
   NEGATE     "!"
 ;
 
+// array tokens
+%token
+  REPEAT "repeat"
+  UNDEF  "undef"
+  ARRAY  "array"
+;
+
 // terminal tokens
 %token <int> NUMBER
-%token <std::string> VAR
+%token <std::string> NAME
 
 // nterminals
 
@@ -116,6 +125,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         equality_expression
 %nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
+%nterm <expression*>         has_value
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
 
@@ -161,10 +171,12 @@ statement:  OP_BRACE statement_block CL_BRACE {
 ;
 
 base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
-                | NUMBER                          { $$ = driver.make_node<number>($1, @$); }
-                | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+                | has_value                       { $$ = $1; }
                 | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
 ;
+
+has_value:  NUMBER { $$ = driver.make_node<number>($1, @$); }
+          | NAME    { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
 
 unary_expression:   MINUS  base_expression %prec UMINUS   { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
                   | PLUS   base_expression %prec UPLUS    { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2, @$);   }
@@ -190,18 +202,19 @@ comparable_expression:   comparable_expression LESS calc_expression        { $$=
                        | calc_expression                                   { $$ = $1; }
 ;
 
-equality_expression:  equality_expression EQ  comparable_expression        { $$ = driver.make_node<logic_expression>(LogicOp::EQ, $1, $3, @$);         }
-                    | equality_expression NEQ comparable_expression        { $$ = driver.make_node<logic_expression>(LogicOp::NEQ, $1, $3, @$);        }
+equality_expression:  equality_expression EQ  comparable_expression        { $$ = driver.make_node<logic_expression>(LogicOp::EQ, $1, $3, @$);  }
+                    | equality_expression NEQ comparable_expression        { $$ = driver.make_node<logic_expression>(LogicOp::NEQ, $1, $3, @$); }
                     | comparable_expression                                { $$ = $1; }
 ;
 
 logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3, @$);  }
                     | logical_expression LOGIC_OR  equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3, @$);   }
-                    | equality_expression                                { $$ =$1; }
+                    | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression:   VAR ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
-                       | VAR ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+assignment_expression:   NAME ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+                       | NAME ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+                       | NAME ASSIGN array_type            {}
 ;
 
 expression:   logical_expression    { $$ = $1; }
@@ -226,6 +239,22 @@ ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
                   driver.change_scope(blocks.top());
                   $$ = driver.make_node<if_operator>($3, $5, $7, @$);
                 }
+;
+
+integer_type:
+;
+
+array_elem: NAME 
+
+array_type:  REPEAT OP_BRACK base_expression SCOLON base_expression OP_BRACK
+           | REPEAT OP_BRACK UNDEF SCOLON base_expression OP_BRACK
+           | ARRAY  OP_BRACK initializer_list CL_BRACK
+
+;
+
+initializer_list:   has_value SCOLON initializer_list
+                  | has_value
+
 ;
 
 %%

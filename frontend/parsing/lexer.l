@@ -17,7 +17,7 @@ using namespace yy;
 WS      [ \t\v]+
 DIGIT   [0-9]
 DIGIT1  [1-9]
-VAR     [a-zA-Z_][a-zA-Z_0-9_]*
+NAME     [a-zA-Z_][a-zA-Z_0-9_]*
 
 %%
 ([/][/].*)        { update_location(); }
@@ -50,10 +50,16 @@ VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 ")"               { return parser::make_CL_BRACK(update_location()); }
 "{"               { return parser::make_OP_BRACE(update_location()); }
 "}"               { return parser::make_CL_BRACE(update_location()); }
+"["               { return parser::make_OPSQ_BRACK(update_location()); }
+"]"               { return parser::make_CLSQ_BRACK(update_location()); }
+
+"repeat"          { return parser::make_REPEAT(update_location()); }
+"undef"           { return parser::make_UNDEF(update_location());  }
+"array"           { return parser::make_ARRAY(update_location());  }
 
 {DIGIT1}?{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
-{VAR}               { return parser::make_VAR(yytext, update_location());               }
-.			        { throw parser::syntax_error{update_location(), "Unknown symbol"};  }
-<<EOF>>             { return parser::make_EOF(update_location());}
+{NAME}            { return parser::make_NAME(yytext, update_location());              }
+.			            { throw parser::syntax_error{update_location(), "Unknown symbol"};  }
+<<EOF>>           { return parser::make_EOF(update_location());}
 
 %%
