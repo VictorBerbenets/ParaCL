@@ -126,8 +126,12 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
 %nterm <expression*>         has_value
+%nterm <object_type*>        array_elem
+%nterm <object_type*>        array_type
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
+
+%nterm <std::vector<expression*>>  array_brackets
 
 %left LESS LESS_EQ GREATER GREATER_EQ
 %left EQ NEQ
@@ -175,8 +179,9 @@ base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
                 | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
 ;
 
-has_value:  NUMBER { $$ = driver.make_node<number>($1, @$); }
-          | NAME    { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+has_value:  NUMBER     { $$ = driver.make_node<number>($1, @$); }
+          | NAME       { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+          | array_elem { $$ = $1; }
 
 unary_expression:   MINUS  base_expression %prec UMINUS   { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
                   | PLUS   base_expression %prec UPLUS    { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2, @$);   }
@@ -214,7 +219,7 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
 
 assignment_expression:   NAME ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
                        | NAME ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
-                       | NAME ASSIGN array_type            {}
+                       | NAME ASSIGN array_type            { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
 ;
 
 expression:   logical_expression    { $$ = $1; }
@@ -241,20 +246,26 @@ ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
                 }
 ;
 
-integer_type:
+array_elem: NAME array_brackets { $$ = driver.make_node<array_elem>($1, $2, @$);
+          std::cout << "SIZE = " << $2.size() << std::endl;}
+;
+ 
+array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {
+                  $1.push_back($3);
+                  $$ = $1;
+                }
+              | OPSQ_BRACK has_value CLSQ_BRACK {
+                  $$.push_back($2);
+                }
 ;
 
-array_elem: NAME 
-
-array_type:  REPEAT OP_BRACK base_expression SCOLON base_expression OP_BRACK
-           | REPEAT OP_BRACK UNDEF SCOLON base_expression OP_BRACK
-           | ARRAY  OP_BRACK initializer_list CL_BRACK
-
+array_type:  REPEAT OP_BRACK base_expression SCOLON base_expression OP_BRACK {}
+           | REPEAT OP_BRACK UNDEF SCOLON base_expression OP_BRACK  {}
+           | ARRAY  OP_BRACK initializer_list CL_BRACK {}
 ;
 
 initializer_list:   has_value SCOLON initializer_list
                   | has_value
-
 ;
 
 %%

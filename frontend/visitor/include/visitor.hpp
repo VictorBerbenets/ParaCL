@@ -19,6 +19,7 @@ class base_visitor {
   virtual void visit(ast::while_operator *stm)   = 0;
   virtual void visit(ast::read_expression *stm)  = 0;
   virtual void visit(ast::print_function *stm)   = 0;
+  virtual void visit(ast::array_elem *stm)       = 0;
 };
 
 class visitor: public base_visitor {

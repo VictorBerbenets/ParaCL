@@ -14,10 +14,11 @@ using namespace yy;
 %option yyclass="scanner"
 %option yylineno
 
-WS      [ \t\v]+
-DIGIT   [0-9]
-DIGIT1  [1-9]
-NAME     [a-zA-Z_][a-zA-Z_0-9_]*
+WS        [ \t\v]+
+DIGIT     [0-9]
+DIGIT1    [1-9]
+NUMBER    {DIGIT1}?{DIGIT}*
+NAME      [a-zA-Z_][a-zA-Z_0-9_]*
 
 %%
 ([/][/].*)        { update_location(); }
@@ -57,7 +58,7 @@ NAME     [a-zA-Z_][a-zA-Z_0-9_]*
 "undef"           { return parser::make_UNDEF(update_location());  }
 "array"           { return parser::make_ARRAY(update_location());  }
 
-{DIGIT1}?{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
+{NUMBER}          { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
 {NAME}            { return parser::make_NAME(yytext, update_location());              }
 .			            { throw parser::syntax_error{update_location(), "Unknown symbol"};  }
 <<EOF>>           { return parser::make_EOF(update_location());}

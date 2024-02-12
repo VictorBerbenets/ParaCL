@@ -21,6 +21,15 @@ class interpreter: visitor {
   void visit(ast::if_operator *stm)      override;
   void visit(ast::while_operator *stm)   override;
   void visit(ast::print_function *stm)   override;
+  void visit(ast::array_elem *stm)       override {
+    std::cout << "name = " << stm->name() << std::endl;
+    std::cout << "indexes:\n";
+    auto inxs = stm->indexes();
+    for (auto i : inxs) {
+      i->accept(this);
+      std::cout << get_value() << std::endl;
+    }
+  }
 
   void run_program(ast::statement_block *root) {
     visit(root);

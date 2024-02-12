@@ -47,6 +47,10 @@ class error_handler: public base_visitor {
     stm->ident_exp()->accept(this);
   }
 
+  void visit(ast::array_elem *stm) override {
+    stm->accept(this);
+  }
+
   void visit(ast::if_operator *stm) override {
     stm->condition()->accept(this);
     stm->body()->accept(this);
