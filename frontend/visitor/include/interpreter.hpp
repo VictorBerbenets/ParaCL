@@ -10,18 +10,140 @@ class interpreter: visitor {
       : input_stream_ {input},
         output_stream_ {output} {}
 
-  void visit(ast::calc_expression *stm)  override;
-  void visit(ast::un_operator *stm)      override;
-  void visit(ast::logic_expression *stm) override;
-  void visit(ast::number *stm)           override;
-  void visit(ast::variable *stm)         override;
-  void visit(ast::assignment *stm)       override;
-  void visit(ast::read_expression *stm)  override;
-  void visit(ast::statement_block *stm)  override;
-  void visit(ast::if_operator *stm)      override;
-  void visit(ast::while_operator *stm)   override;
-  void visit(ast::print_function *stm)   override;
-  void visit(ast::array_elem *stm)       override {
+  void visit(ast::statement_block *stm) override {
+    for (auto&& statement : *stm) {
+      statement->accept(this);
+    }
+  }
+
+  void visit(ast::calc_expression *stm) override {
+    stm->left()->accept(this);
+    auto lhs = get_value();
+    stm->right()->accept(this);
+    auto rhs = get_value();
+
+    switch(stm->type()) {
+      case ast::CalcOp::ADD :
+        set_value(lhs + rhs);
+        break;
+      case ast::CalcOp::SUB :
+        set_value(lhs - rhs);
+        break;
+      case ast::CalcOp::MUL :
+        set_value(lhs * rhs);
+        break;
+      case ast::CalcOp::PERCENT :
+        set_value(lhs % rhs);
+        break;
+      case ast::CalcOp::DIV :
+        if (auto check = rhs; check) {
+          set_value(lhs / check);
+        } else {
+          throw std::runtime_error{"trying to divide by 0"};
+        }
+        break;
+      default: throw std::logic_error{"unrecognized logic type"};
+    }
+  }
+
+  void visit(ast::un_operator *stm) override {
+    stm->arg()->accept(this);
+
+    switch(stm->type()) {
+      case ast::UnOp::PLUS :
+        set_value(+get_value());
+        break;
+      case ast::UnOp::MINUS :
+        set_value(-get_value());
+        break;
+      case ast::UnOp::NEGATE :
+        set_value(!get_value());
+        break;
+      default: throw std::logic_error{"unrecognized logic type"};
+    }
+  }
+
+  void visit(ast::logic_expression *stm) override {
+    stm->left()->accept(this);
+    auto lhs = get_value();
+    stm->right()->accept(this);
+    auto rhs = get_value();
+
+    switch(stm->type()) {
+      case ast::LogicOp::LESS :
+        set_value(lhs <  rhs);
+        break;
+      case ast::LogicOp::LESS_EQ :
+        set_value(lhs <= rhs);
+        break;
+      case ast::LogicOp::LOGIC_AND :
+        set_value(lhs && rhs);
+        break;
+      case ast::LogicOp::LOGIC_OR :
+        set_value(lhs || rhs);
+        break;
+      case ast::LogicOp::GREATER:
+        set_value(lhs > rhs);
+        break;
+      case ast::LogicOp::GREATER_EQ :
+        set_value(lhs >= rhs);
+        break;
+      case ast::LogicOp::EQ :
+        set_value(lhs == rhs);
+        break;
+      case ast::LogicOp::NEQ :
+        set_value(lhs != rhs);
+        break;
+      default: throw std::logic_error{"unrecognized logic type"};
+    }
+  }
+
+  void visit(ast::number *stm) override {
+    set_value(stm->get_value());
+  }
+
+  void visit(ast::variable *stm) override {
+    auto curr_scope  = stm->scope();
+    auto right_scope = curr_scope->find(stm->name());
+    set_value(right_scope->value(stm->name()));
+  }
+
+  void visit(ast::assignment *stm) override {
+    stm->ident_exp()->accept(this);
+    stm->redefine(get_value());
+  }
+
+  void visit(ast::read_expression*) override {
+    int tmp {0};
+    input_stream_ >> tmp;
+    set_value(tmp);
+  }
+
+  void visit(ast::if_operator *stm) override {
+    stm->condition()->accept(this);
+
+    if(get_value()) {
+      stm->body()->accept(this);
+    } else if (stm->else_block()) {
+      stm->else_block()->accept(this);
+    }
+  }
+
+  void visit(ast::while_operator *stm) override {
+    stm->condition()->accept(this);
+
+    while(get_value()) {
+      stm->body()->accept(this);
+      stm->condition()->accept(this);
+    }
+  }
+
+  void visit(ast::print_function *stm) override {
+    stm->get()->accept(this);
+    output_stream_ << get_value() << std::endl;
+  }
+
+  void visit(ast::array_elem *stm) override {
     std::cout << "name = " << stm->name() << std::endl;
     std::cout << "indexes:\n";
     auto inxs = stm->indexes();
