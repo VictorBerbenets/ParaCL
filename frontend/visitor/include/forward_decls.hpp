@@ -8,7 +8,7 @@ class statement;
 class statement_block;
 class logic_expression;
 class calc_expression;
-class assignment;
+template <typename T> class assignment;
 class un_operator;
 class number;
 class variable;
@@ -17,6 +17,7 @@ class while_operator;
 class print_function;
 class read_expression;
 class array_elem;
+class array;
 class integer_literal;
 
 } // <--- namespace ast

@@ -108,7 +108,7 @@ class interpreter: visitor {
     set_value(right_scope->value(stm->name()));
   }
 
-  void visit(ast::assignment *stm) override {
+  void visit(ast::assignment<int> *stm) override {
     stm->ident_exp()->accept(this);
     stm->redefine(get_value());
   }
@@ -151,6 +151,9 @@ class interpreter: visitor {
       i->accept(this);
       std::cout << get_value() << std::endl;
     }
+  }
+
+  void visit(ast::array *) override {
   }
 
   void run_program(ast::statement_block *root) {

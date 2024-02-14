@@ -43,12 +43,16 @@ class error_handler: public base_visitor {
     }
   }
 
-  void visit(ast::assignment *stm) override {
+  void visit(ast::assignment<int> *stm) override {
     stm->ident_exp()->accept(this);
   }
 
   void visit(ast::array_elem *stm) override {
     stm->accept(this);
+  }
+
+  void visit(ast::array *) override {
+//    stm->accept(this);
   }
 
   void visit(ast::if_operator *stm) override {

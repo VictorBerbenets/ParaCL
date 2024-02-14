@@ -38,13 +38,14 @@ class ast final {
   statement_block *root_ptr() const & noexcept { return root_; }
 
   template <derived_from NodeType, typename... Args>
+  requires (!std::derived_from<NodeType, array>)
   NodeType *make_node(Args&&... args) {
     auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);
     auto ret_ptr  = node_ptr.get();
     nodes_.push_back(std::move(node_ptr));
     return ret_ptr;
   }
-  
+ 
   template <derived_from<array> NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
     auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);

@@ -103,44 +103,6 @@ class logic_expression: public bin_operator<LogicOp> {
   }
 };
 
-class assignment: public expression {
- public:
-  assignment(statement_block *curr_block, const std::string &name,
-             expression *expr, yy::location loc)
-    : expression {curr_block, loc},
-      name_ {name},
-      identifier_ {expr} {
-    parent_->declare(name_);
-  }
-
-  assignment(statement_block *curr_block, std::string &&name,
-             expression *expr, yy::location loc)
-      : expression {curr_block, loc},
-        name_ {std::move(name)},
-        identifier_ {expr} {
-    parent_->declare(name_);
-  }
-
-  void accept(base_visitor *base_visitor) override {
-    base_visitor->visit(this);
-  }
-
-  expression *ident_exp() noexcept {
-    return identifier_;
-  }
-
-  void redefine(int value) {
-    parent_->redefine(name_, value);
-  }
-
-  const std::string &name() const noexcept {
-    return name_;
-  }
- private:
-  std::string name_;
-  expression* identifier_;
-};
-
 class read_expression: public expression {
   using value_type = int;
  public:

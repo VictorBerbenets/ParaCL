@@ -41,8 +41,7 @@ class integer_literal: public object_type {
 // if we know the size before running
 class array: public object_type {
  public:
-  array(size_type sz, int init_val = {0})
-      : stor_ (sz, init_val) {}
+  array(statement_block *scope, expression *e1, expression *e2, yy::location loc){}
  protected:
   std::vector<int> stor_;
 };
@@ -74,6 +73,48 @@ class init_array: public array {
 
 class dynamic_array: public array {
 
+};
+
+template <typename T>
+class assignment;
+
+template <>
+class assignment<int>: public expression {
+ public:
+  assignment(statement_block *curr_block, const std::string &name,
+             expression *expr, yy::location loc)
+    : expression {curr_block, loc},
+      name_ {name},
+      identifier_ {expr} {
+    parent_->declare(name_);
+  }
+
+  assignment(statement_block *curr_block, std::string &&name,
+             expression *expr, yy::location loc)
+      : expression {curr_block, loc},
+        name_ {std::move(name)},
+        identifier_ {expr} {
+    parent_->declare(name_);
+  }
+
+  void accept(base_visitor *base_visitor) override {
+    base_visitor->visit(this);
+  }
+
+  expression *ident_exp() noexcept {
+    return identifier_;
+  }
+
+  void redefine(int value) {
+    parent_->redefine(name_, value);
+  }
+
+  const std::string &name() const noexcept {
+    return name_;
+  }
+ private:
+  std::string name_;
+  expression* identifier_;
 };
 
 //class multi_array: public 

@@ -128,7 +128,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         assignment_expression
 %nterm <expression*>         has_value
 %nterm <object_type*>        array_elem
-%nterm <object_type*>        array_type
+%nterm <array*>              array_type
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
 
@@ -218,9 +218,9 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
                     | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression:   NAME ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
-                       | NAME ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
-                       | NAME ASSIGN array_type            { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+assignment_expression:   NAME ASSIGN assignment_expression { $$ = driver.make_node<assignment<int>>(blocks.top(), std::move($1), $3, @$); }
+                       | NAME ASSIGN logical_expression    { $$ = driver.make_node<assignment<int>>(blocks.top(), std::move($1), $3, @$); }
+                       | array_type                        { $$ = $1; }
 ;
 
 expression:   logical_expression    { $$ = $1; }
@@ -259,10 +259,12 @@ array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {
                 }
 ;
 
-array_type:  REPEAT OP_BRACK base_expression COMMA base_expression CL_BRACK {}
-           | REPEAT OP_BRACK UNDEF COMMA base_expression CL_BRACK  {std::cout << "?\n";}
-           | REPEAT OP_BRACK UNDEF COMMA SCAN CL_BRACK  {  }
-           | ARRAY  OP_BRACK initializer_list CL_BRACK {}
+array_type:  NAME ASSIGN REPEAT OP_BRACK base_expression COMMA base_expression CL_BRACK {
+               driver.make_node<array>(blocks.top(), $5, $7, @$);
+             }
+           | NAME ASSIGN REPEAT OP_BRACK UNDEF COMMA base_expression CL_BRACK  {std::cout << "?\n";}
+           | NAME ASSIGN REPEAT OP_BRACK UNDEF COMMA SCAN CL_BRACK  {  }
+           | NAME ASSIGN ARRAY  OP_BRACK initializer_list CL_BRACK {}
 ;
 
 initializer_list:   has_value COMMA initializer_list
