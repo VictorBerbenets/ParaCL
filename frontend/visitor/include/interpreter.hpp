@@ -98,7 +98,7 @@ class interpreter: visitor {
     }
   }
 
-  void visit(ast::number *stm) override {
+  void visit(ast::integer_literal *stm) override {
     set_value(stm->get_value());
   }
 

@@ -29,17 +29,13 @@ class integer_literal: public object_type {
   const value_type &get_value() const noexcept {
     return value_;
   }
-/*
+
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
-*/
+
  private:
   value_type value_;
-};
-
-class integer_variable: public object_type {
-
 };
 
 // if we know the size before running

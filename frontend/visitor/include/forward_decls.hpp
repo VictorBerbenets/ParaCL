@@ -17,7 +17,9 @@ class while_operator;
 class print_function;
 class read_expression;
 class array_elem;
-}
+class integer_literal;
+
+} // <--- namespace ast
 
 } // <--- namespace frontend
 

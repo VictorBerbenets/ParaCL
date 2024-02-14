@@ -31,6 +31,7 @@ NAME      [a-zA-Z_][a-zA-Z_0-9_]*
 "%"               { return parser::make_PERCENT(update_location()); }
 "="               { return parser::make_ASSIGN(update_location());  }
 ";"               { return parser::make_SCOLON(update_location());  }
+","               { return parser::make_COMMA(update_location());   }
 
 ">"               { return parser::make_GREATER(update_location());    }
 "<"               { return parser::make_LESS(update_location());       }

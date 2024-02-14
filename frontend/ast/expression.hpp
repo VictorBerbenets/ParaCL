@@ -18,24 +18,6 @@ class expression: public statement {
   using pointer_type = expression*;
 };
 
-class number: public expression {
-  using value_type = int;
- public:
-  number(value_type num, yy::location loc)
-      : expression {loc},
-        value_ {num} {}
-
-  const value_type &get_value() const noexcept {
-    return value_;
-  }
-
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
-
- private:
-  value_type value_;
-};
 
 class variable: public expression {
  public:
@@ -167,9 +149,6 @@ class read_expression: public expression {
   void accept(base_visitor *base_visitor) override {
     base_visitor->visit(this);
   }
-
- private:
-  value_type value_;
 };
 
 } // <--- namespace ast

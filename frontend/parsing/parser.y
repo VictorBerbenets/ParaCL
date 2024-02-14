@@ -69,6 +69,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
   PERCENT  "%"
   EOF 0    "end of file"
   SCOLON   ";"
+  COMMA    ","
 ;
 
 // statement tokens
@@ -176,16 +177,16 @@ statement:  OP_BRACE statement_block CL_BRACE {
 
 base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
                 | has_value                       { $$ = $1; }
-                | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
 ;
 
-has_value:  NUMBER     { $$ = driver.make_node<number>($1, @$); }
+has_value:  NUMBER     { $$ = driver.make_node<integer_literal>($1, @$); }
           | NAME       { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
           | array_elem { $$ = $1; }
 
 unary_expression:   MINUS  base_expression %prec UMINUS   { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
                   | PLUS   base_expression %prec UPLUS    { $$ = driver.make_node<un_operator>(UnOp::PLUS, $2, @$);   }
                   | NEGATE base_expression %prec NEGATE   { $$ = driver.make_node<un_operator>(UnOp::NEGATE, $2, @$); }
+                  | SCAN                                  { $$ = driver.make_node<read_expression>(@$); }
                   | base_expression                       { $$ = $1; }
 ;
 
@@ -246,8 +247,7 @@ ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
                 }
 ;
 
-array_elem: NAME array_brackets { $$ = driver.make_node<array_elem>($1, $2, @$);
-          std::cout << "SIZE = " << $2.size() << std::endl;}
+array_elem: NAME array_brackets { $$ = driver.make_node<array_elem>($1, $2, @$); }
 ;
  
 array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {
@@ -259,12 +259,13 @@ array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {
                 }
 ;
 
-array_type:  REPEAT OP_BRACK base_expression SCOLON base_expression OP_BRACK {}
-           | REPEAT OP_BRACK UNDEF SCOLON base_expression OP_BRACK  {}
+array_type:  REPEAT OP_BRACK base_expression COMMA base_expression CL_BRACK {}
+           | REPEAT OP_BRACK UNDEF COMMA base_expression CL_BRACK  {std::cout << "?\n";}
+           | REPEAT OP_BRACK UNDEF COMMA SCAN CL_BRACK  {  }
            | ARRAY  OP_BRACK initializer_list CL_BRACK {}
 ;
 
-initializer_list:   has_value SCOLON initializer_list
+initializer_list:   has_value COMMA initializer_list
                   | has_value
 ;
 

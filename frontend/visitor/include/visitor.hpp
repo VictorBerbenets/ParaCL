@@ -12,7 +12,6 @@ class base_visitor {
   virtual void visit(ast::calc_expression *stm)  = 0;
   virtual void visit(ast::logic_expression *stm) = 0;
   virtual void visit(ast::un_operator *stm)      = 0;
-  virtual void visit(ast::number *stm)           = 0;
   virtual void visit(ast::variable *stm)         = 0;
   virtual void visit(ast::assignment *stm)       = 0;
   virtual void visit(ast::if_operator *stm)      = 0;
@@ -20,6 +19,7 @@ class base_visitor {
   virtual void visit(ast::read_expression *stm)  = 0;
   virtual void visit(ast::print_function *stm)   = 0;
   virtual void visit(ast::array_elem *stm)       = 0;
+  virtual void visit(ast::integer_literal *stm)  = 0;
 };
 
 class visitor: public base_visitor {

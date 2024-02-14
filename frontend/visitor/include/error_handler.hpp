@@ -33,7 +33,7 @@ class error_handler: public base_visitor {
     stm->arg()->accept(this);
   }
 
-  void visit(ast::number * /*unused*/) override {}
+  void visit(ast::integer_literal * /*unused*/) override {}
 
   void visit(ast::variable *stm) override {
     auto curr_scope = stm->scope();
