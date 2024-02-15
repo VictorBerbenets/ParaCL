@@ -45,12 +45,13 @@ class ast final {
     nodes_.push_back(std::move(node_ptr));
     return ret_ptr;
   }
- 
+
   template <derived_from<array> NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
     auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);
     auto ret_ptr  = node_ptr.get();
     nodes_.push_back(std::move(node_ptr));
+    curr_block_->declare(ret_ptr->name());
     return ret_ptr;
   }
 

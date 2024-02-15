@@ -260,7 +260,7 @@ array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {
 ;
 
 array_type:  NAME ASSIGN REPEAT OP_BRACK base_expression COMMA base_expression CL_BRACK {
-               driver.make_node<array>(blocks.top(), $5, $7, @$);
+               $$ = driver.make_node<array>(blocks.top(), $1, $5, $7, @$);
              }
            | NAME ASSIGN REPEAT OP_BRACK UNDEF COMMA base_expression CL_BRACK  {std::cout << "?\n";}
            | NAME ASSIGN REPEAT OP_BRACK UNDEF COMMA SCAN CL_BRACK  {  }

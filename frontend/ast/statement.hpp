@@ -83,11 +83,8 @@ class statement_block final: public statement {
   }
 
   void redefine(const std::string &name, int value) {
-    if (auto curr_scope = find(name); curr_scope) {
-      curr_scope->set(name, value);
-    } else {
-      std::cout << "error" << std::endl;
-    }
+    auto curr_scope = find(name);
+    curr_scope->set(name, value);
   }
   // finding declaration in parent's scopes
   statement_block *find(const std::string &name) {

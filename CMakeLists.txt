@@ -70,7 +70,7 @@ add_executable(unit
 
 set_target_properties(
   paraCL unit interactive PROPERTIES
-    COMPILE_FLAGS " -Wall -Wextra "
+    COMPILE_FLAGS " -g -Wall -Wextra "
 )
 
 target_link_libraries(paraCL PUBLIC bison_parser)

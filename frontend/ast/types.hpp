@@ -14,8 +14,6 @@ class object_type: public expression {
  public:
   using size_type = std::size_t;
 
-  void accept(base_visitor*) override {}
-
   using expression::expression;
 };
 
@@ -41,8 +39,19 @@ class integer_literal: public object_type {
 // if we know the size before running
 class array: public object_type {
  public:
-  array(statement_block *scope, expression *e1, expression *e2, yy::location loc){}
+  array(statement_block *scope, std::string name,
+        expression *e1, expression *e2, yy::location loc)
+            : object_type {scope},
+              name_ {std::move(name)} {}
+
+  void accept(base_visitor *b_visitor) override {
+    b_visitor->visit(this); 
+  }
+
+  std::string name() const { return name_; }
+
  protected:
+  std::string name_;
   std::vector<int> stor_;
 };
 
@@ -66,12 +75,18 @@ class array_elem: public object_type {
 };
 
 class init_array: public array {
+  void accept(base_visitor *b_visitor) override {
+    b_visitor->visit(this);
+  }
 
 };
 
 // if we know the size before running
 
 class dynamic_array: public array {
+  void accept(base_visitor *b_visitor) override {
+    b_visitor->visit(this);
+  }
 
 };
 

@@ -154,6 +154,7 @@ class interpreter: visitor {
   }
 
   void visit(ast::array *) override {
+
   }
 
   void run_program(ast::statement_block *root) {
