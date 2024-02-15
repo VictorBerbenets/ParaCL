@@ -35,7 +35,7 @@ class error_handler: public base_visitor {
 
   void visit(ast::integer_literal * /*unused*/) override {}
 
-  void visit(ast::variable *stm) override {
+  void visit(ast::integer_variable *stm) override {
     auto curr_scope = stm->scope();
     if (auto right_scope = curr_scope->find(stm->name()); !right_scope) {
       errors_.push_back({stm->name() + " was not declared in this scope",

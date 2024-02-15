@@ -10,18 +10,11 @@ namespace frontend {
 
 namespace ast {
 
-class object_type: public expression {
- public:
-  using size_type = std::size_t;
-
-  using expression::expression;
-};
-
-class integer_literal: public object_type {
+class integer_literal: public expression {
   using value_type = int;
  public:
   integer_literal(value_type num, yy::location loc)
-      : object_type {loc},
+      : expression {loc},
         value_ {num} {}
 
   const value_type &get_value() const noexcept {
@@ -36,31 +29,62 @@ class integer_literal: public object_type {
   value_type value_;
 };
 
+class object_type: public expression {
+ public:
+  using size_type = std::size_t;
+
+  object_type() = default; // remove in future
+
+  object_type(statement_block *block, std::string name, yy::location loc)
+      : expression {block, loc},
+        name_ {std::move(name)} {}
+
+  const std::string &name() const noexcept {
+    return name_;
+  }
+
+ protected:
+  std::string name_;
+};
+
+class integer_variable: public object_type {
+  using value_type = int;
+ public:
+  integer_variable(statement_block *curr_block, std::string var_name,
+           yy::location l)
+      : object_type {curr_block, var_name, l} {}
+  void declare() {
+    scope()->declare(name_);
+  }
+
+  void accept(base_visitor *b_visitor) override {
+    b_visitor->visit(this);
+  }
+
+ private:
+  value_type value_;
+};
+
 // if we know the size before running
 class array: public object_type {
  public:
   array(statement_block *scope, std::string name,
-        expression *e1, expression *e2, yy::location loc)
-            : object_type {scope},
-              name_ {std::move(name)} {}
+        expression *, expression *, yy::location loc)
+            : object_type {scope, name, loc} {}
 
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this); 
   }
 
-  std::string name() const { return name_; }
-
  protected:
-  std::string name_;
   std::vector<int> stor_;
 };
 
 class array_elem: public object_type {
  public:
-  array_elem(std::string name, std::vector<expression*> indexes,
-             yy::location loc)
-      : object_type {loc},
-        arr_name_ {std::move(name)},
+  array_elem(statement_block *scope, std::string name,
+             std::vector<expression*> indexes, yy::location loc)
+      : object_type {scope, name, loc},
         indexes_  {std::move(indexes)} {}
   
   void accept(base_visitor *b_visitor) override {
@@ -68,9 +92,7 @@ class array_elem: public object_type {
   }
 
   auto indexes() const { return indexes_;  }
-  std::string name() const { return arr_name_; }
  private:
-  std::string arr_name_;
   std::vector<expression*> indexes_;
 };
 

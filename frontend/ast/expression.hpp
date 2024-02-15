@@ -18,35 +18,6 @@ class expression: public statement {
   using pointer_type = expression*;
 };
 
-
-class variable: public expression {
- public:
-  variable(statement_block *curr_block, const std::string &var_name,
-           yy::location l)
-      : expression {curr_block, l},
-        name_ {var_name} {}
-
-  variable(statement_block *curr_block, std::string &&var_name,
-           yy::location l)
-      : expression {curr_block, l},
-        name_ {std::move(var_name)} {}
-
-  void declare() {
-    scope()->declare(name_);
-  }
-
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
-
-  const std::string &name() const noexcept {
-    return name_;
-  }
-
- private:
-  std::string name_;
-};
-
 class un_operator: public expression {
  public:
   un_operator(UnOp type, pointer_type arg, yy::location loc)

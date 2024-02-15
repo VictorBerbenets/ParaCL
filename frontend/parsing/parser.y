@@ -180,7 +180,7 @@ base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
 ;
 
 has_value:  NUMBER     { $$ = driver.make_node<integer_literal>($1, @$); }
-          | NAME       { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+          | NAME       { $$ = driver.make_node<integer_variable>(blocks.top(), std::move($1), @$); }
           | array_elem { $$ = $1; }
 
 unary_expression:   MINUS  base_expression %prec UMINUS   { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
@@ -211,7 +211,7 @@ comparable_expression:   comparable_expression LESS calc_expression        { $$=
 equality_expression:  equality_expression EQ  comparable_expression        { $$ = driver.make_node<logic_expression>(LogicOp::EQ, $1, $3, @$);  }
                     | equality_expression NEQ comparable_expression        { $$ = driver.make_node<logic_expression>(LogicOp::NEQ, $1, $3, @$); }
                     | comparable_expression                                { $$ = $1; }
-;
+
 
 logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3, @$);  }
                     | logical_expression LOGIC_OR  equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3, @$);   }
@@ -247,7 +247,7 @@ ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
                 }
 ;
 
-array_elem: NAME array_brackets { $$ = driver.make_node<array_elem>($1, $2, @$); }
+array_elem: NAME array_brackets { $$ = driver.make_node<array_elem>(blocks.top(), $1, $2, @$); }
 ;
  
 array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {

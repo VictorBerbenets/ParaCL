@@ -28,7 +28,7 @@ class driver final {
   template <frontend::ast::derived_from NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
     auto node = ast_.make_node<NodeType>(std::forward<Args>(args)...);
-    if (std::same_as<variable, NodeType>) {
+    if (std::same_as<integer_variable, NodeType>) {
       handler_.visit(node);
     }
     return node;
