@@ -73,7 +73,7 @@ class statement_block final: public statement {
   }
 
   object_type *object(const std::string &name) noexcept {
-    return sym_tab_[name];
+    return has(name) ? sym_tab_[name] : nullptr;
   }
 
   void add(statement *stm) {

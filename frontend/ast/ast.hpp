@@ -17,7 +17,7 @@ namespace yy {
 
 class driver;
 
-}
+} // <--- namespace driver
 
 namespace frontend {
 
@@ -25,6 +25,20 @@ namespace ast {
 
 template <typename T, typename From = statement>
 concept derived_from = std::derived_from<T, From>;
+
+template <typename T>
+concept lvalue_var = derived_from<T, lvalue_variable>;
+
+template <typename T>
+concept not_lvalue_var = derived_from<T> &&
+                         !lvalue_var<T>;
+
+template <typename T>
+concept object_node = derived_from<T, object_type>;
+
+template <typename T>
+concept not_object_node = derived_from<T> &&
+                          !object_node<T>;
 
 class ast final {
   using size_type    = std::size_t;
@@ -46,37 +60,40 @@ class ast final {
 
   statement_block *root_ptr() const & noexcept { return root_; }
 
-  template <derived_from NodeType, typename... Args>
-  requires (!std::derived_from<NodeType, object_type>)
+  template <not_object_node NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
-    auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);
-    auto ret_ptr  = node_ptr.get();
-    nodes_.push_back(std::move(node_ptr));
-    return ret_ptr;
+    return create_custom_pointer<NodeType>(std::forward<Args>(args)...);
   }
 
-  template <derived_from<object_type> NodeType, typename... Args>
+  template <object_node NodeType, typename... Args>
   NodeType *make_node(std::string obj_name, Args&&... args) {
     if (auto right_block = curr_block_->find(obj_name); right_block) {
       return static_cast<NodeType*>(right_block->object(obj_name));
     }
-    auto node_ptr = std::make_unique<NodeType>(std::move(obj_name), std::forward<Args>(args)...);
-    auto ret_ptr  = node_ptr.get();
-    nodes_.push_back(std::move(node_ptr));
-    return ret_ptr;
+    return create_custom_pointer<NodeType>(std::move(obj_name),
+                                           std::forward<Args>(args)...);
   }
-  
-  template <typename T>
+
+  template <lvalue_var NodeType>
   assignment<int> *make_node(std::string obj_name, statement_block *curr_scope,
                              expression *right_oper, yy::location loc) {
     if (auto right_block = curr_block_->find(obj_name); right_block) {
-      auto object     = static_cast<T*>(right_block->object(obj_name));
-      auto assign_ptr = make_node<assignment<int>>(right_oper, object, loc);
-      return assign_ptr;
+      auto object = static_cast<NodeType*>(right_block->object(obj_name));
+      return make_node<assignment<int>>(right_oper, object, loc);
     }
-    auto obj_type   = std::make_unique<T>(obj_name, curr_scope, loc);
-    auto assign_ptr = make_node<assignment<int>>(right_oper, obj_type.get(), loc);
+    auto obj_type   = std::make_unique<NodeType>(obj_name, curr_scope, loc);
     curr_block_->declare(obj_type.get());
+    auto assign_ptr = make_node<assignment<int>>(right_oper, obj_type.get(), loc);
+    nodes_.push_back(std::move(obj_type));
+    return assign_ptr;
+  }
+
+  template <lvalue_var NodeType>
+  assignment<int> *make_node(std::string obj_name, statement_block *curr_scope,
+                             std::vector<expression*> vec, expression *right_oper,
+                             yy::location loc) {
+    auto obj_type   = std::make_unique<NodeType>(obj_name, curr_scope, vec, loc);
+    auto assign_ptr = make_node<assignment<int>>(right_oper, obj_type.get(), loc);
     nodes_.push_back(std::move(obj_type));
     return assign_ptr;
   }
@@ -97,6 +114,15 @@ class ast final {
 
   size_type size() const noexcept { return nodes_.size(); }
   [[nodiscard]] bool empty() const noexcept { return nodes_.size() == 0; }
+ private:
+  template <derived_from NodeType, typename... Args>
+  NodeType *create_custom_pointer(Args&&... args) {
+    auto node_ptr = std::make_unique<NodeType>(std::forward<Args>(args)...);
+    auto ret_ptr  = node_ptr.get();
+    nodes_.push_back(std::move(node_ptr));
+
+    return ret_ptr;
+  }
 
   friend class ::yy::driver;
  private:

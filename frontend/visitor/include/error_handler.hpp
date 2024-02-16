@@ -9,9 +9,16 @@
 
 namespace frontend {
 
+namespace handler {
+
+inline std::string make_quoted(const std::string &str) {
+  return "\"" + str + "\"";
+}
+
 class error_handler: public base_visitor {
   using error_type = std::pair<const std::string, yy::location>;
   using size_type  = std::size_t;
+
  public:
   void visit(ast::statement_block *stm) override {
     for (auto&& statement : *stm) {
@@ -38,8 +45,8 @@ class error_handler: public base_visitor {
   void visit(ast::integer_variable *stm) override {
     auto curr_scope = stm->scope();
     if (auto right_scope = curr_scope->find(stm->name()); !right_scope) {
-      errors_.push_back({stm->name() + " was not declared in this scope",
-                        stm->location()});
+      errors_.push_back({make_quoted(stm->name()) + " was not declared in this"
+                         "scope", stm->location()});
     }
   }
 
@@ -48,7 +55,11 @@ class error_handler: public base_visitor {
   }
 
   void visit(ast::array_elem *stm) override {
-    stm->accept(this);
+    auto curr_scope = stm->scope();
+    if (auto right_scope = curr_scope->find(stm->name()); !right_scope) {
+      errors_.push_back({"array " + make_quoted(stm->name()) +
+                         " was not declared in this scope", stm->location()});
+    } 
   }
 
   void visit(ast::array *) override {
@@ -93,5 +104,7 @@ class error_handler: public base_visitor {
  private:
   std::vector<error_type> errors_;
 };
+
+} // <--- namespace handler
 
 } // <--- namespace frontend

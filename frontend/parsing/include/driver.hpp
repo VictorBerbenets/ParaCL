@@ -28,16 +28,19 @@ class driver final {
   template <frontend::ast::derived_from NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
     auto node = ast_.make_node<NodeType>(std::forward<Args>(args)...);
-    if (std::same_as<integer_variable, NodeType>) {
+    if (std::same_as<integer_variable, NodeType> ||
+        std::same_as<array_elem, NodeType>) {
       handler_.visit(node);
     }
     return node;
   }
- 
-  template <typename T>
-  assignment<int> *make_node(std::string obj_name, statement_block *curr_scope,
-                             expression *right_oper, yy::location loc) {
-    auto assign_ptr = ast_.make_node<T>(obj_name, curr_scope, right_oper, loc);
+
+  template <lvalue_var NodeType, typename... Args>
+  assignment<int> *make_assignment(Args&&... args) {
+    auto assign_ptr = ast_.make_node<NodeType>(std::forward<Args>(args)...);
+    if (std::same_as<array_elem, NodeType>) {
+      handler_.visit(static_cast<array_elem*>(assign_ptr->get_object()));
+    }
     return assign_ptr;
   }
 
@@ -57,7 +60,7 @@ class driver final {
     return ast_.get_curr_block();
   }
 
-  std::optional<frontend::error_handler> check_for_errors() const {
+  std::optional<frontend::handler::error_handler> check_for_errors() const {
     if (handler_.empty()) {
       return {};
     }
@@ -74,7 +77,7 @@ class driver final {
   parser parser_;
   std::string file_;
 
-  frontend::error_handler handler_;
+  frontend::handler::error_handler handler_;
   frontend::ast::ast ast_;
 };
 

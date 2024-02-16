@@ -219,18 +219,15 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
 ;
 
 assignment_expression: NAME ASSIGN assignment_expression {
-                         //auto int_var = driver.make_node<integer_variable>($1,
-                         //blocks.top(), @1);
-                         $$ = driver.make_node<integer_variable>($1,
-                         blocks.top(), $3, @$);
+                         $$ = driver.make_assignment<integer_variable>($1, blocks.top(), $3, @$);
                        }
-                     | NAME ASSIGN logical_expression    {
-                         //auto int_var = driver.make_node<integer_variable>($1, blocks.top(),  @1);
-                         $$ = driver.make_node<integer_variable>($1,
-                         blocks.top(), $3, @$);
+                     | NAME ASSIGN logical_expression {
+                         $$ = driver.make_assignment<integer_variable>($1, blocks.top(), $3, @$);
                        }
-                     | array_elem ASSIGN expression      {}
-                     | array_type                        { $$ = $1; }
+                     | NAME array_brackets ASSIGN expression  {
+                         $$ = driver.make_assignment<array_elem>($1, blocks.top(), $2, $4, @$);
+                       }
+                     | array_type                             { $$ = $1; }
 ;
 
 expression:   logical_expression    { $$ = $1; }
@@ -257,10 +254,9 @@ ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
                 }
 ;
 
-array_elem: NAME array_brackets { $$ =
-          driver.make_node<array_elem>($1, blocks.top(), $2, @$); }
+array_elem: NAME array_brackets { $$ = driver.make_node<array_elem>($1, blocks.top(), $2, @$); }
 ;
- 
+
 array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {
                   $1.push_back($3);
                   $$ = $1;

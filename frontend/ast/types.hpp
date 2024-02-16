@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <utility>
+#include <iterator>
 
 #include "expression.hpp"
 #include "location.hh"
@@ -34,6 +35,13 @@ class integer_literal: public expression {
 // if we know the size before running
 class array: public object_type {
  public:
+  using value_type               = int;
+  using size_type                = std::size_t;
+  using iterator                 = std::vector<value_type>::iterator; 
+  using const_iterator           = std::vector<value_type>::const_iterator; 
+  using reverse_iterator         = std::vector<value_type>::reverse_iterator; 
+  using const_reverse_iterator   = std::vector<value_type>::const_reverse_iterator;
+
   array(std::string name, statement_block *scope,
         expression *, expression *, yy::location loc)
             : object_type {name, scope, loc} {}
@@ -41,9 +49,19 @@ class array: public object_type {
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this); 
   }
+  
+  auto begin() noexcept { return stor_.begin(); }
+  auto end()   noexcept { return stor_.end(); }
+  auto cbegin() const noexcept { return stor_.cbegin(); }
+  auto cend()   const noexcept { return stor_.cend(); }
+  auto rbegin() noexcept { return std::make_reverse_iterator(begin());}
+  auto rend()   noexcept { return std::make_reverse_iterator(end()); }
+  auto crbegin() const noexcept { return std::make_reverse_iterator(cbegin());}
+  auto crend()   const noexcept { return std::make_reverse_iterator(cend()); }
 
+  friend class array_elem;
  protected:
-  std::vector<int> stor_;
+  std::vector<value_type> stor_;
 };
 
 class lvalue_variable: public object_type {
@@ -63,11 +81,7 @@ class integer_variable: public lvalue_variable {
   integer_variable(std::string var_name, statement_block *curr_block,
            yy::location l)
       : lvalue_variable {var_name, curr_block, l} {}
-#if 0
-  void declare() {
-    scope()->declare(this);
-  }
-#endif
+
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
@@ -85,32 +99,37 @@ class array_elem: public lvalue_variable {
              std::vector<expression*> indexes, yy::location loc)
       : lvalue_variable {name, scope, loc},
         indexes_  {std::move(indexes)} {}
-  
+ 
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
  
+  void set_index(size_type index) noexcept { index_ = index; }
+ 
   value_type get_value() override {
-    //auto right_scope = scope()->find(name());
-    //auto array_ptr   = static_cast<array*>(right_scope->object(name()));
-   return 0; 
-
+    return get_array()->stor_[index_];
   }
 
   void set_value(value_type val) override {
-
+    get_array()->stor_[index_] = val; 
   }
 
-  auto indexes() const { return indexes_;  }
+  const auto &indexes() const { return indexes_; }
+  
+  array *get_array() {
+    auto arr_scope = scope()->find(name_);
+    return static_cast<array*>(arr_scope->object(name_));
+  }
+
  private:
   std::vector<expression*> indexes_;
+  size_type index_;
 };
 
 class init_array: public array {
   void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
-
 };
 
 // if we know the size before running
