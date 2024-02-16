@@ -1,3 +1,5 @@
+#pragma once
+
 #include <fstream>
 
 #include "visitor.hpp"
@@ -103,13 +105,15 @@ class interpreter: visitor {
   }
 
   void visit(ast::integer_variable *stm) override {
-    auto curr_scope  = stm->scope();
-    auto right_scope = curr_scope->find(stm->name());
-    set_value(right_scope->value(stm->name()));
+    //auto curr_scope  = stm->scope();
+    //auto right_scope = curr_scope->find(stm->name());
+    //set_value(right_scope->object()->value());
+    set_value(stm->get_value());
   }
 
   void visit(ast::assignment<int> *stm) override {
     stm->ident_exp()->accept(this);
+//    std::cout << "REDEFINED VALUE = " << get_value() << std::endl;
     stm->redefine(get_value());
   }
 
@@ -121,7 +125,7 @@ class interpreter: visitor {
 
   void visit(ast::if_operator *stm) override {
     stm->condition()->accept(this);
-
+  //  std::cout << "IN IFF = " << get_value() << std::endl;
     if(get_value()) {
       stm->body()->accept(this);
     } else if (stm->else_block()) {

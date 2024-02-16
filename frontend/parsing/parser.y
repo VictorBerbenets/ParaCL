@@ -180,7 +180,7 @@ base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
 ;
 
 has_value:  NUMBER     { $$ = driver.make_node<integer_literal>($1, @$); }
-          | NAME       { $$ = driver.make_node<integer_variable>(blocks.top(), std::move($1), @$); }
+          | NAME       { $$ = driver.make_node<integer_variable>($1, blocks.top(), @$); }
           | array_elem { $$ = $1; }
 
 unary_expression:   MINUS  base_expression %prec UMINUS   { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
@@ -218,9 +218,19 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
                     | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression:   NAME ASSIGN assignment_expression { $$ = driver.make_node<assignment<int>>(blocks.top(), std::move($1), $3, @$); }
-                       | NAME ASSIGN logical_expression    { $$ = driver.make_node<assignment<int>>(blocks.top(), std::move($1), $3, @$); }
-                       | array_type                        { $$ = $1; }
+assignment_expression: NAME ASSIGN assignment_expression {
+                         //auto int_var = driver.make_node<integer_variable>($1,
+                         //blocks.top(), @1);
+                         $$ = driver.make_node<integer_variable>($1,
+                         blocks.top(), $3, @$);
+                       }
+                     | NAME ASSIGN logical_expression    {
+                         //auto int_var = driver.make_node<integer_variable>($1, blocks.top(),  @1);
+                         $$ = driver.make_node<integer_variable>($1,
+                         blocks.top(), $3, @$);
+                       }
+                     | array_elem ASSIGN expression      {}
+                     | array_type                        { $$ = $1; }
 ;
 
 expression:   logical_expression    { $$ = $1; }
@@ -247,7 +257,8 @@ ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
                 }
 ;
 
-array_elem: NAME array_brackets { $$ = driver.make_node<array_elem>(blocks.top(), $1, $2, @$); }
+array_elem: NAME array_brackets { $$ =
+          driver.make_node<array_elem>($1, blocks.top(), $2, @$); }
 ;
  
 array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {
@@ -260,7 +271,7 @@ array_brackets: array_brackets OPSQ_BRACK has_value CLSQ_BRACK {
 ;
 
 array_type:  NAME ASSIGN REPEAT OP_BRACK base_expression COMMA base_expression CL_BRACK {
-               $$ = driver.make_node<array>(blocks.top(), $1, $5, $7, @$);
+               $$ = driver.make_node<array>($1, blocks.top(), $5, $7, @$);
              }
            | NAME ASSIGN REPEAT OP_BRACK UNDEF COMMA base_expression CL_BRACK  {std::cout << "?\n";}
            | NAME ASSIGN REPEAT OP_BRACK UNDEF COMMA SCAN CL_BRACK  {  }

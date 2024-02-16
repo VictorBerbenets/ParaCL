@@ -33,6 +33,13 @@ class driver final {
     }
     return node;
   }
+ 
+  template <typename T>
+  assignment<int> *make_node(std::string obj_name, statement_block *curr_scope,
+                             expression *right_oper, yy::location loc) {
+    auto assign_ptr = ast_.make_node<T>(obj_name, curr_scope, right_oper, loc);
+    return assign_ptr;
+  }
 
   statement_block *make_block() {
     return ast_.make_block();
@@ -61,6 +68,7 @@ class driver final {
     frontend::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }
+
  private:
   scanner scanner_;
   parser parser_;

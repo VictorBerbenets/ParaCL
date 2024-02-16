@@ -19,13 +19,13 @@ class definition: public statement {
              yy::location loc)
       : statement{curr_block, loc},
         name_ {name} {
-    parent_->declare(name_);
+//    parent_->declare(name_);
   }
   definition(statement_block *curr_block, std::string &&name,
              yy::location loc)
       : statement{curr_block, loc},
         name_ {std::move(name)} {
-    parent_->declare(name_);
+//    parent_->declare(name_);
   }
 
   const std::string &name() const noexcept {
