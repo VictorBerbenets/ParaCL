@@ -6,7 +6,7 @@
 
 namespace paracl_testing {
 
-static const std::string data_path = "../examples/unit/data/";
+static const std::string data_path = "../tests/unit/data/";
 
 TEST(PRIMITIVES, SCOPE1) {
   get_paracl_ans(data_path + "scope1.txt");

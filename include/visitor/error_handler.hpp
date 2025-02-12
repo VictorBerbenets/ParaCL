@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <vector>
-#include <string>
 
 #include "visitor.hpp"
 #include "location.hh"

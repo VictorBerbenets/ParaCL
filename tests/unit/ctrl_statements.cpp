@@ -7,7 +7,7 @@
 
 namespace paracl_testing {
 
-static const std::string data_path = "../examples/unit/data/";
+static const std::string data_path = "../tests/unit/data/";
 
 TEST(CTRL_STATEMENTS, IF) {
   std::ostringstream ans;
