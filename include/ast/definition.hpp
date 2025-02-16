@@ -28,6 +28,10 @@ class definition: public statement {
     parent_->declare(name_);
   }
 
+  void accept(CodeGenVisitor *CodeGenVis) override {
+    CodeGenVis->visit(this);
+  }
+
   const std::string &name() const noexcept {
     return name_;
   }

@@ -42,6 +42,10 @@ class driver final {
     ast_.set_root(root);
   }
 
+  statement_block *get_root() const {
+    return ast_.root_ptr();
+  }
+
   void change_scope(statement_block *new_block) noexcept {
     ast_.set_curr_block(new_block);
   }

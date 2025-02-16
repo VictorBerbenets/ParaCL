@@ -4,31 +4,31 @@ namespace paracl {
   
 void CodeGenVisitor::visit(ast::definition *Def) {
 }
-void CodeGenVisitor::visit(ast::statement_block *stm) override {
+void CodeGenVisitor::visit(ast::statement_block *StmBlock) {
 
 }
 
-void CodeGenVisitor::visit(ast::calc_expression *stm) {
+void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {
 
 }
 
-void CodeGenVisitor::visit(ast::logic_expression *stm) {
+void CodeGenVisitor::visit(ast::logic_expression *LogicExpr) {
 
 }
 
-void CodeGenVisitor::visit(ast::un_operator *stm)      {
+void CodeGenVisitor::visit(ast::un_operator *UnOper)      {
 
 }
 
-void CodeGenVisitor::visit(ast::number *stm)           {
+void CodeGenVisitor::visit(ast::number *Num)           {
 
 }
 
-void CodeGenVisitor::visit(ast::variable *stm)         {
+void CodeGenVisitor::visit(ast::variable *Var)         {
 
 }
 
-void CodeGenVisitor::visit(ast::assignment *stm)       {
+void CodeGenVisitor::visit(ast::assignment *Assign)       {
 
 }
 

@@ -27,8 +27,12 @@ class print_function: public function {
       : function {loc},
         print_expr_ {expr} {}
 
-  void accept_interpret(base_visitor *b_visitor) override {
+  void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
+  }
+ 
+  void accept(CodeGenVisitor *CodeGenVis) override {
+    CodeGenVis->visit(this);
   }
 
   expression *get() const noexcept {

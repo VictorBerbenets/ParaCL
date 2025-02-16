@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "visitor.hpp"
+#include "codegen_visitor.hpp"
 #include "symbol_table.hpp"
 #include "location.hh"
 
@@ -24,7 +25,8 @@ class statement {
  public:
   virtual ~statement() = default;
 
-  virtual void accept_interpret(base_visitor *b_visitor) = 0;
+  virtual void accept(base_visitor *b_visitor) = 0;
+  virtual void accept(CodeGenVisitor *b_visitor) = 0;
 
   void set_parent(statement_block *parent) noexcept {
     parent_ = parent;
@@ -71,8 +73,12 @@ class statement_block final: public statement {
   statement_block(InputIt begin ,InputIt end)
       : statements_ {begin, end} {}
 
-  void accept_interpret(base_visitor *b_visitor) override {
+  void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
+  }
+  
+  void accept(CodeGenVisitor *CodeGenVis) override {
+    CodeGenVis->visit(this);
   }
 
   void declare(const std::string &name, int value = 0) {

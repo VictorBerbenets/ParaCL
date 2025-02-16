@@ -34,8 +34,12 @@ class while_operator: public ctrl_statement {
  public:
   using ctrl_statement::ctrl_statement;
 
-  void accept_interpret(base_visitor *b_visitor) override {
+  void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
+  }
+  
+  void accept(CodeGenVisitor *CodeGenVis) override {
+    CodeGenVis->visit(this);
   }
 };
 
@@ -48,8 +52,12 @@ class if_operator final: public ctrl_statement {
       : ctrl_statement {cond, body, loc},
         else_block_ {else_block} {}
 
-  void accept_interpret(base_visitor *b_visitor) override {
+  void accept(base_visitor *b_visitor) override {
     b_visitor->visit(this);
+  }
+  
+  void accept(CodeGenVisitor *CodeGenVis) override {
+    CodeGenVis->visit(this);
   }
 
   statement *else_block() noexcept { return else_block_; }

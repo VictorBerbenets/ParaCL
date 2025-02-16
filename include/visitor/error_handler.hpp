@@ -3,8 +3,9 @@
 #include <iostream>
 #include <vector>
 
-#include "visitor.hpp"
+#include "ast_includes.hpp"
 #include "location.hh"
+#include "visitor.hpp"
 
 namespace paracl {
 
@@ -14,22 +15,22 @@ class error_handler: public base_visitor {
  public:
   void visit(ast::statement_block *stm) override {
     for (auto&& statement : *stm) {
-      statement->accept_interpret(this);
+      statement->accept(this);
     }
   }
 
   void visit(ast::calc_expression *stm) override {
-    stm->left()->accept_interpret(this);
-    stm->right()->accept_interpret(this);
+    stm->left()->accept(this);
+    stm->right()->accept(this);
   }
 
   void visit(ast::logic_expression *stm) override {
-    stm->left()->accept_interpret(this);
-    stm->right()->accept_interpret(this);
+    stm->left()->accept(this);
+    stm->right()->accept(this);
   }
 
   void visit(ast::un_operator *stm) override {
-    stm->arg()->accept_interpret(this);
+    stm->arg()->accept(this);
   }
 
   void visit(ast::number * /*unused*/) override {}
@@ -43,27 +44,27 @@ class error_handler: public base_visitor {
   }
 
   void visit(ast::assignment *stm) override {
-    stm->ident_exp()->accept_interpret(this);
+    stm->ident_exp()->accept(this);
   }
 
   void visit(ast::if_operator *stm) override {
-    stm->condition()->accept_interpret(this);
-    stm->body()->accept_interpret(this);
+    stm->condition()->accept(this);
+    stm->body()->accept(this);
   }
 
   void visit(ast::while_operator *stm) override {
-    stm->condition()->accept_interpret(this);
-    stm->body()->accept_interpret(this);
+    stm->condition()->accept(this);
+    stm->body()->accept(this);
   }
 
   void visit(ast::read_expression * /*unused*/) override {}
 
   void visit(ast::print_function *stm) override {
     auto exp = stm->get();
-    exp->accept_interpret(this);
+    exp->accept(this);
   }
 
-  void run(statement_block *root) {
+  void run(ast::statement_block *root) {
     visit(root);
   }
 

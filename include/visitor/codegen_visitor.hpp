@@ -5,7 +5,7 @@
 namespace paracl {
 
 class CodeGenVisitor: public base_visitor {
-  
+public: 
   void visit(ast::calc_expression *stm)  override;
   void visit(ast::un_operator *stm)      override;
   void visit(ast::logic_expression *stm) override;
