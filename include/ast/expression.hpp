@@ -30,7 +30,7 @@ class number: public expression {
   }
 
   void accept_interpret(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
+    b_visitor->visit_interpret(this);
   }
 
  private:
@@ -54,7 +54,7 @@ class variable: public expression {
   }
 
   void accept_interpret(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
+    b_visitor->visit_interpret(this);
   }
 
   const std::string &name() const noexcept {
@@ -73,7 +73,7 @@ class un_operator: public expression {
         arg_ {arg} {}
 
   void accept_interpret(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
+    b_visitor->visit_interpret(this);
   }
 
   expression *arg() noexcept { return arg_; }
@@ -108,7 +108,7 @@ class calc_expression: public bin_operator<CalcOp> {
   using bin_operator::bin_operator;
 
   void accept_interpret(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
+    b_visitor->visit_interpret(this);
   }
 };
 
@@ -117,7 +117,7 @@ class logic_expression: public bin_operator<LogicOp> {
   using bin_operator::bin_operator;
 
   void accept_interpret(base_visitor* b_visitor) override {
-    b_visitor->visit(this);
+    b_visitor->visit_interpret(this);
   }
 };
 
@@ -140,7 +140,7 @@ class assignment: public expression {
   }
 
   void accept_interpret(base_visitor *base_visitor) override {
-    base_visitor->visit(this);
+    base_visitor->visit_interpret(this);
   }
 
   expression *ident_exp() noexcept {
@@ -165,7 +165,7 @@ class read_expression: public expression {
   read_expression(yy::location loc): expression {loc} {}
 
   void accept_interpret(base_visitor *base_visitor) override {
-    base_visitor->visit(this);
+    base_visitor->visit_interpret(this);
   }
 
  private:

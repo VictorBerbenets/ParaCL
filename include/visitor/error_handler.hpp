@@ -12,29 +12,29 @@ class error_handler: public base_visitor {
   using error_type = std::pair<const std::string, yy::location>;
   using size_type  = std::size_t;
  public:
-  void visit(ast::statement_block *stm) override {
+  void visit_interpret(ast::statement_block *stm) override {
     for (auto&& statement : *stm) {
       statement->accept_interpret(this);
     }
   }
 
-  void visit(ast::calc_expression *stm) override {
+  void visit_interpret(ast::calc_expression *stm) override {
     stm->left()->accept_interpret(this);
     stm->right()->accept_interpret(this);
   }
 
-  void visit(ast::logic_expression *stm) override {
+  void visit_interpret(ast::logic_expression *stm) override {
     stm->left()->accept_interpret(this);
     stm->right()->accept_interpret(this);
   }
 
-  void visit(ast::un_operator *stm) override {
+  void visit_interpret(ast::un_operator *stm) override {
     stm->arg()->accept_interpret(this);
   }
 
-  void visit(ast::number * /*unused*/) override {}
+  void visit_interpret(ast::number * /*unused*/) override {}
 
-  void visit(ast::variable *stm) override {
+  void visit_interpret(ast::variable *stm) override {
     auto curr_scope = stm->scope();
     if (auto right_scope = curr_scope->find(stm->name()); !right_scope) {
       errors_.push_back({stm->name() + " was not declared in this scope",
@@ -42,29 +42,29 @@ class error_handler: public base_visitor {
     }
   }
 
-  void visit(ast::assignment *stm) override {
+  void visit_interpret(ast::assignment *stm) override {
     stm->ident_exp()->accept_interpret(this);
   }
 
-  void visit(ast::if_operator *stm) override {
+  void visit_interpret(ast::if_operator *stm) override {
     stm->condition()->accept_interpret(this);
     stm->body()->accept_interpret(this);
   }
 
-  void visit(ast::while_operator *stm) override {
+  void visit_interpret(ast::while_operator *stm) override {
     stm->condition()->accept_interpret(this);
     stm->body()->accept_interpret(this);
   }
 
-  void visit(ast::read_expression * /*unused*/) override {}
+  void visit_interpret(ast::read_expression * /*unused*/) override {}
 
-  void visit(ast::print_function *stm) override {
+  void visit_interpret(ast::print_function *stm) override {
     auto exp = stm->get();
     exp->accept_interpret(this);
   }
 
   void run(statement_block *root) {
-    visit(root);
+    visit_interpret(root);
   }
 
   void print_errors(std::ostream &stream) const {

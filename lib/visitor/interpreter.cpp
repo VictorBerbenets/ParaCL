@@ -7,13 +7,13 @@
 
 namespace paracl {
 
-void interpreter::visit(ast::statement_block *stm) {
+void interpreter::visit_interpret(ast::statement_block *stm) {
   for (auto&& statement : *stm) {
     statement->accept_interpret(this);
   }
 }
 
-void interpreter::visit(ast::calc_expression *stm) {
+void interpreter::visit_interpret(ast::calc_expression *stm) {
   stm->left()->accept_interpret(this);
   auto lhs = get_value();
   stm->right()->accept_interpret(this);
@@ -43,7 +43,7 @@ void interpreter::visit(ast::calc_expression *stm) {
   }
 }
 
-void interpreter::visit(ast::un_operator *stm) {
+void interpreter::visit_interpret(ast::un_operator *stm) {
   stm->arg()->accept_interpret(this);
 
   switch(stm->type()) {
@@ -60,7 +60,7 @@ void interpreter::visit(ast::un_operator *stm) {
   }
 }
 
-void interpreter::visit(ast::logic_expression *stm) {
+void interpreter::visit_interpret(ast::logic_expression *stm) {
   stm->left()->accept_interpret(this);
   auto lhs = get_value();
   stm->right()->accept_interpret(this);
@@ -95,17 +95,17 @@ void interpreter::visit(ast::logic_expression *stm) {
   }
 }
 
-void interpreter::visit(ast::number *stm) {
+void interpreter::visit_interpret(ast::number *stm) {
   set_value(stm->get_value());
 }
 
-void interpreter::visit(ast::variable *stm) {
+void interpreter::visit_interpret(ast::variable *stm) {
   auto curr_scope  = stm->scope();
   auto right_scope = curr_scope->find(stm->name());
   set_value(right_scope->value(stm->name()));
 }
 
-void interpreter::visit(ast::if_operator *stm) {
+void interpreter::visit_interpret(ast::if_operator *stm) {
   stm->condition()->accept_interpret(this);
 
   if(get_value()) {
@@ -115,7 +115,7 @@ void interpreter::visit(ast::if_operator *stm) {
   }
 }
 
-void interpreter::visit(ast::while_operator *stm) {
+void interpreter::visit_interpret(ast::while_operator *stm) {
   stm->condition()->accept_interpret(this);
 
   while(get_value()) {
@@ -124,18 +124,18 @@ void interpreter::visit(ast::while_operator *stm) {
   }
 }
 
-void interpreter::visit(ast::read_expression* /* unused */) {
+void interpreter::visit_interpret(ast::read_expression* /* unused */) {
   int tmp {0};
   input_stream_ >> tmp;
   set_value(tmp);
 }
 
-void interpreter::visit(ast::print_function *stm) {
+void interpreter::visit_interpret(ast::print_function *stm) {
   stm->get()->accept_interpret(this);
   output_stream_ << get_value() << std::endl;
 }
 
-void interpreter::visit(ast::assignment *stm) {
+void interpreter::visit_interpret(ast::assignment *stm) {
 //  set_value(evaluate(stm->ident_exp());
   stm->ident_exp()->accept_interpret(this);
   stm->redefine(get_value());
