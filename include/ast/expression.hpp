@@ -5,7 +5,7 @@
 #include "visitor.hpp"
 #include "location.hh"
 
-namespace frontend {
+namespace paracl {
 
 namespace ast {
 
@@ -29,7 +29,7 @@ class number: public expression {
     return value_;
   }
 
-  void accept(base_visitor *b_visitor) override {
+  void accept_interpret(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 
@@ -53,7 +53,7 @@ class variable: public expression {
     scope()->declare(name_);
   }
 
-  void accept(base_visitor *b_visitor) override {
+  void accept_interpret(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 
@@ -72,7 +72,7 @@ class un_operator: public expression {
         type_ {type},
         arg_ {arg} {}
 
-  void accept(base_visitor *b_visitor) override {
+  void accept_interpret(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 
@@ -107,7 +107,7 @@ class calc_expression: public bin_operator<CalcOp> {
  public:
   using bin_operator::bin_operator;
 
-  void accept(base_visitor *b_visitor) override {
+  void accept_interpret(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 };
@@ -116,7 +116,7 @@ class logic_expression: public bin_operator<LogicOp> {
  public:
   using bin_operator::bin_operator;
 
-  void accept(base_visitor* b_visitor) override {
+  void accept_interpret(base_visitor* b_visitor) override {
     b_visitor->visit(this);
   }
 };
@@ -139,7 +139,7 @@ class assignment: public expression {
     parent_->declare(name_);
   }
 
-  void accept(base_visitor *base_visitor) override {
+  void accept_interpret(base_visitor *base_visitor) override {
     base_visitor->visit(this);
   }
 
@@ -164,7 +164,7 @@ class read_expression: public expression {
  public:
   read_expression(yy::location loc): expression {loc} {}
 
-  void accept(base_visitor *base_visitor) override {
+  void accept_interpret(base_visitor *base_visitor) override {
     base_visitor->visit(this);
   }
 
@@ -174,5 +174,5 @@ class read_expression: public expression {
 
 } // <--- namespace ast
 
-} // <--- namespace frontend
+} // <--- namespace paracl
 

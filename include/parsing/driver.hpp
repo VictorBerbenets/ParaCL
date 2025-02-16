@@ -25,7 +25,7 @@ class driver final {
       scanner_.switch_streams(Is, nullptr);
   }
 
-  template <frontend::ast::derived_from NodeType, typename... Args>
+  template <paracl::ast::derived_from NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
     auto node = ast_.make_node<NodeType>(std::forward<Args>(args)...);
     if (std::same_as<variable, NodeType>) {
@@ -50,7 +50,7 @@ class driver final {
     return ast_.get_curr_block();
   }
 
-  std::optional<frontend::error_handler> check_for_errors() const {
+  std::optional<paracl::error_handler> check_for_errors() const {
     if (handler_.empty()) {
       return {};
     }
@@ -58,7 +58,7 @@ class driver final {
   }
 
   void evaluate(std::ostream &output = std::cout, std::istream &input = std::cin) const {
-    frontend::interpreter runner(input, output);
+    paracl::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }
  private:
@@ -66,8 +66,8 @@ class driver final {
   parser parser_;
   std::string file_;
 
-  frontend::error_handler handler_;
-  frontend::ast::ast ast_;
+  paracl::error_handler handler_;
+  paracl::ast::ast ast_;
 };
 
 } // <--- namespace yy

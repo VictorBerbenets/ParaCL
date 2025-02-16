@@ -6,7 +6,7 @@
 #include "visitor.hpp"
 #include "location.hh"
 
-namespace frontend {
+namespace paracl {
 
 namespace ast {
 
@@ -34,7 +34,7 @@ class while_operator: public ctrl_statement {
  public:
   using ctrl_statement::ctrl_statement;
 
-  void accept(base_visitor *b_visitor) override {
+  void accept_interpret(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 };
@@ -48,7 +48,7 @@ class if_operator final: public ctrl_statement {
       : ctrl_statement {cond, body, loc},
         else_block_ {else_block} {}
 
-  void accept(base_visitor *b_visitor) override {
+  void accept_interpret(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 
@@ -62,4 +62,4 @@ class if_operator final: public ctrl_statement {
 
 } // <--- namespace ast
 
-} // <--- namespace frontend
+} // <--- namespace paracl

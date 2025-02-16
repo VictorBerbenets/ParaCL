@@ -1,6 +1,6 @@
 #pragma once
 
-namespace frontend {
+namespace paracl {
 
 namespace ast {
 
@@ -31,5 +31,5 @@ enum class UnOp: char {
 
 } // <--- namespace ast
 
-} // <--- namespace frontend
+} // <--- namespace paracl
 

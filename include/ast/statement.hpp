@@ -9,7 +9,7 @@
 #include "symbol_table.hpp"
 #include "location.hh"
 
-namespace frontend {
+namespace paracl {
 
 namespace ast {
 
@@ -24,7 +24,7 @@ class statement {
  public:
   virtual ~statement() = default;
 
-  virtual void accept(base_visitor *b_visitor) = 0;
+  virtual void accept_interpret(base_visitor *b_visitor) = 0;
 
   void set_parent(statement_block *parent) noexcept {
     parent_ = parent;
@@ -71,11 +71,10 @@ class statement_block final: public statement {
   statement_block(InputIt begin ,InputIt end)
       : statements_ {begin, end} {}
 
-  void accept(base_visitor *b_visitor) override {
+  void accept_interpret(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 
-  // template <typename... Args>
   void declare(const std::string &name, int value = 0) {
     if (auto curr_scope = find(name); !curr_scope) {
       sym_tab_.add(name, value);
@@ -97,10 +96,6 @@ class statement_block final: public statement {
       }
     }
     return nullptr;
-  }
-
-  const statement_block *find(const std::string &name) const {
-    return find(name);
   }
 
   void set(const std::string &name, int value) {
@@ -128,5 +123,5 @@ class statement_block final: public statement {
 
 } // <--- namespace ast
 
-} // <--- namespace frontend
+} // <--- namespace paracl
 

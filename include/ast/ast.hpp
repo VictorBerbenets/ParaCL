@@ -9,7 +9,7 @@
 #include "statement.hpp"
 #include "symbol_table.hpp"
 
-namespace frontend {
+namespace paracl {
 
 namespace ast {
 
@@ -68,5 +68,5 @@ class ast final {
 
 } // <--- namespace ast
 
-} // <--- namespace frontend
+} // <--- namespace paracl
 

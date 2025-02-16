@@ -5,18 +5,18 @@
 #include "interpreter.hpp"
 #include "identifiers.hpp"
 
-namespace frontend {
+namespace paracl {
 
 void interpreter::visit(ast::statement_block *stm) {
   for (auto&& statement : *stm) {
-    statement->accept(this);
+    statement->accept_interpret(this);
   }
 }
 
 void interpreter::visit(ast::calc_expression *stm) {
-  stm->left()->accept(this);
+  stm->left()->accept_interpret(this);
   auto lhs = get_value();
-  stm->right()->accept(this);
+  stm->right()->accept_interpret(this);
   auto rhs = get_value();
 
   switch(stm->type()) {
@@ -44,7 +44,7 @@ void interpreter::visit(ast::calc_expression *stm) {
 }
 
 void interpreter::visit(ast::un_operator *stm) {
-  stm->arg()->accept(this);
+  stm->arg()->accept_interpret(this);
 
   switch(stm->type()) {
     case ast::UnOp::PLUS :
@@ -61,9 +61,9 @@ void interpreter::visit(ast::un_operator *stm) {
 }
 
 void interpreter::visit(ast::logic_expression *stm) {
-  stm->left()->accept(this);
+  stm->left()->accept_interpret(this);
   auto lhs = get_value();
-  stm->right()->accept(this);
+  stm->right()->accept_interpret(this);
   auto rhs = get_value();
 
   switch(stm->type()) {
@@ -106,21 +106,21 @@ void interpreter::visit(ast::variable *stm) {
 }
 
 void interpreter::visit(ast::if_operator *stm) {
-  stm->condition()->accept(this);
+  stm->condition()->accept_interpret(this);
 
   if(get_value()) {
-    stm->body()->accept(this);
+    stm->body()->accept_interpret(this);
   } else if (stm->else_block()) {
-    stm->else_block()->accept(this);
+    stm->else_block()->accept_interpret(this);
   }
 }
 
 void interpreter::visit(ast::while_operator *stm) {
-  stm->condition()->accept(this);
+  stm->condition()->accept_interpret(this);
 
   while(get_value()) {
-    stm->body()->accept(this);
-    stm->condition()->accept(this);
+    stm->body()->accept_interpret(this);
+    stm->condition()->accept_interpret(this);
   }
 }
 
@@ -131,14 +131,14 @@ void interpreter::visit(ast::read_expression* /* unused */) {
 }
 
 void interpreter::visit(ast::print_function *stm) {
-  stm->get()->accept(this);
+  stm->get()->accept_interpret(this);
   output_stream_ << get_value() << std::endl;
 }
 
 void interpreter::visit(ast::assignment *stm) {
 //  set_value(evaluate(stm->ident_exp());
-  stm->ident_exp()->accept(this);
+  stm->ident_exp()->accept_interpret(this);
   stm->redefine(get_value());
 }
 
-} // <--- namespace frontend
+} // <--- namespace paracl

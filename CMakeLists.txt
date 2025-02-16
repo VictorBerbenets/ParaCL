@@ -62,6 +62,7 @@ set(INCLUDE_DIRS
   include/parsing
   include/visitor
   include/symbol_tab
+  include/codegen
 )
 set(SOURCES
     ${AST_SOURCES}

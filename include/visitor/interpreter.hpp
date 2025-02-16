@@ -2,7 +2,7 @@
 
 #include "visitor.hpp"
 
-namespace frontend {
+namespace paracl {
 
 class interpreter: visitor {
  public:
@@ -31,4 +31,4 @@ class interpreter: visitor {
   std::ostream &output_stream_;
 };
 
-} // <--- namespace frontend
+} // <--- namespace paracl

@@ -11,7 +11,7 @@
 #include "visitor.hpp"
 #include "location.hh"
 
-namespace frontend {
+namespace paracl {
 
 namespace ast {
 
@@ -27,7 +27,7 @@ class print_function: public function {
       : function {loc},
         print_expr_ {expr} {}
 
-  void accept(base_visitor *b_visitor) override {
+  void accept_interpret(base_visitor *b_visitor) override {
     b_visitor->visit(this);
   }
 
@@ -41,4 +41,4 @@ class print_function: public function {
 
 } // <--- namespace ast
 
-} // <--- namespace frontend
+} // <--- namespace paracl

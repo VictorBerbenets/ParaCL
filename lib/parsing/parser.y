@@ -29,7 +29,7 @@ namespace yy {
 }
 
 using namespace yy;
-using namespace frontend::ast;
+using namespace paracl::ast;
 
 }
 

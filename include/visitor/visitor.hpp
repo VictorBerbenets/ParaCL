@@ -2,7 +2,7 @@
 
 #include "forward_decls.hpp"
 
-namespace frontend {
+namespace paracl {
 
 class base_visitor {
  public:
@@ -35,5 +35,5 @@ class visitor: public base_visitor {
   int curr_value_ = 0;
 };
 
-} // <--- namespace frontend
+} // <--- namespace paracl
 

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace frontend {
+namespace paracl {
 
 namespace ast {
 
@@ -19,5 +19,5 @@ class read_expression;
 
 }
 
-} // <--- namespace frontend
+} // <--- namespace paracl
 

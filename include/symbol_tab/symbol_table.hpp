@@ -4,7 +4,7 @@
 #include <memory>
 
 
-namespace frontend {
+namespace paracl {
 
 class symbol_table {
   using size_type  = std::size_t;
@@ -28,4 +28,4 @@ class symbol_table {
   std::unordered_map<std::string, int> names_;
 };
 
-} // <--- namespace frontend
+} // <--- namespace paracl

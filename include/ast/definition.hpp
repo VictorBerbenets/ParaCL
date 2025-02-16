@@ -8,7 +8,7 @@
 #include "visitor.hpp"
 #include "location.hh"
 
-namespace frontend {
+namespace paracl {
 
 namespace ast {
 
@@ -39,4 +39,4 @@ class definition: public statement {
 
 } // <--- namespace ast
 
-} // <--- namespace frontend
+} // <--- namespace paracl
