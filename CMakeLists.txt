@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(paracl)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(PARACL_COMPILER "${PROJECT_NAME}_compiler")
 set(PARACL_INTERPRET "${PROJECT_NAME}_interpreter")
