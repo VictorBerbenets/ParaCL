@@ -72,7 +72,7 @@ class statement_block final: public statement {
       : statements_ {begin, end} {}
 
   void accept_interpret(base_visitor *b_visitor) override {
-    b_visitor->visit_interpret(this);
+    b_visitor->visit(this);
   }
 
   void declare(const std::string &name, int value = 0) {

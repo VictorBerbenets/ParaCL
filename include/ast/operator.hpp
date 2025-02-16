@@ -35,7 +35,7 @@ class while_operator: public ctrl_statement {
   using ctrl_statement::ctrl_statement;
 
   void accept_interpret(base_visitor *b_visitor) override {
-    b_visitor->visit_interpret(this);
+    b_visitor->visit(this);
   }
 };
 
@@ -49,7 +49,7 @@ class if_operator final: public ctrl_statement {
         else_block_ {else_block} {}
 
   void accept_interpret(base_visitor *b_visitor) override {
-    b_visitor->visit_interpret(this);
+    b_visitor->visit(this);
   }
 
   statement *else_block() noexcept { return else_block_; }

@@ -1,15 +1,11 @@
-#include <fstream>
+#pragma once
 
 #include "visitor.hpp"
 
 namespace paracl {
 
-class interpreter: visitor {
- public:
-  interpreter(std::istream &input, std::ostream &output)
-      : input_stream_ {input},
-        output_stream_ {output} {}
-
+class CodeGenVisitor: public base_visitor {
+  
   void visit(ast::calc_expression *stm)  override;
   void visit(ast::un_operator *stm)      override;
   void visit(ast::logic_expression *stm) override;
@@ -21,14 +17,9 @@ class interpreter: visitor {
   void visit(ast::if_operator *stm)      override;
   void visit(ast::while_operator *stm)   override;
   void visit(ast::print_function *stm)   override;
+  
+  virtual void visit(ast::definition *stm) = 0;
 
-  void run_program(ast::statement_block *root) {
-    visit(root);
-  }
-
- private:
-  std::istream &input_stream_;
-  std::ostream &output_stream_;
 };
 
-} // <--- namespace paracl
+} // paracl

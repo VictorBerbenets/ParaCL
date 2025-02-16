@@ -28,7 +28,7 @@ class print_function: public function {
         print_expr_ {expr} {}
 
   void accept_interpret(base_visitor *b_visitor) override {
-    b_visitor->visit_interpret(this);
+    b_visitor->visit(this);
   }
 
   expression *get() const noexcept {

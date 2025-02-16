@@ -9,6 +9,7 @@ class statement_block;
 class logic_expression;
 class calc_expression;
 class assignment;
+class definition;
 class un_operator;
 class number;
 class variable;
