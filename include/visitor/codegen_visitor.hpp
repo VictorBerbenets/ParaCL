@@ -18,6 +18,7 @@ public:
   void visit(ast::while_operator *stm)   override;
   void visit(ast::print_function *stm)   override;
   
+  virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm) = 0;
 
 };

@@ -37,8 +37,12 @@ class driver final {
   statement_block *make_block() {
     return ast_.make_block();
   }
+  
+  root_statement_block *make_root_block() {
+    return ast_.make_root_block();
+  }
 
-  void set_ast_root(statement_block *root) & noexcept {
+  void set_ast_root(root_statement_block *root) & noexcept {
     ast_.set_root(root);
   }
 

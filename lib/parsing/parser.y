@@ -20,6 +20,7 @@
 #include <string>
 #include <stdexcept>
 #include <utility>
+#include <cassert>
 
 #include "ast_includes.hpp"
 
@@ -51,6 +52,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 
 %{
   std::stack<statement_block*> blocks;
+  bool IsRootBlockSet = false;
 %}
 
 %param {yy::scanner& scanner}
@@ -132,11 +134,16 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 
 %%
 
-program: statement_block { driver.set_ast_root($1); }
+program: statement_block { driver.set_ast_root(static_cast<root_statement_block*>($1)); }
 ;
 
 statement_block:  %empty {
+                          if (!IsRootBlockSet) {
+                            blocks.push(driver.make_root_block());
+                            IsRootBlockSet = true;
+                          } else {
                           blocks.push(driver.make_block());
+                          }
                           $$ = blocks.top();
                   }
                 | statement_block statement {

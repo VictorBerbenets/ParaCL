@@ -5,6 +5,7 @@ namespace paracl {
 namespace ast {
 
 class statement;
+class root_statement_block;
 class statement_block;
 class logic_expression;
 class calc_expression;

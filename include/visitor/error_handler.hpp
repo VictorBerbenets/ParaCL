@@ -13,6 +13,13 @@ class error_handler: public base_visitor {
   using error_type = std::pair<const std::string, yy::location>;
   using size_type  = std::size_t;
  public:
+#if o0
+  void visit(ast::root_statement_block *stm) override {
+    for (auto&& statement : *stm) {
+      statement->accept(this);
+    }
+  }
+#endif
   void visit(ast::statement_block *stm) override {
     for (auto&& statement : *stm) {
       statement->accept(this);

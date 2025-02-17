@@ -88,14 +88,13 @@ aux_source_directory(./tests/interactive INTERACTIVE_SOURCES)
 aux_source_directory(./tests/unit UNIT_SOURCES)
 
 set(TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/)
-
+  
 list(APPEND TESTS "interactive" "unit")
 list(APPEND TESTS_SOURCES "INTERACTIVE_SOURCES" "UNIT_SOURCES")
 
 foreach(TEST TEST_SRC IN ZIP_LISTS TESTS TESTS_SOURCES)
   add_executable(${TEST} ${${TEST_SRC}} ${SOURCES})
-  target_link_libraries(${TEST} PUBLIC bison_parser
-                                PRIVATE ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${TEST} PRIVATE ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${llvm_libs})
   target_include_directories(${TEST} PUBLIC ${INCLUDE_DIRS}
                                             ${CMAKE_CURRENT_BINARY_DIR} ${TESTS_DIR})
 endforeach()

@@ -17,6 +17,7 @@ class interpreter: visitor {
   void visit(ast::variable *stm)         override;
   void visit(ast::assignment *stm)       override;
   void visit(ast::read_expression *stm)  override;
+  //void visit(ast::root_statement_block *stm);
   void visit(ast::statement_block *stm)  override;
   void visit(ast::if_operator *stm)      override;
   void visit(ast::while_operator *stm)   override;

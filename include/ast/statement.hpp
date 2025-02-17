@@ -52,7 +52,7 @@ class statement {
   yy::location loc_;
 };
 
-class statement_block final: public statement {
+class statement_block: public statement {
   using StmtsStore     = std::vector<statement*>;
   using ScopeIter      = StmtsStore::iterator;
   using ConstScopeIter = StmtsStore::const_iterator;
@@ -122,9 +122,22 @@ class statement_block final: public statement {
   ConstScopeIter cbegin() const noexcept { return statements_.cbegin(); }
   ConstScopeIter cend()   const noexcept { return statements_.cend(); }
 
+  unsigned size() const noexcept { return statements_.size(); } 
+
  private:
   StmtsStore statements_;
   symbol_table sym_tab_;
+};
+
+class root_statement_block: public statement_block {
+  public:
+    using statement_block::statement_block;
+
+     //root_statement_block(statement_block *Parent): statement_block(Parent) {}
+
+    void accept(CodeGenVisitor *CodeGenVis) override {
+      CodeGenVis->visit(this);
+    }
 };
 
 } // <--- namespace ast

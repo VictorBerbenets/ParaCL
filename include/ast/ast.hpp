@@ -5,6 +5,7 @@
 #include <vector>
 #include <concepts>
 #include <memory>
+#include <optional>
 
 #include "statement.hpp"
 #include "symbol_table.hpp"
@@ -43,12 +44,19 @@ class ast final {
     nodes_.push_back(std::move(node_ptr));
     return ret_ptr;
   }
-
-  statement_block *make_block() {
-    return curr_block_ = make_node<statement_block>(curr_block_);
+  
+  // We can create root block only ones
+  root_statement_block* make_root_block() {
+    curr_block_ = make_node<root_statement_block>(curr_block_);
+    return static_cast<root_statement_block*>(curr_block_);
   }
 
-  void set_root(statement_block *root_id) & noexcept {
+  statement_block *make_block() {
+    curr_block_ = make_node<statement_block>(curr_block_);
+    return curr_block_;
+  }
+
+  void set_root(root_statement_block *root_id) & noexcept {
     root_ = root_id;
   }
 
@@ -61,7 +69,7 @@ class ast final {
   size_type size() const noexcept { return nodes_.size(); }
   [[nodiscard]] bool empty() const noexcept { return nodes_.size() == 0; }
  private:
-  statement_block *root_       = nullptr;
+  root_statement_block *root_       = nullptr;
   statement_block *curr_block_ = nullptr;
   std::vector<pointer_type> nodes_;
 };
