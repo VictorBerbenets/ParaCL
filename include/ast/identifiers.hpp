@@ -4,7 +4,7 @@ namespace paracl {
 
 namespace ast {
 
-enum class LogicOp: char {
+enum class LogicOp : char {
   LESS,
   LESS_EQ,
   GREATER,
@@ -15,21 +15,10 @@ enum class LogicOp: char {
   LOGIC_OR
 };
 
-enum class CalcOp: char {
-    PERCENT,
-    ADD,
-    SUB,
-    MUL,
-    DIV
-};
+enum class CalcOp : char { PERCENT, ADD, SUB, MUL, DIV };
 
-enum class UnOp: char {
-    PLUS,
-    MINUS,
-    NEGATE
-};
+enum class UnOp : char { PLUS, MINUS, NEGATE };
 
-} // <--- namespace ast
+} // namespace ast
 
-} // <--- namespace paracl
-
+} // namespace paracl

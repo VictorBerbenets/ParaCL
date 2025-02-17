@@ -1,18 +1,18 @@
-#include <iostream>
-#include <filesystem>
 #include <FlexLexer.h>
+#include <filesystem>
+#include <iostream>
 
-#include "driver.hpp"
 #include "ast.hpp"
+#include "driver.hpp"
 #include "expression.hpp"
 
 namespace fs = std::filesystem;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   if (argc != 2) {
-    std::cerr << "paraCL: fatal error: no input file" << 
-                 " (it must be like that: ./paraCL filename)" << std::endl <<
-                 "Program terminated" << std::endl;
+    std::cerr << "paraCL: fatal error: no input file"
+              << " (it must be like that: ./paraCL filename)" << std::endl
+              << "Program terminated" << std::endl;
     return -1;
   } else if (!fs::is_regular_file(argv[1])) {
     std::cerr << "paraCL: error: can't oppen file: " << argv[1] << std::endl;
@@ -32,4 +32,3 @@ int main(int argc, char** argv) {
   }
   driver.evaluate();
 }
-

@@ -1,16 +1,16 @@
 #pragma once
 
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Function.h>
-#include <llvm/IR/Type.h>
-#include <llvm/IR/Value.h>
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/ADT/StringRef.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Value.h>
 
-#include <memory>
 #include <map>
+#include <memory>
 
 namespace paracl {
 
@@ -30,7 +30,7 @@ public:
 
   Type *getInt32Ty();
   Type *getVoidTy();
-   
+
 private:
   void createParaCLStdLibFuncsDecls();
 

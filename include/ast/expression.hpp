@@ -1,206 +1,157 @@
 #pragma once
 
-#include "statement.hpp"
 #include "identifiers.hpp"
-#include "visitor.hpp"
 #include "location.hh"
+#include "statement.hpp"
+#include "visitor.hpp"
 
 namespace paracl {
 
 namespace ast {
 
-class expression: public statement {
- protected:
+class expression : public statement {
+protected:
   using statement::statement;
 
   expression() = default;
 
-  using pointer_type = expression*;
+  using pointer_type = expression *;
 };
 
-class number: public expression {
+class number : public expression {
   using value_type = int;
- public:
-  number(value_type num, yy::location loc)
-      : expression {loc},
-        value_ {num} {}
 
-  const value_type &get_value() const noexcept {
-    return value_;
-  }
+public:
+  number(value_type num, yy::location loc) : expression{loc}, value_{num} {}
 
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
-  
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
+  const value_type &get_value() const noexcept { return value_; }
 
- private:
+  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
+
+private:
   value_type value_;
 };
 
-class variable: public expression {
- public:
+class variable : public expression {
+public:
   variable(statement_block *curr_block, const std::string &var_name,
            yy::location l)
-      : expression {curr_block, l},
-        name_ {var_name} {}
+      : expression{curr_block, l}, name_{var_name} {}
 
-  variable(statement_block *curr_block, std::string &&var_name,
-           yy::location l)
-      : expression {curr_block, l},
-        name_ {std::move(var_name)} {}
+  variable(statement_block *curr_block, std::string &&var_name, yy::location l)
+      : expression{curr_block, l}, name_{std::move(var_name)} {}
 
-  void declare() {
-    scope()->declare(name_);
-  }
+  void declare() { scope()->declare(name_); }
 
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
-  
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
+  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
 
-  const std::string &name() const noexcept {
-    return name_;
-  }
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
- private:
+  const std::string &name() const noexcept { return name_; }
+
+private:
   std::string name_;
 };
 
-class un_operator: public expression {
- public:
+class un_operator : public expression {
+public:
   un_operator(UnOp type, pointer_type arg, yy::location loc)
-      : expression {loc},
-        type_ {type},
-        arg_ {arg} {}
+      : expression{loc}, type_{type}, arg_{arg} {}
 
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
- 
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
+  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   expression *arg() noexcept { return arg_; }
   UnOp type() const noexcept { return type_; }
 
- private:
+private:
   UnOp type_;
   pointer_type arg_;
 };
 
-template <typename BinType>
-class bin_operator: public expression {
- public:
-   bin_operator(BinType type, pointer_type left, pointer_type right,
-                yy::location loc)
-    : expression {loc},
-      type_ {type},
-      left_ {left},
-      right_ {right} {}
+template <typename BinType> class bin_operator : public expression {
+public:
+  bin_operator(BinType type, pointer_type left, pointer_type right,
+               yy::location loc)
+      : expression{loc}, type_{type}, left_{left}, right_{right} {}
 
-  pointer_type left()  noexcept { return left_;  }
+  pointer_type left() noexcept { return left_; }
   pointer_type right() noexcept { return right_; }
-  BinType type() const noexcept { return type_;  }
+  BinType type() const noexcept { return type_; }
 
- protected:
+protected:
   BinType type_;
   pointer_type left_, right_;
 };
 
-class calc_expression: public bin_operator<CalcOp> {
- public:
+class calc_expression : public bin_operator<CalcOp> {
+public:
   using bin_operator::bin_operator;
 
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
- 
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
+  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };
 
-class logic_expression: public bin_operator<LogicOp> {
- public:
+class logic_expression : public bin_operator<LogicOp> {
+public:
   using bin_operator::bin_operator;
 
-  void accept(base_visitor* b_visitor) override {
-    b_visitor->visit(this);
-  }
- 
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
+  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };
 
-class assignment: public expression {
- public:
+class assignment : public expression {
+public:
   assignment(statement_block *curr_block, const std::string &name,
              expression *expr, yy::location loc)
-    : expression {curr_block, loc},
-      name_ {name},
-      identifier_ {expr} {
+      : expression{curr_block, loc}, name_{name}, identifier_{expr} {
     parent_->declare(name_);
   }
 
-  assignment(statement_block *curr_block, std::string &&name,
-             expression *expr, yy::location loc)
-      : expression {curr_block, loc},
-        name_ {std::move(name)},
-        identifier_ {expr} {
+  assignment(statement_block *curr_block, std::string &&name, expression *expr,
+             yy::location loc)
+      : expression{curr_block, loc}, name_{std::move(name)}, identifier_{expr} {
     parent_->declare(name_);
   }
 
   void accept(base_visitor *base_visitor) override {
     base_visitor->visit(this);
   }
-  
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
- 
-  expression *ident_exp() noexcept {
-    return identifier_;
-  }
 
-  void redefine(int value) {
-    parent_->redefine(name_, value);
-  }
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
-  const std::string &name() const noexcept {
-    return name_;
-  }
- private:
+  expression *ident_exp() noexcept { return identifier_; }
+
+  void redefine(int value) { parent_->redefine(name_, value); }
+
+  const std::string &name() const noexcept { return name_; }
+
+private:
   std::string name_;
-  expression* identifier_;
+  expression *identifier_;
 };
 
-class read_expression: public expression {
+class read_expression : public expression {
   using value_type = int;
- public:
-  read_expression(yy::location loc): expression {loc} {}
+
+public:
+  read_expression(yy::location loc) : expression{loc} {}
 
   void accept(base_visitor *base_visitor) override {
     base_visitor->visit(this);
   }
- 
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
 
- private:
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
+
+private:
   value_type value_;
 };
 
-} // <--- namespace ast
+} // namespace ast
 
-} // <--- namespace paracl
-
+} // namespace paracl

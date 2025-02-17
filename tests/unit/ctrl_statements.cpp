@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "tests.hpp"
 
@@ -17,7 +17,7 @@ TEST(CTRL_STATEMENTS, IF) {
 
   auto a = data[0];
   auto b = data[1];
-// testing if part
+  // testing if part
   if (a + 1 < b - 1) {
     ans << a << std::endl;
   } else if (a * 10 > b * 5) {
@@ -35,7 +35,8 @@ TEST(CTRL_STATEMENTS, IF) {
     ans << 1000 << std::endl;
   }
 
-  ASSERT_EQ(ans.view(), get_paracl_ans(data_path + "if.txt", input_data).view());
+  ASSERT_EQ(ans.view(),
+            get_paracl_ans(data_path + "if.txt", input_data).view());
 }
 
 TEST(CTRL_STATEMENTS, WHILE) {
@@ -45,8 +46,8 @@ TEST(CTRL_STATEMENTS, WHILE) {
   input_data << data[0] << std::endl;
 
   auto a = data[0];
-// testing while part
-  while(a) {
+  // testing while part
+  while (a) {
     if (a > 0) {
       a = a - 1;
     } else {
@@ -57,7 +58,8 @@ TEST(CTRL_STATEMENTS, WHILE) {
     ans << a << std::endl;
   }
 
-  ASSERT_EQ(ans.view(), get_paracl_ans(data_path + "while.txt", input_data).view());
+  ASSERT_EQ(ans.view(),
+            get_paracl_ans(data_path + "while.txt", input_data).view());
 }
 
 TEST(CTRL_STATEMENTS, WHILE_IF) {
@@ -67,25 +69,25 @@ TEST(CTRL_STATEMENTS, WHILE_IF) {
   input_data << data[0] << std::endl;
 
   auto a = data[0];
-// testing while part
+  // testing while part
   int b = 0;
   while (a > 0) {
-      ans << a << std::endl;
-      if (a / 2 == a - 1) {
-          ans << 10 << std::endl;
-      }
-      while (b < a) {
-          ans << b << std::endl;
-          b = b + 1;
-      }
-      a = a - 1;
-      b = 0;
+    ans << a << std::endl;
+    if (a / 2 == a - 1) {
+      ans << 10 << std::endl;
+    }
+    while (b < a) {
+      ans << b << std::endl;
+      b = b + 1;
+    }
+    a = a - 1;
+    b = 0;
   }
 
   ans << a << std::endl;
 
-  ASSERT_EQ(ans.view(), get_paracl_ans(data_path + "while_if.txt", input_data).view());
+  ASSERT_EQ(ans.view(),
+            get_paracl_ans(data_path + "while_if.txt", input_data).view());
 }
 
-} // <--- namespace paracl_testing
-
+} // namespace paracl_testing

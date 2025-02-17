@@ -1,33 +1,31 @@
 #pragma once
 
+#include <concepts>
+#include <optional>
 #include <string>
 #include <utility>
-#include <optional>
-#include <concepts>
 
 #include "ast.hpp"
-#include "scanner.hpp"
-#include "paracl_grammar.tab.hh"
-#include "interpreter.hpp"
-#include "error_handler.hpp"
 #include "codegen_visitor.hpp"
+#include "error_handler.hpp"
+#include "interpreter.hpp"
+#include "paracl_grammar.tab.hh"
+#include "scanner.hpp"
 
 namespace yy {
 
 class driver final {
- public:
-  driver(): scanner_{}, parser_(scanner_, *this) {}
+public:
+  driver() : scanner_{}, parser_(scanner_, *this) {}
 
-  void parse() {
-      parser_.parse();
-  }
+  void parse() { parser_.parse(); }
 
   void switch_input_stream(std::istream *Is) {
-      scanner_.switch_streams(Is, nullptr);
+    scanner_.switch_streams(Is, nullptr);
   }
 
   template <paracl::ast::derived_from NodeType, typename... Args>
-  NodeType *make_node(Args&&... args) {
+  NodeType *make_node(Args &&...args) {
     auto node = ast_.make_node<NodeType>(std::forward<Args>(args)...);
     if (std::same_as<variable, NodeType>) {
       handler_.visit(node);
@@ -35,21 +33,15 @@ class driver final {
     return node;
   }
 
-  statement_block *make_block() {
-    return ast_.make_block();
-  }
-  
-  root_statement_block *make_root_block() {
-    return ast_.make_root_block();
-  }
+  statement_block *make_block() { return ast_.make_block(); }
+
+  root_statement_block *make_root_block() { return ast_.make_root_block(); }
 
   void set_ast_root(root_statement_block *root) & noexcept {
     ast_.set_root(root);
   }
 
-  root_statement_block *get_root() const {
-    return ast_.root_ptr();
-  }
+  root_statement_block *get_root() const { return ast_.root_ptr(); }
 
   void change_scope(statement_block *new_block) noexcept {
     ast_.set_curr_block(new_block);
@@ -66,7 +58,8 @@ class driver final {
     return {handler_};
   }
 
-  void evaluate(std::ostream &output = std::cout, std::istream &input = std::cin) const {
+  void evaluate(std::ostream &output = std::cout,
+                std::istream &input = std::cin) const {
     paracl::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }
@@ -75,7 +68,8 @@ class driver final {
     paracl::CodeGenVisitor GenVis;
     GenVis.generateIRCode(ast_.root_ptr(), Output);
   }
- private:
+
+private:
   scanner scanner_;
   parser parser_;
   std::string file_;
@@ -84,4 +78,4 @@ class driver final {
   paracl::ast::ast ast_;
 };
 
-} // <--- namespace yy
+} // namespace yy

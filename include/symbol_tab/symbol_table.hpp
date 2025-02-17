@@ -1,16 +1,15 @@
 #pragma once
 
-#include <unordered_map>
 #include <memory>
-
+#include <unordered_map>
 
 namespace paracl {
 
 class symbol_table {
-  using size_type  = std::size_t;
+  using size_type = std::size_t;
   using value_type = int;
- public:
 
+public:
   bool has(const std::string &var_name) const {
     return names_.find(var_name) != names_.end();
   }
@@ -20,12 +19,10 @@ class symbol_table {
     names_.insert({var_name, value});
   }
 
-  value_type &operator[](const std::string &name) {
-    return names_[name];
-  }
+  value_type &operator[](const std::string &name) { return names_[name]; }
 
- private:
+private:
   std::unordered_map<std::string, int> names_;
 };
 
-} // <--- namespace paracl
+} // namespace paracl

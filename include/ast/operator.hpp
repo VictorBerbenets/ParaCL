@@ -3,71 +3,54 @@
 #include <vector>
 
 #include "expression.hpp"
-#include "visitor.hpp"
 #include "location.hh"
+#include "visitor.hpp"
 
 namespace paracl {
 
 namespace ast {
 
-class ctrl_statement: public statement {
- public:
-   ctrl_statement(expression *cond, statement *body, yy::location loc)
-      : statement {loc},
-        condition_ {cond},
-        body_ {body} {}
+class ctrl_statement : public statement {
+public:
+  ctrl_statement(expression *cond, statement *body, yy::location loc)
+      : statement{loc}, condition_{cond}, body_{body} {}
 
-  expression *condition() noexcept {
-    return condition_;
-  }
+  expression *condition() noexcept { return condition_; }
 
-  statement *body() noexcept {
-    return body_;
-  }
+  statement *body() noexcept { return body_; }
 
- protected:
+protected:
   expression *condition_;
   statement *body_;
 };
 
-class while_operator: public ctrl_statement {
- public:
+class while_operator : public ctrl_statement {
+public:
   using ctrl_statement::ctrl_statement;
 
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
-  
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
+  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };
 
-class if_operator final: public ctrl_statement {
- public:
+class if_operator final : public ctrl_statement {
+public:
   using ctrl_statement::ctrl_statement;
 
   if_operator(expression *cond, statement *body, statement *else_block,
               yy::location loc)
-      : ctrl_statement {cond, body, loc},
-        else_block_ {else_block} {}
+      : ctrl_statement{cond, body, loc}, else_block_{else_block} {}
 
-  void accept(base_visitor *b_visitor) override {
-    b_visitor->visit(this);
-  }
-  
-  void accept(CodeGenVisitor *CodeGenVis) override {
-    CodeGenVis->visit(this);
-  }
+  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   statement *else_block() noexcept { return else_block_; }
 
- private:
-  statement *else_block_ {nullptr};
+private:
+  statement *else_block_{nullptr};
 };
 
+} // namespace ast
 
-
-} // <--- namespace ast
-
-} // <--- namespace paracl
+} // namespace paracl

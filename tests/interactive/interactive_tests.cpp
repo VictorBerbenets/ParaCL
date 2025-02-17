@@ -1,8 +1,8 @@
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <algorithm>
-#include <sstream>
 #include <numeric>
+#include <sstream>
 
 #include "tests.hpp"
 
@@ -13,25 +13,25 @@ static const std::string data_path = "../tests/interactive/data/";
 TEST(TEST1, PRINT) {
   std::ostringstream cpp_ans;
 
-  for (int i = 10; i ; --i) {
+  for (int i = 10; i; --i) {
     cpp_ans << i << std::endl;
   }
 
   ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "print.txt").view());
 }
 
-
 TEST(TEST2, SCAN) {
   std::ostringstream cpp_ans;
   std::stringstream input_data;
 
   std::cout << "Enter number" << std::endl;
-  int tmp {};
+  int tmp{};
   std::cin >> tmp;
   input_data << tmp;
   cpp_ans << tmp + 1 << std::endl;
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "scan.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(),
+            get_paracl_ans(data_path + "scan.txt", input_data).view());
 }
 
 TEST(TEST3, LCM) {
@@ -47,7 +47,8 @@ TEST(TEST3, LCM) {
   cpp_ans << ans << std::endl;
   std::cout << "correct answer is " << ans << std::endl;
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "lcm.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(),
+            get_paracl_ans(data_path + "lcm.txt", input_data).view());
 }
 
 TEST(TEST4, GCD) {
@@ -63,7 +64,8 @@ TEST(TEST4, GCD) {
   cpp_ans << ans << std::endl;
   std::cout << "correct answer is " << ans << std::endl;
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "gcd.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(),
+            get_paracl_ans(data_path + "gcd.txt", input_data).view());
 }
 
 TEST(TEST5, FIBONAGHI) {
@@ -78,7 +80,7 @@ TEST(TEST5, FIBONAGHI) {
 
   auto fib = [](int n) {
     int a = 0, b = 1;
-    for(int i = 2; i <= n; ++i) {
+    for (int i = 2; i <= n; ++i) {
       int c = a + b;
       a = b;
       b = c;
@@ -90,7 +92,8 @@ TEST(TEST5, FIBONAGHI) {
   cpp_ans << ans << std::endl;
   std::cout << "correct answer is " << ans << std::endl;
 
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "fibonachi.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(),
+            get_paracl_ans(data_path + "fibonachi.txt", input_data).view());
 }
 
 TEST(TEST6, PRIME_FACTORS) {
@@ -105,10 +108,8 @@ TEST(TEST6, PRIME_FACTORS) {
 
   auto print_prime_factors = [](std::ostream &os, int n) {
     int div = 2;
-    while (n > 1)
-    {
-      while (n % div == 0)
-      {
+    while (n > 1) {
+      while (n % div == 0) {
         os << div << std::endl;
         n = n / div;
       }
@@ -117,11 +118,11 @@ TEST(TEST6, PRIME_FACTORS) {
   };
 
   print_prime_factors(cpp_ans, n);
-  ASSERT_EQ(cpp_ans.view(), get_paracl_ans(data_path + "prime_factors.txt", input_data).view());
+  ASSERT_EQ(cpp_ans.view(),
+            get_paracl_ans(data_path + "prime_factors.txt", input_data).view());
 
   std::cout << "prime factors of " << n << ": " << std::endl;
   print_prime_factors(std::cout, n);
 }
 
-} // <--- namespace paracl_testing
-
+} // namespace paracl_testing

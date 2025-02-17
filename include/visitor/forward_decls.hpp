@@ -19,7 +19,6 @@ class while_operator;
 class print_function;
 class read_expression;
 
-}
+} // namespace ast
 
-} // <--- namespace paracl
-
+} // namespace paracl
