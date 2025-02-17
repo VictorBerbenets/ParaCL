@@ -35,7 +35,7 @@ class ast final {
   ast &operator=(ast&& ) = default;
   ~ast() = default;
 
-  statement_block *root_ptr() const & noexcept { return root_; }
+  root_statement_block *root_ptr() const & noexcept { return root_; }
 
   template <derived_from NodeType, typename... Args>
   NodeType *make_node(Args&&... args) {
@@ -45,7 +45,6 @@ class ast final {
     return ret_ptr;
   }
   
-  // We can create root block only ones
   root_statement_block* make_root_block() {
     curr_block_ = make_node<root_statement_block>(curr_block_);
     return static_cast<root_statement_block*>(curr_block_);
@@ -69,7 +68,7 @@ class ast final {
   size_type size() const noexcept { return nodes_.size(); }
   [[nodiscard]] bool empty() const noexcept { return nodes_.size() == 0; }
  private:
-  root_statement_block *root_       = nullptr;
+  root_statement_block *root_ = nullptr;
   statement_block *curr_block_ = nullptr;
   std::vector<pointer_type> nodes_;
 };

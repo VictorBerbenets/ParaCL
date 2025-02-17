@@ -10,6 +10,7 @@
 #include "paracl_grammar.tab.hh"
 #include "interpreter.hpp"
 #include "error_handler.hpp"
+#include "codegen_visitor.hpp"
 
 namespace yy {
 
@@ -46,7 +47,7 @@ class driver final {
     ast_.set_root(root);
   }
 
-  statement_block *get_root() const {
+  root_statement_block *get_root() const {
     return ast_.root_ptr();
   }
 
@@ -68,6 +69,11 @@ class driver final {
   void evaluate(std::ostream &output = std::cout, std::istream &input = std::cin) const {
     paracl::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
+  }
+
+  void compile(llvm::StringRef Output) const {
+    paracl::CodeGenVisitor GenVis;
+    GenVis.generateIRCode(ast_.root_ptr(), Output);
   }
  private:
   scanner scanner_;

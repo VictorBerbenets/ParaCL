@@ -1,3 +1,4 @@
+#include "ast_includes.hpp"
 #include "codegen_visitor.hpp"
 #include "codegen.hpp"
 
@@ -54,5 +55,11 @@ void CodeGenVisitor::visit(ast::read_expression *stm)  {
 void CodeGenVisitor::visit(ast::print_function *stm)   {
 
 }
+
+void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock, llvm::StringRef Output) {
+  
+  RootBlock->accept(this);
+}
+
 
 } // paracl

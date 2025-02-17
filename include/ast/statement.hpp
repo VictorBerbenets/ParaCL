@@ -133,8 +133,6 @@ class root_statement_block: public statement_block {
   public:
     using statement_block::statement_block;
 
-     //root_statement_block(statement_block *Parent): statement_block(Parent) {}
-
     void accept(CodeGenVisitor *CodeGenVis) override {
       CodeGenVis->visit(this);
     }

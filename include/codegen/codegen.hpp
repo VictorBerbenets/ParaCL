@@ -7,6 +7,7 @@
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/StringRef.h>
 
 #include <memory>
 #include <map>
@@ -27,10 +28,8 @@ class IRCodeGenerator final {
 public:
   IRCodeGenerator(StringRef ModuleName);
 
-
   Type *getInt32Ty();
   Type *getVoidTy();
-
    
 private:
   void createParaCLStdLibFuncsDecls();

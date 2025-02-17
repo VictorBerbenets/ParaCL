@@ -52,14 +52,15 @@ int main(int argc, char** argv) try {
       ParseDriver.evaluate();
       break;
     case Compiler:
-       
+      ParseDriver.compile(OutputFileName);       
       break;
     default:
       llvm_unreachable("Wrong operating-mode for paraCL");
   }
 
-
+} catch (const std::exception &Except) {
+  llvm::errs() << "Exception catched: " << Except.what() << '\n';   
 } catch (...) {
-
+  llvm::errs() << "Exception unknown" << '\n';
 }
 
