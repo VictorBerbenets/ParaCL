@@ -5,10 +5,8 @@ project(paracl)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(PARACL_COMPILER "${PROJECT_NAME}_compiler")
-set(PARACL_INTERPRET "${PROJECT_NAME}_interpreter")
-set(PARACL_COMPILER_PATH "lib/parsing/paracl_compiler.cpp")
-set(PARACL_INTERPRET_PATH "lib/parsing/paracl_interpreter.cpp")
+set(PARACL_EXEC_NAME "${PROJECT_NAME}")
+set(PARACL_SOURCE_PATH "${CMAKE_SOURCE_DIR}/paracl.cpp")
 
 find_package(LLVM REQUIRED CONFIG)
 if (LLVM_FOUND)
@@ -34,7 +32,10 @@ set(PARSER_PATH "lib/parsing/parser.y")
 
 aux_source_directory(./lib/ast/ AST_SOURCES)
 aux_source_directory(./lib/visitor/ VISITOR_SOURCES)
-aux_source_directory(./lib/symbol_tab/src SYMBOL_TAB_SOURCES)
+aux_source_directory(./lib/symbol_tab/ SYMBOL_TAB_SOURCES)
+
+add_library(PARACL_INTERFACE_LIB INTERFACE)
+target_include_directories(PARACL_INTERFACE_LIB INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 flex_target(scanner
   ${LEXER_PATH}
@@ -54,6 +55,7 @@ target_include_directories(bison_parser PUBLIC include/parsing/ ${CMAKE_CURRENT_
 target_include_directories(bison_parser PUBLIC include/ast/)
 target_include_directories(bison_parser PUBLIC include/symbol_tab/)
 target_include_directories(bison_parser PUBLIC include/visitor/)
+target_include_directories(bison_parser PUBLIC include/codegen/)
 
 add_compile_options(-Wall -Wextra)
 
@@ -64,7 +66,9 @@ set(INCLUDE_DIRS
   include/symbol_tab
   include/codegen
 )
+
 set(SOURCES
+    ./lib/codegen.cpp
     ${AST_SOURCES}
     ${VISITOR_SOURCES}
     ${SYMBOL_TAB_SOURCES}
@@ -72,17 +76,12 @@ set(SOURCES
     ${FLEX_scanner_OUTPUTS}
 )
 
-list(APPEND TARGETS ${PARACL_COMPILER} ${PARACL_INTERPRET})
-list(APPEND DRIVERS ${PARACL_COMPILER_PATH} ${PARACL_INTERPRET_PATH})
-
-foreach(TARGET DRIVER IN ZIP_LISTS TARGETS DRIVERS)
-  add_executable(${TARGET}
-    ${DRIVER}
-    ${SOURCES}
-  )
-  target_include_directories(${TARGET} PUBLIC ${INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
-  target_link_libraries(${TARGET} PUBLIC ${llvm_libs} bison_parser)
-endforeach()
+add_executable(${PARACL_EXEC_NAME}
+  paracl.cpp
+  ${SOURCES}
+)
+target_include_directories(${PARACL_EXEC_NAME} PUBLIC ${INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(${PARACL_EXEC_NAME} PUBLIC ${llvm_libs} bison_parser)
 
 aux_source_directory(./tests/interactive INTERACTIVE_SOURCES)
 aux_source_directory(./tests/unit UNIT_SOURCES)

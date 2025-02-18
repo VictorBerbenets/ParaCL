@@ -1,14 +1,17 @@
 #include "codegen_visitor.hpp"
 #include "ast_includes.hpp"
-#include "codegen.hpp"
 
 namespace paracl {
 
-void CodeGenVisitor::visit(ast::definition *Def) {}
+CodeGenVisitor::CodeGenVisitor(llvm::StringRef OutputFileName): Output(OutputFileName), CodeGen(Output) {}
 
-void CodeGenVisitor::visit(ast::root_statement_block *StmBlock) {}
+void CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
+  
+}
 
 void CodeGenVisitor::visit(ast::statement_block *StmBlock) {}
+
+void CodeGenVisitor::visit(ast::definition *Def) {}
 
 void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {}
 
@@ -30,9 +33,7 @@ void CodeGenVisitor::visit(ast::read_expression *stm) {}
 
 void CodeGenVisitor::visit(ast::print_function *stm) {}
 
-void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock,
-                                    llvm::StringRef Output) {
-
+void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock) {
   RootBlock->accept(this);
 }
 

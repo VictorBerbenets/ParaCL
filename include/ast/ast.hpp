@@ -2,12 +2,10 @@
 
 #include <concepts>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 
 #include "statement.hpp"
-#include "symbol_table.hpp"
 
 namespace paracl {
 

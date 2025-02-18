@@ -1,5 +1,6 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ErrorHandling.h>
+#include <llvm/Support/raw_ostream.h>
 
 #include <FlexLexer.h>
 
@@ -15,27 +16,33 @@ namespace cl = llvm::cl;
 
 enum OperatingMode { Compiler, Interpreter };
 
+cl::OptionCategory 
+ParaCLCategory("ParaCL options", "Options for controlling the running process.");
+
 cl::opt<std::string> InputFileName(cl::Positional, cl::desc("<input file>"),
-                                   cl::value_desc("filename"), cl::Required);
+                                   cl::value_desc("filename"), cl::Required, cl::cat(ParaCLCategory));
 
 cl::opt<OperatingMode> OperatingMode(
     "operating-mode", cl::desc("Set the operating mode"), cl::init(Interpreter),
     cl::values(clEnumValN(Compiler, "compiler",
                           "Compiling paraCL code in llvm IR"),
                clEnumValN(Interpreter, "interpreter",
-                          "Interpreting paraCL code without compiling")));
+                          "Interpreting paraCL code without compiling")), cl::cat(ParaCLCategory));
 
 cl::opt<std::string>
     OutputFileName("o", cl::desc("Specify output filename for llvm IR"),
                    cl::value_desc("filename"), cl::init("paracl.ll"),
-                   cl::Optional);
+                   cl::Optional, cl::cat(ParaCLCategory));
+
+void printParaCLVersion(llvm::raw_ostream &Os) {
+  Os << "ParaCL: 1.0" << '\n';
+}
+
 } // namespace
 
-namespace paracl::codegen {
-std::unique_ptr<IRCodeGenerator> CodeGen(nullptr);
-} // namespace paracl::codegen
-
 int main(int argc, char **argv) try {
+  cl::SetVersionPrinter(printParaCLVersion);
+  cl::HideUnrelatedOptions(ParaCLCategory);
   cl::ParseCommandLineOptions(argc, argv,
                               " ParaCL (custom para C language))\n\n"
                               " This program has two modes: compiler in llvm "

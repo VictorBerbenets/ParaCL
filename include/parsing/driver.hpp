@@ -65,8 +65,8 @@ public:
   }
 
   void compile(llvm::StringRef Output) const {
-    paracl::CodeGenVisitor GenVis;
-    GenVis.generateIRCode(ast_.root_ptr(), Output);
+    paracl::CodeGenVisitor GenVis(Output);
+    GenVis.generateIRCode(ast_.root_ptr());
   }
 
 private:

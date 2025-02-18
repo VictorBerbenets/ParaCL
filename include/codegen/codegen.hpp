@@ -40,10 +40,6 @@ private:
   std::map<std::string, Value *> NamedValues;
 };
 
-extern std::unique_ptr<IRCodeGenerator> CodeGen;
-
-std::unique_ptr<IRCodeGenerator> createIRCodeGenerator(std::string Name);
-
 } // namespace codegen
 
 } // namespace paracl

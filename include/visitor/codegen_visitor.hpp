@@ -3,11 +3,14 @@
 #include <llvm/ADT/StringRef.h>
 
 #include "visitor.hpp"
+#include "codegen.hpp"
 
 namespace paracl {
 
 class CodeGenVisitor : public base_visitor {
 public:
+  CodeGenVisitor(llvm::StringRef OutputFileName);
+
   virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm);
 
@@ -23,8 +26,10 @@ public:
   void visit(ast::while_operator *stm) override;
   void visit(ast::print_function *stm) override;
 
-  void generateIRCode(ast::root_statement_block *RootBlock,
-                      llvm::StringRef Output);
+  void generateIRCode(ast::root_statement_block *RootBlock);
+private:
+  llvm::StringRef Output;
+  codegen::IRCodeGenerator CodeGen;
 };
 
 } // namespace paracl

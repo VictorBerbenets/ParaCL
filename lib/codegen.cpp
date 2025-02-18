@@ -29,13 +29,6 @@ void IRCodeGenerator::createParaCLStdLibFuncsDecls() {
                    Mod.get());
 }
 
-std::unique_ptr<IRCodeGenerator> createIRCodeGenerator(llvm::StringRef Name) {
-  auto Gen = std::make_unique<IRCodeGenerator>(Name);
-  // Add standart paraCL library functions
-
-  return Gen;
-}
-
 } // namespace codegen
 
 } // namespace paracl
