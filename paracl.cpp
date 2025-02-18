@@ -14,6 +14,7 @@ namespace {
 
 namespace cl = llvm::cl;
 
+enum Error { ParseErr = 0xbad2bad, FStreamErr = 0xcafe10b0ba };
 enum OperatingMode { Compiler, Interpreter };
 
 cl::OptionCategory
@@ -63,22 +64,24 @@ int main(int argc, char **argv) try {
   if (auto errors = ParseDriver.check_for_errors(); errors) {
     llvm::errs() << "The program has been stopped. Found errors:" << '\n';
     errors.value().print_errors(std::cerr);
-    return -1;
+    return ParseErr;
   }
 
-  if (OperatingMode == Interpreter) {
-    ParseDriver.evaluate();
-  } else if (OperatingMode == Compiler) {
+  if (OperatingMode == Compiler) {
     if (!OutputFileName.getValue().empty()) {
       std::error_code ErrCode;
       llvm::raw_fd_ostream FileOs(OutputFileName, ErrCode);
-      if (ErrCode)
+      if (ErrCode) {
         llvm::errs() << ErrCode.message().c_str() << "\n";
+        return ParseErr;
+      }
       ParseDriver.compile(ModuleName, FileOs);
       FileOs.close();
     } else {
       ParseDriver.compile(ModuleName, llvm::outs());
     }
+  } else if (OperatingMode == Interpreter) {
+    ParseDriver.evaluate();
   } else {
     llvm_unreachable("Unknown operating mode for paraCL");
   }

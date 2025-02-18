@@ -32,6 +32,24 @@ public:
   Type *getInt32Ty();
   Type *getVoidTy();
 
+  BasicBlock *createBasicBlock(Function *Func, StringRef Name);
+
+  template <typename... ArgsTy,
+            typename = std::enable_if_t<
+                (... && std::is_convertible_v<Type *, ArgsTy>)>>
+  Function *createFunction(Type *Ret, Function::LinkageTypes LinkType,
+                           StringRef Name, bool IsVarArg, ArgsTy&&... Args) {
+    std::array<Type *, sizeof...(ArgsTy)> FuncArgs{
+        {std::forward<ArgsTy>(Args)...}};
+
+    auto *FuncType = FunctionType::get(Ret, FuncArgs, IsVarArg);
+    return Function::Create(FuncType, LinkType, Name, Mod.get());
+  }
+
+  Function *createFunction(Type *Ret, ArrayRef<Type *> Args,
+                           Function::LinkageTypes LinkType, StringRef Name,
+                           bool IsVarArg = false);
+
   friend class paracl::CodeGenVisitor;
 
 private:

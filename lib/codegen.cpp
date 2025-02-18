@@ -19,15 +19,18 @@ Type *IRCodeGenerator::getVoidTy() { return Type::getVoidTy(Context); }
 
 void IRCodeGenerator::createParaCLStdLibFuncsDecls() {
   // Create __pcl_print
-  SmallVector<Type *> PrintParams{getInt32Ty()};
-  auto *PrintFuncTy = FunctionType::get(getVoidTy(), PrintParams, false);
-  Function::Create(PrintFuncTy, Function::ExternalLinkage, ParaCLPrintFuncName,
-                   Mod.get());
+  createFunction(getVoidTy(), Function::ExternalLinkage, ParaCLPrintFuncName,
+                 false, getInt32Ty());
   // Create __pcl_scan
-  SmallVector<Type *> ScanParams{getVoidTy()};
-  auto *ScanFuncTy = FunctionType::get(getInt32Ty(), ScanParams, false);
-  Function::Create(ScanFuncTy, Function::ExternalLinkage, ParaCLScanFuncName,
-                   Mod.get());
+  createFunction(getInt32Ty(), Function::ExternalLinkage, ParaCLScanFuncName,
+                 false);
+}
+
+Function *IRCodeGenerator::createFunction(Type *Ret, ArrayRef<Type *> Args,
+                                          Function::LinkageTypes LinkType,
+                                          StringRef Name, bool IsVarArg) {
+  auto *FuncType = FunctionType::get(Ret, Args, IsVarArg);
+  return Function::Create(FuncType, LinkType, Name, Mod.get());
 }
 
 } // namespace codegen

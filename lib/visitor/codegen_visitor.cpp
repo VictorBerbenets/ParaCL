@@ -12,13 +12,11 @@ CodeGenVisitor::CodeGenVisitor(StringRef ModuleName) : CodeGen(ModuleName) {}
 
 // This visit method for root basic block represents the main module of the
 // program (global scope). The main function that launches the program is
-// created here
-// (__pcl_start)
+// created here (__pcl_start)
 void CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
-  auto *FuncType = FunctionType::get(CodeGen.getVoidTy(), false);
-  auto *PCLStartFunc = Function::Create(
-      FuncType, Function::ExternalLinkage,
-      codegen::IRCodeGenerator::ParaCLStartFuncName, CodeGen.Mod.get());
+  auto *PCLStartFunc = CodeGen.createFunction(
+      CodeGen.getVoidTy(), Function::ExternalLinkage,
+      codegen::IRCodeGenerator::ParaCLStartFuncName, false);
   // Create entry block to start instruction insertion
   auto *EntryBlock =
       BasicBlock::Create(CodeGen.Context, "pcl_entry", PCLStartFunc);
