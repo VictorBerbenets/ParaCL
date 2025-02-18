@@ -51,10 +51,8 @@ class statement_block : public statement {
   using ScopeIter = StmtsStore::iterator;
   using ConstScopeIter = StmtsStore::const_iterator;
 
-   // Find the object in the current scope
-  bool has(const std::string &name) const {
-    return sym_tab_.has(name);
-  }
+  // Find the object in the current scope
+  bool has(const std::string &name) const { return sym_tab_.has(name); }
 
 public:
   explicit statement_block(statement_block *parent) : statement{parent} {}

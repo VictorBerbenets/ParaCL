@@ -57,7 +57,7 @@ target_include_directories(bison_parser PUBLIC include/symbol_tab/)
 target_include_directories(bison_parser PUBLIC include/visitor/)
 target_include_directories(bison_parser PUBLIC include/codegen/)
 
-add_compile_options(-Wall -Wextra)
+add_compile_options(-Wall -Wextra -g)
 
 set(INCLUDE_DIRS
   include/ast

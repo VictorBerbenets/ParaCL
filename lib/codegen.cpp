@@ -1,3 +1,4 @@
+#include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/GlobalValue.h>
 
 #include "codegen.hpp"
@@ -18,12 +19,12 @@ Type *IRCodeGenerator::getVoidTy() { return Type::getVoidTy(Context); }
 
 void IRCodeGenerator::createParaCLStdLibFuncsDecls() {
   // Create __pcl_print
-  ArrayRef<Type *> PrintParams(getInt32Ty());
+  SmallVector<Type *> PrintParams{getInt32Ty()};
   auto *PrintFuncTy = FunctionType::get(getVoidTy(), PrintParams, false);
   Function::Create(PrintFuncTy, Function::ExternalLinkage, ParaCLPrintFuncName,
                    Mod.get());
   // Create __pcl_scan
-  ArrayRef<Type *> ScanParams(getVoidTy());
+  SmallVector<Type *> ScanParams{getVoidTy()};
   auto *ScanFuncTy = FunctionType::get(getInt32Ty(), ScanParams, false);
   Function::Create(ScanFuncTy, Function::ExternalLinkage, ParaCLScanFuncName,
                    Mod.get());

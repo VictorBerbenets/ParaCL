@@ -64,9 +64,9 @@ public:
     runner.run_program(ast_.root_ptr());
   }
 
-  void compile(llvm::StringRef Output) const {
-    paracl::CodeGenVisitor GenVis(Output);
-    GenVis.generateIRCode(ast_.root_ptr());
+  void compile(llvm::StringRef ModuleName, llvm::raw_ostream &Os) const {
+    paracl::CodeGenVisitor CodeGenVis(ModuleName);
+    CodeGenVis.generateIRCode(ast_.root_ptr(), Os);
   }
 
 private:

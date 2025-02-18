@@ -16,27 +16,34 @@ namespace cl = llvm::cl;
 
 enum OperatingMode { Compiler, Interpreter };
 
-cl::OptionCategory 
-ParaCLCategory("ParaCL options", "Options for controlling the running process.");
+cl::OptionCategory
+    ParaCLCategory("ParaCL options",
+                   "Options for controlling the running process.");
 
 cl::opt<std::string> InputFileName(cl::Positional, cl::desc("<input file>"),
-                                   cl::value_desc("filename"), cl::Required, cl::cat(ParaCLCategory));
+                                   cl::value_desc("filename"), cl::Required,
+                                   cl::cat(ParaCLCategory));
+
+cl::opt<std::string> ModuleName("module-name",
+                                cl::desc("Set the name for the paraCL module"),
+                                cl::value_desc("paraCL module name"),
+                                cl::Optional, cl::init("pcl_module"),
+                                cl::cat(ParaCLCategory));
 
 cl::opt<OperatingMode> OperatingMode(
-    "operating-mode", cl::desc("Set the operating mode"), cl::init(Interpreter),
+    "oper-mode", cl::desc("Set the operating mode"), cl::init(Interpreter),
     cl::values(clEnumValN(Compiler, "compiler",
                           "Compiling paraCL code in llvm IR"),
                clEnumValN(Interpreter, "interpreter",
-                          "Interpreting paraCL code without compiling")), cl::cat(ParaCLCategory));
+                          "Interpreting paraCL code without compiling")),
+    cl::Optional, cl::cat(ParaCLCategory));
 
 cl::opt<std::string>
     OutputFileName("o", cl::desc("Specify output filename for llvm IR"),
-                   cl::value_desc("filename"), cl::init("paracl.ll"),
-                   cl::Optional, cl::cat(ParaCLCategory));
+                   cl::value_desc("filename"), cl::Optional,
+                   cl::cat(ParaCLCategory));
 
-void printParaCLVersion(llvm::raw_ostream &Os) {
-  Os << "ParaCL: 1.0" << '\n';
-}
+void printParaCLVersion(llvm::raw_ostream &Os) { Os << "ParaCL: 1.0" << '\n'; }
 
 } // namespace
 
@@ -59,15 +66,21 @@ int main(int argc, char **argv) try {
     return -1;
   }
 
-  switch (OperatingMode) {
-  case Interpreter:
+  if (OperatingMode == Interpreter) {
     ParseDriver.evaluate();
-    break;
-  case Compiler:
-    ParseDriver.compile(OutputFileName);
-    break;
-  default:
-    llvm_unreachable("Wrong operating-mode for paraCL");
+  } else if (OperatingMode == Compiler) {
+    if (!OutputFileName.getValue().empty()) {
+      std::error_code ErrCode;
+      llvm::raw_fd_ostream FileOs(OutputFileName, ErrCode);
+      if (ErrCode)
+        llvm::errs() << ErrCode.message().c_str() << "\n";
+      ParseDriver.compile(ModuleName, FileOs);
+      FileOs.close();
+    } else {
+      ParseDriver.compile(ModuleName, llvm::outs());
+    }
+  } else {
+    llvm_unreachable("Unknown operating mode for paraCL");
   }
 
 } catch (const std::exception &Except) {

@@ -6,5 +6,5 @@ let
  pkgs.mkShell {
    buildInputs = [ llvm ];
    nativeBuildInputs = [ pkgs.cmake pkgs.gtest pkgs.bison pkgs.flex
-                         pkgs.clang-tools pkgs.lit pkgs.valgrind];
+                         pkgs.clang-tools pkgs.lit pkgs.valgrind pkgs.gdb];
 }

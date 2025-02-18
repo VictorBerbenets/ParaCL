@@ -14,24 +14,28 @@
 
 namespace paracl {
 
+class CodeGenVisitor;
+
 namespace codegen {
 
 using namespace llvm;
 
 // This class provides methods for generating paraCL code to LLVM IR.
 class IRCodeGenerator final {
-
+public:
   static constexpr StringRef ParaCLStartFuncName = "__pcl_start";
   static constexpr StringRef ParaCLPrintFuncName = "__pcl_print";
   static constexpr StringRef ParaCLScanFuncName = "__pcl_scan";
 
-public:
   IRCodeGenerator(StringRef ModuleName);
 
   Type *getInt32Ty();
   Type *getVoidTy();
 
+  friend class paracl::CodeGenVisitor;
+
 private:
+  // Create print and scan function decls
   void createParaCLStdLibFuncsDecls();
 
   LLVMContext Context;
