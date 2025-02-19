@@ -9,7 +9,6 @@
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
 
-#include <map>
 #include <memory>
 
 namespace paracl {
@@ -29,16 +28,20 @@ public:
 
   IRCodeGenerator(StringRef ModuleName);
 
-  Type *getInt32Ty();
+  IntegerType *getInt32Ty();
   Type *getVoidTy();
 
-  BasicBlock *createBasicBlock(Function *Func, StringRef Name);
+  // Create a block and make a branch from the current block to the new one.
+  // Changes the insertion location to the end of the new block if
+  // InsertInNewBlock == true
+  BasicBlock *createBlockAndLinkWith(BasicBlock *CurrBlock, StringRef Name,
+                                     bool InsertInNewBlock = true);
 
   template <typename... ArgsTy,
             typename = std::enable_if_t<
-                (... && std::is_convertible_v<Type *, ArgsTy>)>>
+                (... && std::is_convertible_v<ArgsTy, Type *>)>>
   Function *createFunction(Type *Ret, Function::LinkageTypes LinkType,
-                           StringRef Name, bool IsVarArg, ArgsTy&&... Args) {
+                           StringRef Name, bool IsVarArg, ArgsTy &&...Args) {
     std::array<Type *, sizeof...(ArgsTy)> FuncArgs{
         {std::forward<ArgsTy>(Args)...}};
 
@@ -59,7 +62,6 @@ private:
   LLVMContext Context;
   std::unique_ptr<IRBuilder<>> Builder;
   std::unique_ptr<Module> Mod;
-  std::map<std::string, Value *> NamedValues;
 };
 
 } // namespace codegen

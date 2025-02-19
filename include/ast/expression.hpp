@@ -147,9 +147,6 @@ public:
   }
 
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
-
-private:
-  value_type value_;
 };
 
 } // namespace ast

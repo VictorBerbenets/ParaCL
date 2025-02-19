@@ -2,6 +2,9 @@
 
 #include <llvm/ADT/StringRef.h>
 
+#include <map>
+#include <utility>
+
 #include "codegen.hpp"
 #include "visitor.hpp"
 
@@ -31,9 +34,16 @@ public:
                       llvm::raw_ostream &Os);
 
 private:
-  void printIRToOstream(llvm::raw_ostream &Os) const;
+  llvm::Value *getCurrValue() const noexcept { return CurrVal; }
 
+  void setValue(llvm::Value *Value) noexcept { CurrVal = Value; }
+
+  llvm::Value *getValueForVar(llvm::StringRef VarName);
+
+  void printIRToOstream(llvm::raw_ostream &Os) const;
+  llvm::DenseMap<llvm::StringRef, llvm::Value *> NameToValue;
   codegen::IRCodeGenerator CodeGen;
+  llvm::Value *CurrVal;
 };
 
 } // namespace paracl

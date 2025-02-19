@@ -14,7 +14,6 @@ public:
     return names_.find(var_name) != names_.end();
   }
 
-  // template <typename... Args>
   void add(const std::string &var_name, int value) {
     names_.insert({var_name, value});
   }
