@@ -1,10 +1,13 @@
-let
-   pkgs = import <nixpkgs> {};
-   llvmPackages = pkgs.llvmPackages_19;
-   llvm = llvmPackages.llvm;
- in
- pkgs.mkShell {
-   buildInputs = [ llvm ];
-   nativeBuildInputs = [ pkgs.cmake pkgs.gtest pkgs.bison pkgs.flex
-                         pkgs.clang-tools pkgs.lit pkgs.valgrind pkgs.gdb];
+{ pkgs, stdenv, ... }:
+stdenv.mkDerivation {
+  src = ./.;
+  pname = "paraCL (custom C language)";
+  version = "0.1.0";
+  nativeBuildInputs = with pkgs; [
+    flex
+    bison
+    cmake
+  ];
+  buildInputs = [pkgs.llvm_19];
+  checkInputs = with pkgs; [ gtest ];
 }

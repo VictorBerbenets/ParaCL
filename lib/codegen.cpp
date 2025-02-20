@@ -17,6 +17,10 @@ IntegerType *IRCodeGenerator::getInt32Ty() { return Type::getInt32Ty(Context); }
 
 Type *IRCodeGenerator::getVoidTy() { return Type::getVoidTy(Context); }
 
+ConstantInt *IRCodeGenerator::createConstantSInt32(unsigned Val) {
+  return ConstantInt::get(getInt32Ty(), Val, true);
+}
+
 void IRCodeGenerator::createParaCLStdLibFuncsDecls() {
   // Create __pcl_print
   createFunction(getVoidTy(), Function::ExternalLinkage, ParaCLPrintFuncName,

@@ -34,35 +34,153 @@ void CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
 }
 
 void CodeGenVisitor::visit(ast::statement_block *StmBlock) {
-  auto *CurrBlock = CodeGen.Builder->GetInsertBlock();
-  CodeGen.createBlockAndLinkWith(CurrBlock, "local-scope");
-
   for (auto &&CurStatement : *StmBlock)
     CurStatement->accept(this);
 }
 
-void CodeGenVisitor::visit(ast::definition *Def) {}
+void CodeGenVisitor::visit(ast::definition *) { /*unused*/ }
 
-void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {}
+void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {
+  CalcExpr->left()->accept(this);
+  auto *Lhs = getCurrValue();
+  CalcExpr->right()->accept(this);
+  auto *Rhs = getCurrValue();
 
-void CodeGenVisitor::visit(ast::logic_expression *LogicExpr) {}
+  switch (CalcExpr->type()) {
+  case ast::CalcOp::ADD:
+    setCurrValue(CodeGen.Builder->CreateAdd(Lhs, Rhs));
+    break;
+  case ast::CalcOp::SUB:
+    setCurrValue(CodeGen.Builder->CreateSub(Lhs, Rhs));
+    break;
+  case ast::CalcOp::MUL:
+    setCurrValue(CodeGen.Builder->CreateMul(Lhs, Rhs));
+    break;
+  case ast::CalcOp::PERCENT:
+    setCurrValue(CodeGen.Builder->CreateSRem(Lhs, Rhs));
+    break;
+  case ast::CalcOp::DIV:
+    setCurrValue(CodeGen.Builder->CreateSDiv(Lhs, Rhs));
+    break;
+  default:
+    llvm_unreachable("unrecognized logic type for calc_expression");
+  }
+}
 
-void CodeGenVisitor::visit(ast::un_operator *UnOper) {}
+void CodeGenVisitor::visit(ast::logic_expression *LogicExpr) {
+  LogicExpr->left()->accept(this);
+  auto *Lhs = getCurrValue();
+  LogicExpr->right()->accept(this);
+  auto *Rhs = getCurrValue();
+
+  switch (LogicExpr->type()) {
+  case ast::LogicOp::LOGIC_AND:
+    setCurrValue(CodeGen.Builder->CreateAnd(Lhs, Rhs));
+    break;
+  case ast::LogicOp::LOGIC_OR:
+    setCurrValue(CodeGen.Builder->CreateOr(Lhs, Rhs));
+    break;
+  case ast::LogicOp::LESS:
+    setCurrValue(
+        CodeGen.Builder->CreateCmp(CmpInst::Predicate::ICMP_SLT, Lhs, Rhs));
+    break;
+  case ast::LogicOp::LESS_EQ:
+    setCurrValue(
+        CodeGen.Builder->CreateCmp(CmpInst::Predicate::ICMP_SLE, Lhs, Rhs));
+    break;
+  case ast::LogicOp::GREATER:
+    setCurrValue(
+        CodeGen.Builder->CreateCmp(CmpInst::Predicate::ICMP_SGT, Lhs, Rhs));
+    break;
+  case ast::LogicOp::GREATER_EQ:
+    setCurrValue(
+        CodeGen.Builder->CreateCmp(CmpInst::Predicate::ICMP_SGE, Lhs, Rhs));
+    break;
+  case ast::LogicOp::EQ:
+    setCurrValue(
+        CodeGen.Builder->CreateCmp(CmpInst::Predicate::ICMP_EQ, Lhs, Rhs));
+    break;
+  case ast::LogicOp::NEQ:
+    setCurrValue(
+        CodeGen.Builder->CreateCmp(CmpInst::Predicate::ICMP_NE, Lhs, Rhs));
+    break;
+  default:
+    throw std::logic_error{"unrecognized logic type"};
+  }
+}
+
+void CodeGenVisitor::visit(ast::un_operator *UnOper) {
+  UnOper->arg()->accept(this);
+
+  switch (UnOper->type()) {
+  case ast::UnOp::PLUS:
+    // Do nothing with the value
+    setCurrValue(getCurrValue());
+    break;
+  case ast::UnOp::MINUS:
+    setCurrValue(CodeGen.Builder->CreateNeg(getCurrValue()));
+    break;
+  case ast::UnOp::NEGATE:
+    setCurrValue(CodeGen.Builder->CreateICmpEQ(
+        getCurrValue(), CodeGen.createConstantSInt32(0)));
+    break;
+  default:
+    llvm_unreachable("unrecognized logic type for un_operator");
+  }
+}
 
 void CodeGenVisitor::visit(ast::number *Num) {
-  CurrVal = ConstantInt::getSigned(CodeGen.getInt32Ty(), Num->get_value());
+  setCurrValue(CodeGen.createConstantSInt32(Num->get_value()));
 }
 
 void CodeGenVisitor::visit(ast::variable *Var) {
-  setValue(getValueForVar(Var->name()));
+  auto *Value = getValueForVar(Var->name());
+  auto *AllocTy = static_cast<AllocaInst *>(Value)->getAllocatedType();
+  auto *Load = CodeGen.Builder->CreateLoad(AllocTy, Value, Var->name());
+  setCurrValue(Load);
 }
 
 void CodeGenVisitor::visit(ast::assignment *Assign) {
   Assign->ident_exp()->accept(this);
-  NameToValue[Assign->name()] = getCurrValue();
+  if (!NameToValue.contains(Assign->name())) {
+    auto *Alloca = CodeGen.Builder->CreateAlloca(CodeGen.getInt32Ty(), nullptr,
+                                                 Assign->name());
+    CodeGen.Builder->CreateStore(getCurrValue(), Alloca);
+    NameToValue[Assign->name()] = Alloca;
+  } else {
+    CodeGen.Builder->CreateStore(getCurrValue(), NameToValue[Assign->name()]);
+  }
 }
 
-void CodeGenVisitor::visit(ast::if_operator *stm) {}
+void CodeGenVisitor::visit(ast::if_operator *If) {
+  auto *CurrBlock = CodeGen.createBlockAndLinkWith(
+      CodeGen.Builder->GetInsertBlock(), "if-cond");
+  // Calculate condition
+  If->condition()->accept(this);
+  auto *CondValue = getCurrValue();
+
+  auto *IfBodyBlock =
+      BasicBlock::Create(CodeGen.Context, "if-body", CurrBlock->getParent());
+  auto *IfEndBlock =
+      BasicBlock::Create(CodeGen.Context, "if-end", CurrBlock->getParent());
+  CodeGen.Builder->SetInsertPoint(IfBodyBlock);
+  If->body()->accept(this);
+  CodeGen.Builder->CreateBr(IfEndBlock);
+
+  CodeGen.Builder->SetInsertPoint(CurrBlock);
+  if (If->else_block()) {
+    auto *IfElseBlock =
+        BasicBlock::Create(CodeGen.Context, "if-else", CurrBlock->getParent());
+    CodeGen.Builder->CreateCondBr(CondValue, IfBodyBlock, IfElseBlock);
+
+    CodeGen.Builder->SetInsertPoint(IfElseBlock);
+    If->else_block()->accept(this);
+    CodeGen.Builder->CreateBr(IfEndBlock);
+  } else {
+    CodeGen.Builder->CreateCondBr(CondValue, IfBodyBlock, IfEndBlock);
+  }
+  CodeGen.Builder->SetInsertPoint(IfEndBlock);
+}
 
 void CodeGenVisitor::visit(ast::while_operator *stm) {}
 
@@ -71,7 +189,7 @@ void CodeGenVisitor::visit(ast::read_expression *stm) {
   auto *ScanFunc =
       CodeGen.Mod->getFunction(codegen::IRCodeGenerator::ParaCLScanFuncName);
   auto *ScanRetVal = CodeGen.Builder->CreateCall(ScanType, ScanFunc);
-  setValue(ScanRetVal);
+  setCurrValue(ScanRetVal);
 }
 
 void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {

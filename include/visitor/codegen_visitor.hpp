@@ -36,7 +36,7 @@ public:
 private:
   llvm::Value *getCurrValue() const noexcept { return CurrVal; }
 
-  void setValue(llvm::Value *Value) noexcept { CurrVal = Value; }
+  void setCurrValue(llvm::Value *Value) noexcept { CurrVal = Value; }
 
   llvm::Value *getValueForVar(llvm::StringRef VarName);
 

@@ -31,6 +31,9 @@ public:
   IntegerType *getInt32Ty();
   Type *getVoidTy();
 
+  // Create signed constant int32
+  ConstantInt *createConstantSInt32(unsigned Val);
+
   // Create a block and make a branch from the current block to the new one.
   // Changes the insertion location to the end of the new block if
   // InsertInNewBlock == true
