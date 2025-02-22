@@ -1,21 +1,50 @@
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/GlobalValue.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/TargetParser/Host.h>
 
 #include "codegen.hpp"
+#include "option_category.hpp"
 
 namespace paracl {
 
+llvm::cl::OptionCategory
+    ParaCLCategory("ParaCL options",
+                   "Options for controlling the running process.");
+
 namespace codegen {
+
+namespace cl = llvm::cl;
+
+cl::opt<std::string> TargetTriple("target-triple",
+                                  cl::desc("Set the platform target triple"),
+                                  cl::Optional,
+                                  cl::init(llvm::sys::getDefaultTargetTriple()),
+                                  cl::cat(ParaCLCategory));
 
 IRCodeGenerator::IRCodeGenerator(StringRef ModuleName)
     : Builder(std::make_unique<IRBuilder<>>(Context)),
       Mod(std::make_unique<Module>(ModuleName, Context)) {
+  assert(!TargetTriple.getValue().empty());
+  Mod->setTargetTriple(TargetTriple.getValue());
   createParaCLStdLibFuncsDecls();
 }
 
 IntegerType *IRCodeGenerator::getInt32Ty() { return Type::getInt32Ty(Context); }
 
+IntegerType *IRCodeGenerator::getInt1Ty() { return Type::getInt1Ty(Context); }
+
 Type *IRCodeGenerator::getVoidTy() { return Type::getVoidTy(Context); }
+
+Value *IRCodeGenerator::createCondValueIfNeed(Value *Val) {
+  if (auto *Type = dyn_cast<IntegerType>(Val->getType());
+      Type && Type->getBitWidth() == 1) {
+    return Val;
+  }
+
+  auto *ZeroVal = createConstantSInt32(0);
+  return Builder->CreateICmpNE(Val, ZeroVal);
+}
 
 ConstantInt *IRCodeGenerator::createConstantSInt32(unsigned Val) {
   return ConstantInt::get(getInt32Ty(), Val, true);

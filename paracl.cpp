@@ -9,6 +9,7 @@
 
 #include "codegen.hpp"
 #include "driver.hpp"
+#include "option_category.hpp"
 
 namespace {
 
@@ -17,19 +18,15 @@ namespace cl = llvm::cl;
 enum Error { ParseErr = 0xbad2bad, FStreamErr = 0xcafe10b0ba };
 enum OperatingMode { Compiler, Interpreter };
 
-cl::OptionCategory
-    ParaCLCategory("ParaCL options",
-                   "Options for controlling the running process.");
-
 cl::opt<std::string> InputFileName(cl::Positional, cl::desc("<input file>"),
                                    cl::value_desc("filename"), cl::Required,
-                                   cl::cat(ParaCLCategory));
+                                   cl::cat(paracl::ParaCLCategory));
 
 cl::opt<std::string> ModuleName("module-name",
                                 cl::desc("Set the name for the paraCL module"),
                                 cl::value_desc("paraCL module name"),
                                 cl::Optional, cl::init("pcl_module"),
-                                cl::cat(ParaCLCategory));
+                                cl::cat(paracl::ParaCLCategory));
 
 cl::opt<OperatingMode> OperatingMode(
     "oper-mode", cl::desc("Set the operating mode"), cl::init(Interpreter),
@@ -37,12 +34,12 @@ cl::opt<OperatingMode> OperatingMode(
                           "Compiling paraCL code in llvm IR"),
                clEnumValN(Interpreter, "interpreter",
                           "Interpreting paraCL code without compiling")),
-    cl::Optional, cl::cat(ParaCLCategory));
+    cl::Optional, cl::cat(paracl::ParaCLCategory));
 
 cl::opt<std::string>
     OutputFileName("o", cl::desc("Specify output filename for llvm IR"),
                    cl::value_desc("filename"), cl::Optional,
-                   cl::cat(ParaCLCategory));
+                   cl::cat(paracl::ParaCLCategory));
 
 void printParaCLVersion(llvm::raw_ostream &Os) { Os << "ParaCL: 1.0" << '\n'; }
 
@@ -50,7 +47,7 @@ void printParaCLVersion(llvm::raw_ostream &Os) { Os << "ParaCL: 1.0" << '\n'; }
 
 int main(int argc, char **argv) try {
   cl::SetVersionPrinter(printParaCLVersion);
-  cl::HideUnrelatedOptions(ParaCLCategory);
+  cl::HideUnrelatedOptions(paracl::ParaCLCategory);
   cl::ParseCommandLineOptions(argc, argv,
                               " ParaCL (custom para C language))\n\n"
                               " This program has two modes: compiler in llvm "

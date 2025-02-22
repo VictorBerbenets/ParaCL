@@ -1,12 +1,3 @@
-//------------------------------------------------------------------------------
-//
-// pcllib.cc -- ParaCL driver
-//
-// main calls __pcl_start
-// defines __pcl_print and __pcl_scan
-//
-//------------------------------------------------------------------------------
-
 #include <iostream>
 
 extern "C" void __pcl_start();

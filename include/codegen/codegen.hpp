@@ -29,7 +29,10 @@ public:
   IRCodeGenerator(StringRef ModuleName);
 
   IntegerType *getInt32Ty();
+  IntegerType *getInt1Ty();
   Type *getVoidTy();
+
+  Value *createCondValueIfNeed(Value *Val);
 
   // Create signed constant int32
   ConstantInt *createConstantSInt32(unsigned Val);
