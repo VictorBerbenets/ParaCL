@@ -1,0 +1,21 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: %t2 |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+a = 5;
+b = a;
+c = b - 1;
+
+print a;
+print b;
+print c;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 5
+// CHECK-NEXT: 5
+// CHECK-NEXT: 4

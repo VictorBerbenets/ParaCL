@@ -7,6 +7,8 @@ stdenv.mkDerivation {
     flex
     bison
     cmake
+    lit
+    filecheck
   ];
   buildInputs = [pkgs.llvm_19];
   checkInputs = with pkgs; [ gtest ];

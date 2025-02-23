@@ -1,0 +1,52 @@
+// RUN: echo "1 2" | %paracl %s | FileCheck %s -check-prefix=aLTb -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "1 2" | %t2 |& FileCheck %s -check-prefix=aLTb -dump-input=fail
+
+
+// RUN: echo "10 0" | %paracl %s | FileCheck %s -check-prefix=aGTb -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "10 0" | %t2 |& FileCheck %s -check-prefix=aGTb -dump-input=fail
+
+
+// RUN: echo "100 100" | %paracl %s | FileCheck %s -check-prefix=aEQb -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "100 100" | %t2 |& FileCheck %s -check-prefix=aEQb -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+a = ?;
+b = ?;
+
+if (a < b) {
+  print a;
+} else if (a * 10 > b * 5) {
+  print b;
+} else {
+  a = a + b;
+  print a + b;
+}
+
+if (a == b) {
+  print a * b;
+} else if (b != 0) {
+  print a / b;
+} else {
+  print 1000;
+}
+
+//-----------------------------------------------------------------------------
+
+// aLTb: 1
+// aLTb-NEXT: 0
+
+// aGTb: 0
+// aGTb-NEXT: 1000
+
+// aEQb: 100
+// aEQb-NEXT: 10000

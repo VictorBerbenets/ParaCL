@@ -1,0 +1,20 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: %t2 |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+a = (b = (c = -150) * 10) - c;
+
+print a; // -1350
+print b; // -1500
+print c; // -150
+
+//-----------------------------------------------------------------------------
+
+// CHECK: -1350
+// CHECK-NEXT: -1500
+// CHECK-NEXT: -150
+

@@ -1,0 +1,21 @@
+// RUN: echo "999" | %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "999" | %t2 |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+i = 1;
+
+while (i) {
+    a = ?;
+    a = a + 1;
+    print a;
+
+    i = i - 1;
+}
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 1000

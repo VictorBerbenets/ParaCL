@@ -1,0 +1,25 @@
+// RUN: echo "123 321" | %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "123 321" | %t2 |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+M = ?;
+N = ?;
+
+K = N * M;
+i = K;
+while (i > 0) {
+    if (((i % M) == 0) && ((i % N) == 0)) {
+        K = i;
+    }
+    i = i - 1;
+}
+
+print K;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 13161 

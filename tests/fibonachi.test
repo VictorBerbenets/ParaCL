@@ -1,0 +1,31 @@
+
+// RUN: echo "25" | %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "25" | %t2 |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+{
+  N = ?;
+  a = b = 1;
+  c = 0;
+  if (N <= 2)
+    print 1;
+  else
+  {
+    i = 3;
+    while (i <= N) {
+      c = a + b;
+      a = b;
+      b = c;
+      i = i + 1;
+    }
+    print b;
+  }
+}
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 75025

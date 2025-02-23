@@ -1,0 +1,22 @@
+// RUN: echo "154 7777" | %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "154 7777" | %t2 |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+a = ?;
+b = ?;
+
+while (a != b) {
+    if (a > b)
+        a = a - b;
+    else
+        b = b - a;
+}
+print a;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 77

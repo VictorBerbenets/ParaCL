@@ -1,0 +1,28 @@
+// RUN: echo "-5" | %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "-5" | %t2 |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+a = ?;
+while(a) {
+  if (a > 0) {
+    a = a - 1;
+  } else {
+    a = a + 1;
+  }
+  if (a + 1 == 5 || a - 1 == -5)
+    print 5;
+  print a;
+}
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 5
+// CHECK-NEXT: -4
+// CHECK-NEXT: -3
+// CHECK-NEXT: -2
+// CHECK-NEXT: -1
+// CHECK-NEXT: 0

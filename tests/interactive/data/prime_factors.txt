@@ -1,9 +1,0 @@
-n = ?;
-div = 2;
-while (n > 1) {
-  while ((n % div) == 0) {
-    print div;
-    n = n / div;
-  }
-  div = div + 1;
-}

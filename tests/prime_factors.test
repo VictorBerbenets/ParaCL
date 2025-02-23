@@ -1,0 +1,24 @@
+// RUN: echo "123456789" | %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: clang++ %t.ll %pcllib -o %t2
+// RUN: echo "123456789" | %t2 |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+n = ?;
+div = 2;
+while (n > 1) {
+  while ((n % div) == 0) {
+    print div;
+    n = n / div;
+  }
+  div = div + 1;
+}
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 3 
+// CHECK-NEXT: 3 
+// CHECK-NEXT: 3607
+// CHECK-NEXT: 3803
