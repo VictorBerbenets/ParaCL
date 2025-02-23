@@ -7,14 +7,7 @@
 #include "option_category.hpp"
 
 namespace paracl {
-
-llvm::cl::OptionCategory
-    ParaCLCategory("ParaCL options",
-                   "Options for controlling the running process.");
-
 namespace codegen {
-
-namespace cl = llvm::cl;
 
 cl::opt<std::string> TargetTriple("target-triple",
                                   cl::desc("Set the platform target triple"),
@@ -79,5 +72,4 @@ BasicBlock *IRCodeGenerator::createBlockAndLinkWith(BasicBlock *CurrBlock,
 }
 
 } // namespace codegen
-
 } // namespace paracl

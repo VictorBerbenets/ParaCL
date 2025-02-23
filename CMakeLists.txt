@@ -69,6 +69,7 @@ set(INCLUDE_DIRS
 
 set(SOURCES
     ./lib/codegen.cpp
+    ./lib/option_category.cpp
     ${AST_SOURCES}
     ${VISITOR_SOURCES}
     ${SYMBOL_TAB_SOURCES}
@@ -92,7 +93,7 @@ list(APPEND TESTS "interactive" "unit")
 list(APPEND TESTS_SOURCES "INTERACTIVE_SOURCES" "UNIT_SOURCES")
 
 foreach(TEST TEST_SRC IN ZIP_LISTS TESTS TESTS_SOURCES)
-  add_executable(${TEST} ${${TEST_SRC}} ${SOURCES}  lib/codegen.cpp)
+  add_executable(${TEST} ${${TEST_SRC}} ${SOURCES}  lib/option_category.cpp)
   target_link_libraries(${TEST} PRIVATE ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${llvm_libs})
   target_include_directories(${TEST} PUBLIC ${INCLUDE_DIRS}
                                             ${CMAKE_CURRENT_BINARY_DIR} ${TESTS_DIR})
