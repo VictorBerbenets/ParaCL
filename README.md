@@ -1,32 +1,65 @@
 # Para C Language
 
 ## About
-It is a simple programming language, similar in syntax to the C. The following operations are supported at early levels:  
-while()  
-if()  
-print  
-? - an analog of scanf()  
-All types are integer (so far).
+This is a custom programming language, similar in syntax to the C. Example:
+```
+// Fibonachi program
+
+N = ?;
+a = b = 1;
+c = 0;
+if (N <= 2)
+    print 1;
+else {
+    i = 3;
+    while (i <= N) {
+      c = a + b;
+      a = b;
+      b = c;
+      i = i + 1;
+    }
+    print b;
+}
+
+```
+? - scan function which returns the read value to the call location.  
+All types are integer (so far).  
+This program has two modes of operation: interpreter and compiler. By default, the interpreter mode is enabled. By specifying **-oper-mode=compiler**, you'll get generated LLVM IR, which can then be linked with the paraCL standard library (**lib/std_pcl_lib/pcllib.cpp**). Using clang, you can then produce an executable file.
 ## Requirements
-1. **cmake** version must be 3.15 or higher
-2. [Bison & flex](https://www.gnu.org/software/bison/) must be installed
-3. Gtest must be installed
+[Nix](https://nixos.org/download/) must be installed. 
 ## How to build
 ```bash
-git clone --recurse-submodules https://github.com/VictorBerbenets/ParaCL.git
+git clone git@github.com:VictorBerbenets/ParaCL.git
 cd ParaCL
+nix develop .
+
 cmake -S ./ -B build/
-cd build/
-cmake --build .
+cmake --build build
 ```
 
 ## To Run the program do
 ```bash
-./driver [file]
+./build/paracl [options] <input-file>
+
+# OPTIONS:
+#
+# Generic Options:
+#
+#   --help                             - Display available options (--help-hidden for more)
+#   --help-list                        - Display list of available options (--help-list-hidden for more)
+#   --version                          - Display the version of this program
+#
+# ParaCL options:
+# Options for controlling the running process.
+#
+#   --module-name=<paraCL module name> - Set the name for the paraCL module
+#   -o <filename>                      - Specify output filename for llvm IR
+#   --oper-mode=<value>                - Set the operating mode
+#     =compiler                        -   Compiling paraCL code into llvm IR
+#     =interpreter                     -   Interpreting paraCL code without compiling
+#   --target-triple=<string>           - Set the platform target triple
 ```
-The program will be waiting for input file as command line argument with para C
-code.
 ## How to run tests:
 ```bash
-./example
+lit tests/
 ```
