@@ -71,6 +71,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
   PERCENT  "%"
   EOF 0    "end of file"
   SCOLON   ";"
+  COMMA    ","
 ;
 
 // statement tokens
@@ -79,11 +80,16 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
   ELSE       "else"
   WHILE      "while"
   PRINT      "print"
+  ARRAY      "array"
+  REPEAT     "repeat"
+  UNDEF      "undef"
   SCAN       "?"
   OP_BRACK   "("
   CL_BRACK   ")"
   OP_BRACE   "{"
   CL_BRACE   "}"
+  OP_SQBRACK   "["
+  CL_SQBRACK   "]"
 ;
 
 // logical tokens
@@ -167,10 +173,15 @@ statement:  OP_BRACE statement_block CL_BRACE {
           | SCOLON                            { $$ = driver.make_node<statement_block>(); }
 ;
 
+lvalue_operand: VAR
+              | array_value
+
 base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
                 | NUMBER                          { $$ = driver.make_node<number>($1, @$); }
-                | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+            //  | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
                 | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
+                | lvalue_operand                     {}
+                | array                           {}
 ;
 
 unary_expression:   MINUS  base_expression %prec UMINUS   { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
@@ -204,11 +215,11 @@ equality_expression:  equality_expression EQ  comparable_expression        { $$ 
 
 logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3, @$);  }
                     | logical_expression LOGIC_OR  equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3, @$);   }
-                    | equality_expression                                { $$ =$1; }
+                    | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression:   VAR ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
-                       | VAR ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+assignment_expression:   lvalue_operand ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+                       | lvalue_operand ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
 ;
 
 expression:   logical_expression    { $$ = $1; }
@@ -217,6 +228,29 @@ expression:   logical_expression    { $$ = $1; }
 
 function:  PRINT expression SCOLON   { $$ = driver.make_node<print_function>($2, @$); }
 ;
+
+array_value: VAR array_access {}
+;
+
+array_access: OP_SQBRACK expression CL_SQBRACK array_access
+            | OP_SQBRACK expression CL_SQBRACK
+;
+
+array: REPEAT OP_BRACK array_expr COMMA expression CL_BRACK {}
+      | init_array {}
+;
+
+array_expr: expression {}
+          | UNDEF {/*to do*/}
+;
+
+init_array: ARRAY OP_BRACK init_array_access CL_BRACK
+;
+
+init_array_access: expression COMMA init_array_access 
+          | expression 
+;
+
 
 ctrl_statement: WHILE OP_BRACK expression CL_BRACK  statement {
                     blocks.push(driver.make_block());
