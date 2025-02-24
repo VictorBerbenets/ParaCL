@@ -45,11 +45,17 @@ VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 "else"            { return parser::make_ELSE(update_location());     }
 "while"           { return parser::make_WHILE(update_location());    }
 "print"           { return parser::make_PRINT(update_location());    }
+"array"           { return parser::make_ARRAY(update_location());    }
+"repeat"           { return parser::make_REPEAT(update_location());    }
+"undef"           { return parser::make_UNDEF(update_location());    }
+
 "?"               { return parser::make_SCAN(update_location());     }
 "("               { return parser::make_OP_BRACK(update_location()); }
 ")"               { return parser::make_CL_BRACK(update_location()); }
 "{"               { return parser::make_OP_BRACE(update_location()); }
 "}"               { return parser::make_CL_BRACE(update_location()); }
+"["               { return parser::make_OP_SQBRACK(update_location()); }
+"]"               { return parser::make_CL_SQBRACK(update_location()); }
 
 {DIGIT1}?{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
 {VAR}               { return parser::make_VAR(yytext, update_location());               }
