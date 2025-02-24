@@ -18,11 +18,7 @@ class ast final {
   using size_type = std::size_t;
   using pointer_type = std::unique_ptr<statement>;
 
-  void swap(ast &rhs) {
-    std::swap(root_, rhs.root_);
-    std::swap(curr_block_, rhs.curr_block_);
-    std::swap(nodes_, rhs.nodes_);
-  }
+  void swap(ast &rhs);
 
 public:
   ast() = default;
@@ -32,7 +28,7 @@ public:
   ast &operator=(ast &&) = default;
   ~ast() = default;
 
-  root_statement_block *root_ptr() const & noexcept { return root_; }
+  root_statement_block *root_ptr() const & noexcept;
 
   template <derived_from NodeType, typename... Args>
   NodeType *make_node(Args &&...args) {
@@ -42,26 +38,18 @@ public:
     return ret_ptr;
   }
 
-  root_statement_block *make_root_block() {
-    curr_block_ = make_node<root_statement_block>(curr_block_);
-    return static_cast<root_statement_block *>(curr_block_);
-  }
+  root_statement_block *make_root_block();
 
-  statement_block *make_block() {
-    curr_block_ = make_node<statement_block>(curr_block_);
-    return curr_block_;
-  }
+  statement_block *make_block();
 
-  void set_root(root_statement_block *root_id) & noexcept { root_ = root_id; }
+  void set_root(root_statement_block *root_id) & noexcept;
 
-  void set_curr_block(statement_block *block) & noexcept {
-    curr_block_ = block;
-  }
+  void set_curr_block(statement_block *block) & noexcept;
 
-  statement_block *get_curr_block() noexcept { return curr_block_; }
+  statement_block *get_curr_block() noexcept;
 
-  size_type size() const noexcept { return nodes_.size(); }
-  [[nodiscard]] bool empty() const noexcept { return nodes_.size() == 0; }
+  size_type size() const noexcept;
+  [[nodiscard]] bool empty() const noexcept;
 
 private:
   root_statement_block *root_ = nullptr;

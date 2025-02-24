@@ -210,7 +210,7 @@ void CodeGenVisitor::visit(ast::read_expression * /*unused*/) {
 void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
   PrintFuncNode->get()->accept(this);
 
-  SmallVector<llvm::Value *, 1> ArgValue{getCurrValue()};
+  SmallVector<Value *, 1> ArgValue{getCurrValue()};
   SmallVector<Type *, 1> ArgTy{CodeGen.getInt32Ty()};
   auto *PrintType = FunctionType::get(CodeGen.getVoidTy(), ArgTy, false);
   auto *PrintFunc =
@@ -218,18 +218,18 @@ void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
   CodeGen.Builder->CreateCall(PrintType, PrintFunc, ArgValue);
 }
 
-llvm::Value *CodeGenVisitor::getValueForVar(llvm::StringRef ValueName) {
+Value *CodeGenVisitor::getValueForVar(StringRef ValueName) {
   assert(NameToValue.contains(ValueName));
   return NameToValue[ValueName];
 }
 
 void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock,
-                                    llvm::raw_ostream &Os) {
+                                    raw_ostream &Os) {
   RootBlock->accept(this);
   printIRToOstream(Os);
 }
 
-void CodeGenVisitor::printIRToOstream(llvm::raw_ostream &Os) const {
+void CodeGenVisitor::printIRToOstream(raw_ostream &Os) const {
   CodeGen.Mod->print(Os, nullptr);
 }
 

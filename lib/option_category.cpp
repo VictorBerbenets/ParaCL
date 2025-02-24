@@ -6,5 +6,4 @@ llvm::cl::OptionCategory
     ParaCLCategory("ParaCL options",
                    "Options for controlling the running process.");
 
-
 } // namespace paracl
