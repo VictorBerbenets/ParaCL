@@ -33,9 +33,6 @@ aux_source_directory(./lib/ast/ AST_SOURCES)
 aux_source_directory(./lib/visitor/ VISITOR_SOURCES)
 aux_source_directory(./lib/symbol_tab/ SYMBOL_TAB_SOURCES)
 
-add_library(PARACL_INTERFACE_LIB INTERFACE)
-target_include_directories(PARACL_INTERFACE_LIB INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 flex_target(scanner
   ${LEXER_PATH}
   ${CMAKE_CURRENT_BINARY_DIR}/lexer.cc
@@ -49,23 +46,13 @@ bison_target(parser
 
 add_flex_bison_dependency(scanner parser)
 
+add_subdirectory(include)
+
 add_library(bison_parser STATIC ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
-target_include_directories(bison_parser PUBLIC include/parsing/ ${CMAKE_CURRENT_BINARY_DIR})
-target_include_directories(bison_parser PUBLIC include/ast/)
-target_include_directories(bison_parser PUBLIC include/symbol_tab/)
-target_include_directories(bison_parser PUBLIC include/visitor/)
-target_include_directories(bison_parser PUBLIC include/codegen/)
+target_include_directories(bison_parser PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(bison_parser PUBLIC ParaclHeaders)
 
 add_compile_options(-Wall -Wextra -g)
-
-set(INCLUDE_DIRS
-  include/ast
-  include/parsing
-  include/visitor
-  include/symbol_tab
-  include/codegen
-  include
-)
 
 set(SOURCES
     ./lib/codegen.cpp
@@ -81,5 +68,6 @@ add_executable(${PARACL_EXEC_NAME}
   paracl.cpp
   ${SOURCES}
 )
-target_include_directories(${PARACL_EXEC_NAME} PUBLIC ${INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(${PARACL_EXEC_NAME} PUBLIC ${llvm_libs} bison_parser)
+
+target_include_directories(${PARACL_EXEC_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(${PARACL_EXEC_NAME} PUBLIC ParaclHeaders ${llvm_libs} bison_parser)

@@ -7,19 +7,19 @@
 
 namespace paracl {
 
-void interpreter::visit(ast::statement_block *stm) {
-  for (auto &&statement : *stm) {
+void interpreter::visit(ast::statement_block *StmBlock) {
+  for (auto &&statement : *StmBlock) {
     statement->accept(this);
   }
 }
 
-void interpreter::visit(ast::calc_expression *stm) {
-  stm->left()->accept(this);
+void interpreter::visit(ast::calc_expression *CalcExpr) {
+  CalcExpr->left()->accept(this);
   auto lhs = get_value();
-  stm->right()->accept(this);
+  CalcExpr->right()->accept(this);
   auto rhs = get_value();
 
-  switch (stm->type()) {
+  switch (CalcExpr->type()) {
   case ast::CalcOp::ADD:
     set_value(lhs + rhs);
     break;
@@ -44,10 +44,10 @@ void interpreter::visit(ast::calc_expression *stm) {
   }
 }
 
-void interpreter::visit(ast::un_operator *stm) {
-  stm->arg()->accept(this);
+void interpreter::visit(ast::un_operator *UnOp) {
+  UnOp->arg()->accept(this);
 
-  switch (stm->type()) {
+  switch (UnOp->type()) {
   case ast::UnOp::PLUS:
     set_value(+get_value());
     break;
@@ -62,13 +62,13 @@ void interpreter::visit(ast::un_operator *stm) {
   }
 }
 
-void interpreter::visit(ast::logic_expression *stm) {
-  stm->left()->accept(this);
+void interpreter::visit(ast::logic_expression *LogExpr) {
+  LogExpr->left()->accept(this);
   auto lhs = get_value();
-  stm->right()->accept(this);
+  LogExpr->right()->accept(this);
   auto rhs = get_value();
 
-  switch (stm->type()) {
+  switch (LogExpr->type()) {
   case ast::LogicOp::LESS:
     set_value(lhs < rhs);
     break;
@@ -98,30 +98,30 @@ void interpreter::visit(ast::logic_expression *stm) {
   }
 }
 
-void interpreter::visit(ast::number *stm) { set_value(stm->get_value()); }
+void interpreter::visit(ast::number *Num) { set_value(Num->get_value()); }
 
-void interpreter::visit(ast::variable *stm) {
-  auto curr_scope = stm->scope();
-  auto right_scope = curr_scope->find(stm->name());
-  set_value(right_scope->value(stm->name()));
+void interpreter::visit(ast::variable *Var) {
+  auto curr_scope = Var->scope();
+  auto right_scope = curr_scope->find(Var->name());
+  set_value(right_scope->value(Var->name()));
 }
 
-void interpreter::visit(ast::if_operator *stm) {
-  stm->condition()->accept(this);
+void interpreter::visit(ast::if_operator *If) {
+  If->condition()->accept(this);
 
   if (get_value()) {
-    stm->body()->accept(this);
-  } else if (stm->else_block()) {
-    stm->else_block()->accept(this);
+    If->body()->accept(this);
+  } else if (If->else_block()) {
+    If->else_block()->accept(this);
   }
 }
 
-void interpreter::visit(ast::while_operator *stm) {
-  stm->condition()->accept(this);
+void interpreter::visit(ast::while_operator *While) {
+  While->condition()->accept(this);
 
   while (get_value()) {
-    stm->body()->accept(this);
-    stm->condition()->accept(this);
+    While->body()->accept(this);
+    While->condition()->accept(this);
   }
 }
 
@@ -131,15 +131,15 @@ void interpreter::visit(ast::read_expression * /* unused */) {
   set_value(tmp);
 }
 
-void interpreter::visit(ast::print_function *stm) {
-  stm->get()->accept(this);
+void interpreter::visit(ast::print_function *Print) {
+  Print->get()->accept(this);
   output_stream_ << get_value() << std::endl;
 }
 
-void interpreter::visit(ast::assignment *stm) {
-  //  set_value(evaluate(stm->ident_exp());
-  stm->ident_exp()->accept(this);
-  stm->redefine(get_value());
+void interpreter::visit(ast::assignment *Assign) {
+  //  set_value(evaluate(Assign->ident_exp());
+  Assign->ident_exp()->accept(this);
+  Assign->redefine(get_value());
 }
 
 } // namespace paracl
