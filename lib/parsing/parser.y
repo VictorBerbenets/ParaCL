@@ -173,15 +173,15 @@ statement:  OP_BRACE statement_block CL_BRACE {
           | SCOLON                            { $$ = driver.make_node<statement_block>(); }
 ;
 
-lvalue_operand: VAR
-              | array_value
+// lvalue_operand: VAR
+//              | array_value
 
 base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
                 | NUMBER                          { $$ = driver.make_node<number>($1, @$); }
-            //  | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+                | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
                 | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
-                | lvalue_operand                     {}
-                | array                           {}
+ //               | lvalue_operand                     {}
+//                | array                           {}
 ;
 
 unary_expression:   MINUS  base_expression %prec UMINUS   { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
@@ -218,8 +218,8 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
                     | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression:   lvalue_operand ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
-                       | lvalue_operand ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+assignment_expression:   VAR ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+                       | VAR ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); driver.SymTab}
 ;
 
 expression:   logical_expression    { $$ = $1; }

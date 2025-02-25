@@ -1,5 +1,7 @@
 #pragma once
 
+#include "llvm/Support/FormatVariadic.h"
+
 #include <iostream>
 #include <vector>
 
@@ -14,6 +16,8 @@ class error_handler : public base_visitor {
   using size_type = std::size_t;
 
 public:
+  error_handler(SymTable &SymTbl, ValueManager &ValManager): SymTbl(SymTbl), ValManager(ValManager) {}
+
   void visit(ast::statement_block *stm) override {
     for (auto &&statement : *stm) {
       statement->accept(this);
@@ -34,12 +38,11 @@ public:
 
   void visit(ast::number * /*unused*/) override {}
 
-  void visit(ast::variable *stm) override {
-    auto curr_scope = stm->scope();
-    if (auto right_scope = curr_scope->find(stm->name()); !right_scope) {
+  void visit(ast::variable *Var) override {
+    auto curr_scope = Var->scope();
+    if (!SymTbl.isDefined({Var->name(), curr_scope}))
       errors_.push_back(
-          {stm->name() + " was not declared in this scope", stm->location()});
-    }
+          {llvm::formatv("{0} was not declared in this scope", Var->name()), Var->location()});
   }
 
   void visit(ast::assignment *stm) override { stm->ident_exp()->accept(this); }
@@ -78,6 +81,8 @@ public:
   auto cend() const noexcept { return errors_.cend(); }
 
 private:
+  SymTable &SymTbl;
+  ValueManager &ValManager;
   std::vector<error_type> errors_;
 };
 

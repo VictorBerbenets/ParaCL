@@ -16,7 +16,7 @@ namespace yy {
 
 class driver final {
 public:
-  driver() : scanner_{}, parser_(scanner_, *this) {}
+  driver() : scanner_{}, parser_(scanner_, *this), handler_(SymTab, ValManager) {}
 
   void parse() { parser_.parse(); }
 
@@ -59,13 +59,13 @@ public:
   }
 
   void evaluate(std::ostream &output = std::cout,
-                std::istream &input = std::cin) const {
-    paracl::interpreter runner(input, output);
+                std::istream &input = std::cin) {
+    paracl::interpreter runner(SymTab, ValManager, input, output);
     runner.run_program(ast_.root_ptr());
   }
 
-  void compile(llvm::StringRef ModuleName, llvm::raw_ostream &Os) const {
-    paracl::CodeGenVisitor CodeGenVis(ModuleName);
+  void compile(llvm::StringRef ModuleName, llvm::raw_ostream &Os) {
+    paracl::CodeGenVisitor CodeGenVis(SymTab, ValManager, ModuleName);
     CodeGenVis.generateIRCode(ast_.root_ptr(), Os);
   }
 
@@ -74,8 +74,10 @@ private:
   parser parser_;
   std::string file_;
 
-  paracl::error_handler handler_;
   paracl::ast::ast ast_;
+  paracl::SymTable SymTab;
+  paracl::ValueManager ValManager;
+  paracl::error_handler handler_;
 };
 
 } // namespace yy

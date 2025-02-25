@@ -7,6 +7,12 @@
 
 namespace paracl {
 
+void interpreter::visit(ast::root_statement_block *StmBlock) {
+  for (auto &&statement : *StmBlock) {
+    statement->accept(this);
+  }
+}
+
 void interpreter::visit(ast::statement_block *StmBlock) {
   for (auto &&statement : *StmBlock) {
     statement->accept(this);

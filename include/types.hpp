@@ -23,8 +23,6 @@ public:
   
 protected:
   TypeID ID;
-  unsigned ContainedTypesSize;
-  llvm::SmallVector<PCLType *> ContainedTypes;
 };
 
 class IntegerTy : public PCLType {
@@ -32,18 +30,14 @@ public:
   IntegerTy(): PCLType(TypeID::Int32) {}
 };
 
-class IArrayTy : public PCLType {
+class ArrayTy : public PCLType {
 public:
-
-  IntegerTy *getIndexNum() { return IndexNum; }
-  void setIndexNum(IntegerTy *IndexN) { IndexNum = IndexN; }
+  
+  unsigned size() const { return ContainedTypesSize; }
 
 protected:
-  IntegerTy *IndexNum = nullptr;
-};
-
-class InitListArray : public IArrayTy {
-
+  unsigned ContainedTypesSize;
+  llvm::SmallVector<PCLType *> ContainedTypes;
 };
 
 } // namespace paracl
