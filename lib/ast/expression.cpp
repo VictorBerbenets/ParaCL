@@ -20,7 +20,12 @@ variable::variable(statement_block *curr_block, std::string &&var_name,
                    yy::location l)
     : expression{curr_block, l}, name_{std::move(var_name)} {}
 
-void variable::declare() { scope()->declare(name_); }
+void variable::declare() { 
+#if 0
+  scope()->declare(name_);
+#endif
+}
+
 
 void variable::accept(base_visitor *b_visitor) { b_visitor->visit(this); }
 

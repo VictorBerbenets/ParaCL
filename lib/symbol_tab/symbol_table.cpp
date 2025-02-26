@@ -3,22 +3,29 @@
 
 namespace paracl {
   
-  ast::statement_block *SymTable::getDeclScopeFor(const llvm::StringRef &Name, ast::statement_block *CurrScope) {
+  ast::statement_block *SymTable::getDeclScopeFor(const SymbNameType &Name, ast::statement_block *CurrScope) {
     for (; CurrScope; CurrScope = CurrScope->scope())
       if (NamesInfo.contains({Name, CurrScope}))
-        return true;
+        return CurrScope;
+    return nullptr;
+    
   }
   
-  PCLType *SymTable::getTypeFor(const llvm::StringRef &Name, ast::statement_block *CurrScope) {
-    assert(NamesInfo.contains({Name, CurrScope})); 
-    return NamesInfo[{Name, CurrScope}].Ty.get();
+  PCLType *SymTable::getTypeFor(const SymbNameType &Name, ast::statement_block *CurrScope) {
+    auto *Decl = getDeclScopeFor(Name, CurrScope);
+#if 0
+    for (auto &[Key, _] : NamesInfo)
+      std::cout << "KeyName = " << std::string(Key.Name) << "; Scope = " << std::hex << Key.CurrScope << '\n';
+    std::cout << "IS NULL PTR = " << (Decl == nullptr) << '\n';
+    std::cout << "Name = " << std::string(Name) << "; Scope = " << std::hex << CurrScope << '\n';
+#endif
+
+    //assert(NamesInfo.contains({Name, Decl}));
+    return NamesInfo.find({Name, Decl})->second.getType();
   }
   
-  bool SymTable::isDefined(SymTabKey TabKey) const { 
-    for (auto *CurrScope = TabKey.CurrScope; CurrScope; CurrScope = CurrScope->scope())
-      if (NamesInfo.contains({TabKey.Name, CurrScope}))
-        return true;
-    return false;
+  bool SymTable::isDefined(SymTabKey TabKey) { 
+    return getDeclScopeFor(TabKey.Name, TabKey.CurrScope) != nullptr;
   }
 #if 0
 bool symbol_table::has(const std::string &var_name) const {

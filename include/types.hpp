@@ -8,6 +8,7 @@ class PCLType {
 public:
   
   enum class TypeID {
+    Unknown,
     Int32,
     Array
   };
@@ -32,7 +33,7 @@ public:
 
 class ArrayTy : public PCLType {
 public:
-  
+  ArrayTy(): PCLType(TypeID::Array) {} 
   unsigned size() const { return ContainedTypesSize; }
 
 protected:

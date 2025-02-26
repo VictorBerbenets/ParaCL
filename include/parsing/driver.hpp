@@ -58,6 +58,9 @@ public:
     return {handler_};
   }
 
+  paracl::SymTable &getSymTab() { return SymTab; }
+  paracl::ValueManager &getValManager() { return ValManager; }
+
   void evaluate(std::ostream &output = std::cout,
                 std::istream &input = std::cin) {
     paracl::interpreter runner(SymTab, ValManager, input, output);

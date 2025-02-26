@@ -107,9 +107,23 @@ void interpreter::visit(ast::logic_expression *LogExpr) {
 void interpreter::visit(ast::number *Num) { set_value(Num->get_value()); }
 
 void interpreter::visit(ast::variable *Var) {
-  auto curr_scope = Var->scope();
-  auto right_scope = curr_scope->find(Var->name());
+  auto *curr_scope = Var->scope();
+  auto *DeclScope = SymTbl.getDeclScopeFor(SymbNameType(Var->name()), Var->scope());
+  auto *Ty = SymTbl.getTypeFor(SymbNameType(Var->name()), Var->scope());
+  assert(DeclScope);
+  assert(Ty);
+  auto *Value = ValManager.getValueFor({SymbNameType(Var->name()), DeclScope});
+  if (Ty->getTypeID() == PCLType::TypeID::Int32) {
+    auto Val = static_cast<IntegerVal*>(Value)->getValue();
+#if 0
+    std::cout << "SETTED VALUE = " << Val << std::endl;
+#endif
+    set_value(Val);
+  }
+#if 0
+  set_value();
   set_value(right_scope->value(Var->name()));
+#endif
 }
 
 void interpreter::visit(ast::if_operator *If) {
@@ -145,7 +159,7 @@ void interpreter::visit(ast::print_function *Print) {
 void interpreter::visit(ast::assignment *Assign) {
   //  set_value(evaluate(Assign->ident_exp());
   Assign->ident_exp()->accept(this);
-  Assign->redefine(get_value());
+  ValManager.createValueFor<IntegerVal>({SymbNameType(Assign->name()), Assign->scope()}, get_value());
 }
 
 } // namespace paracl

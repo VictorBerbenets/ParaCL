@@ -41,6 +41,7 @@ using namespace paracl::ast;
 #include <stack>
 
 #include "driver.hpp"
+#include "types.hpp"
 #include "scanner.hpp"
 #include "paracl_grammar.tab.hh"
 
@@ -51,6 +52,9 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 }
 
 %{
+  using namespace paracl;
+  using TypeID = PCLType::TypeID;
+
   std::stack<statement_block*> blocks;
   bool IsRootBlockSet = false;
 %}
@@ -218,8 +222,9 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
                     | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression:   VAR ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
-                       | VAR ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); driver.SymTab}
+assignment_expression:   VAR ASSIGN assignment_expression { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), TypeID::Int32); $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$);}
+                       | VAR ASSIGN logical_expression    { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), TypeID::Int32); $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$);
+                                                                 }
 ;
 
 expression:   logical_expression    { $$ = $1; }

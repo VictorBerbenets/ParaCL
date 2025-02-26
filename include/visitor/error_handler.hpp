@@ -39,10 +39,12 @@ public:
   void visit(ast::number * /*unused*/) override {}
 
   void visit(ast::variable *Var) override {
+#if 0
     auto curr_scope = Var->scope();
     if (!SymTbl.isDefined({Var->name(), curr_scope}))
       errors_.push_back(
           {llvm::formatv("{0} was not declared in this scope", Var->name()), Var->location()});
+#endif
   }
 
   void visit(ast::assignment *stm) override { stm->ident_exp()->accept(this); }
