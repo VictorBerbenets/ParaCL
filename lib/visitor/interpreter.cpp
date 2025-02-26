@@ -104,7 +104,9 @@ void interpreter::visit(ast::logic_expression *LogExpr) {
   }
 }
 
-void interpreter::visit(ast::number *Num) { set_value(Num->get_value()); }
+void interpreter::visit(ast::number *Num) { 
+
+  set_value(Num->get_value()); }
 
 void interpreter::visit(ast::variable *Var) {
   auto *curr_scope = Var->scope();
@@ -115,9 +117,6 @@ void interpreter::visit(ast::variable *Var) {
   auto *Value = ValManager.getValueFor({SymbNameType(Var->name()), DeclScope});
   if (Ty->getTypeID() == PCLType::TypeID::Int32) {
     auto Val = static_cast<IntegerVal*>(Value)->getValue();
-#if 0
-    std::cout << "SETTED VALUE = " << Val << std::endl;
-#endif
     set_value(Val);
   }
 #if 0
@@ -159,7 +158,12 @@ void interpreter::visit(ast::print_function *Print) {
 void interpreter::visit(ast::assignment *Assign) {
   //  set_value(evaluate(Assign->ident_exp());
   Assign->ident_exp()->accept(this);
-  ValManager.createValueFor<IntegerVal>({SymbNameType(Assign->name()), Assign->scope()}, get_value());
+  auto *DeclScope = SymTbl.getDeclScopeFor(SymbNameType(Assign->name()), Assign->scope());
+  auto *Val = ValManager.createValueFor<IntegerVal>({SymbNameType(Assign->name()), DeclScope}, get_value());
+  auto IntVal = static_cast<IntegerVal*>(Val)->getValue();
+#ifdef DEBUG
+  std::cout << "VALUE AFTER CREATE = " << IntVal << std::endl;
+#endif
 }
 
 } // namespace paracl

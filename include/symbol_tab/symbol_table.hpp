@@ -138,9 +138,18 @@ class ValueManager final {
 public:
   
   template <DerivedFromPCLVal ValueTy, typename... ArgTys>
-  void createValueFor(SymTabKey SymKey, ArgTys &&... Args) {
+  PCLValue *createValueFor(SymTabKey SymKey, ArgTys &&... Args) {
     auto ValuePtr = std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...);
-    NameToValue.insert_or_assign(SymKey, std::move(ValuePtr));    
+    return NameToValue.insert_or_assign(SymKey, std::move(ValuePtr)).first->second.get();
+#if 0
+    if (!NameToValue.contains(SymKey)) {
+      auto ValuePtr = std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...);
+      auto [InsIt, IsEmplaced] = NameToValue.try_emplace(SymKey, std::move(ValuePtr));
+      assert(IsEmplaced && "couldn't insert value");
+      return InsIt->second;
+    }
+    NameToValue[SymKey] 
+#endif
   }
 
   PCLValue *getValueFor(SymTabKey SymKey) {

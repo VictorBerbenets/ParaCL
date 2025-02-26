@@ -4,18 +4,20 @@
 namespace paracl {
   
   ast::statement_block *SymTable::getDeclScopeFor(const SymbNameType &Name, ast::statement_block *CurrScope) {
-    for (; CurrScope; CurrScope = CurrScope->scope())
+    for (; CurrScope; CurrScope = CurrScope->scope()) {
       if (NamesInfo.contains({Name, CurrScope}))
         return CurrScope;
+    }
     return nullptr;
     
   }
   
   PCLType *SymTable::getTypeFor(const SymbNameType &Name, ast::statement_block *CurrScope) {
     auto *Decl = getDeclScopeFor(Name, CurrScope);
-#if 0
+#ifdef DEBUG
+    std::cout << "SYMBOLE TABLE DUMP\n";
     for (auto &[Key, _] : NamesInfo)
-      std::cout << "KeyName = " << std::string(Key.Name) << "; Scope = " << std::hex << Key.CurrScope << '\n';
+      std::cout << "KeyName = " << std::string(Key.Name) << "; Scope = " << std::hex << Key.CurrScope << std::dec << '\n';
     std::cout << "IS NULL PTR = " << (Decl == nullptr) << '\n';
     std::cout << "Name = " << std::string(Name) << "; Scope = " << std::hex << CurrScope << '\n';
 #endif
