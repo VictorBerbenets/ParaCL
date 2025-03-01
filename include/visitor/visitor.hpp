@@ -4,6 +4,30 @@
 
 namespace paracl {
 
+namespace ast {
+
+class ArrayAccessAssignment;
+class statement;
+class root_statement_block;
+class statement_block;
+class logic_expression;
+class calc_expression;
+class assignment;
+class definition;
+class un_operator;
+class number;
+class variable;
+class if_operator;
+class while_operator;
+class print_function;
+class read_expression;
+class ArrayAccess;
+class InitListArray;
+class UndefVar;
+class Array;
+
+} // namespace ast
+
 class base_visitor {
 public:
   virtual ~base_visitor() {};
@@ -23,6 +47,7 @@ public:
   virtual void visit(ast::ArrayAccess *ArrAccess) = 0;
   virtual void visit(ast::UndefVar *UndVar) = 0;
   virtual void visit(ast::Array *Arr) = 0;
+  virtual void visit(ast::ArrayAccessAssignment *Arr) = 0;
 };
 
 } // namespace paracl

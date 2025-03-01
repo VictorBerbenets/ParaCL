@@ -60,20 +60,9 @@ void logic_expression::accept(CodeGenVisitor *CodeGenVis) {
   CodeGenVis->visit(this);
 }
 
-assignment::assignment(statement_block *curr_block, const std::string &name,
+assignment::assignment(statement_block *curr_block, variable *LValue,
                        expression *expr, yy::location loc)
-    : expression{curr_block, loc}, name_{name}, identifier_{expr} {
-#if 0
-  parent_->declare(name_);
-#endif
-}
-
-assignment::assignment(statement_block *curr_block, std::string &&name,
-                       expression *expr, yy::location loc)
-    : expression{curr_block, loc}, name_{std::move(name)}, identifier_{expr} {
-#if 0
-  parent_->declare(name_);
-#endif
+    : expression{curr_block, loc}, LValue(LValue), Identifier{expr} {
 }
 
 void assignment::accept(base_visitor *base_visitor) {
@@ -82,15 +71,14 @@ void assignment::accept(base_visitor *base_visitor) {
 
 void assignment::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 
-expression *assignment::ident_exp() noexcept { return identifier_; }
+variable *assignment::getLValue() noexcept { return LValue; }
+expression *assignment::getIdentExp() noexcept { return Identifier; }
 
 void assignment::redefine(int value) {
 #if 0 
   parent_->redefine(name_, value);
 #endif
 }
-
-const std::string &assignment::name() const noexcept { return name_; }
 
 read_expression::read_expression(yy::location loc) : expression{loc} {}
 

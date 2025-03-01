@@ -91,7 +91,7 @@ public:
 
     auto [_, IsEmplaced] = NamesInfo.try_emplace(
         {Name, CurrScope}, SymbInfo(std::forward<ArgsTy>(Args)...));
-    assert(IsEmplaced && "couldn't emplaced the symbol");
+    assert(IsEmplaced && "can't emplace the symbol");
     return true;
   }
 
@@ -127,6 +127,10 @@ public:
   IntegerVal(int Val, PCLType *Ty) : PCLValue(Ty), Val(Val) {}
 
   int getValue() const noexcept { return Val; }
+  void setValue(IntegerVal *NewValue) noexcept {
+    assert(NewValue);
+    Val = NewValue->getValue();
+  }
 
   operator int() const noexcept { return Val; }
 

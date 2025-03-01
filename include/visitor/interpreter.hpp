@@ -16,6 +16,7 @@ public:
         output_stream_{output} {}
 
   void virtual visit(ast::root_statement_block *StmBlock);
+  void visit(ast::ArrayAccessAssignment *Arr) override;
 
   void visit(ast::InitListArray *InitListArr) override;
   void visit(ast::ArrayAccess *ArrAccess) override;

@@ -102,24 +102,22 @@ public:
 
 class assignment : public expression {
 public:
-  assignment(statement_block *curr_block, const std::string &name,
+  assignment(statement_block *curr_block, variable *LValue,
              expression *expr, yy::location loc);
-
-  assignment(statement_block *curr_block, std::string &&name, expression *expr,
-             yy::location loc);
 
   void accept(base_visitor *base_visitor) override;
   void accept(CodeGenVisitor *CodeGenVis) override;
 
-  expression *ident_exp() noexcept;
+  variable *getLValue() noexcept;
+  expression *getIdentExp() noexcept;
 
   void redefine(int value);
 
   const std::string &name() const noexcept;
 
 private:
-  std::string name_;
-  expression *identifier_;
+  variable *LValue;
+  expression *Identifier;
 };
 
 class read_expression : public expression {

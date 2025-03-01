@@ -132,11 +132,12 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         equality_expression
 %nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
-%nterm <expression*>         lvalue_operand
 %nterm <expression*>         init_list_array
 %nterm <expression*>         array_expression
-%nterm <expression*>         array_value
 %nterm <expression*>         array
+%nterm <ArrayAccess*>           array_value
+%nterm <variable*>           lvalue_operand
+%nterm <variable*>           variable
 
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
@@ -187,7 +188,9 @@ statement:  OP_BRACE statement_block CL_BRACE {
           | SCOLON                            { $$ = driver.make_node<statement_block>(); }
 ;
 
-lvalue_operand: VAR                  { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+variable: VAR { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+
+lvalue_operand: variable             { $$ = $1; }
               | array_value          { $$ = $1; }
 
 base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
@@ -231,14 +234,17 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
                     | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression: VAR ASSIGN assignment_expression { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), driver.getSymTab(), TypeID::Int32);
-                                                          $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$);
+assignment_expression: variable ASSIGN assignment_expression { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::Int32);
+                                                          $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$);
                        }
-                     | VAR ASSIGN logical_expression    { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), driver.getSymTab(), TypeID::Int32);
-                                                          $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$);
+                     | variable ASSIGN logical_expression    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::Int32);
+                                                          $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$);
                        }
-                     | VAR ASSIGN array    { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), driver.getSymTab(), TypeID::Array);
-                                             $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
+                     | array_value ASSIGN assignment_expression     { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
+                     | array_value ASSIGN logical_expression     { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
+                     | variable ASSIGN array    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::Array);
+                                             $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
+
 ;
 
 expression: logical_expression    { $$ = $1; }

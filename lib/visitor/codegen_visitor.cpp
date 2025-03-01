@@ -137,14 +137,14 @@ void CodeGenVisitor::visit(ast::variable *Var) {
 }
 
 void CodeGenVisitor::visit(ast::assignment *Assign) {
-  Assign->ident_exp()->accept(this);
-  if (!NameToValue.contains(Assign->name())) {
+  Assign->getIdentExp()->accept(this);
+  if (!NameToValue.contains(Assign->getLValue()->name())) {
     auto *Alloca = CodeGen.Builder->CreateAlloca(CodeGen.getInt32Ty(), nullptr,
-                                                 Assign->name());
+                                                 Assign->getLValue()->name());
     CodeGen.Builder->CreateStore(getCurrValue(), Alloca);
-    NameToValue[Assign->name()] = Alloca;
+    NameToValue[Assign->getLValue()->name()] = Alloca;
   } else {
-    CodeGen.Builder->CreateStore(getCurrValue(), NameToValue[Assign->name()]);
+    CodeGen.Builder->CreateStore(getCurrValue(), NameToValue[Assign->getLValue()->name()]);
   }
 }
 

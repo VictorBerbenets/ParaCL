@@ -163,7 +163,7 @@ void interpreter::visit(ast::if_operator *If) {
 
 void interpreter::visit(ast::while_operator *While) {
   While->condition()->accept(this);
-
+  assert(get_value());
   while (static_cast<IntegerVal *>(get_value())->getValue()) {
     While->body()->accept(this);
     While->condition()->accept(this);
@@ -185,14 +185,12 @@ void interpreter::visit(ast::print_function *Print) {
 }
 
 void interpreter::visit(ast::assignment *Assign) {
-  Assign->ident_exp()->accept(this);
-  
+  Assign->getIdentExp()->accept(this);
+  auto *IdentExp = get_value();
+  SymbNameType Name(Assign->getLValue()->name()); 
   auto *DeclScope =
-      SymTbl.getDeclScopeFor(SymbNameType(Assign->name()), Assign->scope());
-  SymbNameType Name (Assign->name());
-  auto *Val = get_value();
-  assert(Val);
-  ValManager.linkValueWithName({Name, DeclScope}, Val);
+      SymTbl.getDeclScopeFor(Name, Assign->scope());
+  ValManager.linkValueWithName({Name, DeclScope}, IdentExp);
 }
 
 void interpreter::visit(ast::InitListArray *InitListArr) {}
@@ -237,6 +235,15 @@ void interpreter::visit(ast::Array *Arr) {
   assert(Size->getType()->isInt32Ty()); 
 
   set_value(ValManager.createValue<ArrayVal>(InitExpr, static_cast<IntegerVal*>(Size), SymTbl.getType(TypeID::Array)));
+}
+  
+void interpreter::visit(ast::ArrayAccessAssignment *Arr) {
+  Arr->getArrayAccess()->accept(this);
+  auto *LValue = static_cast<IntegerVal*>(get_value());
+  Arr->getIdentExp()->accept(this);
+  auto *IdentExp = static_cast<IntegerVal*>(get_value());
+  
+  LValue->setValue(IdentExp);
 }
 
 } // namespace paracl

@@ -19,6 +19,7 @@ public:
   virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm);
 
+  void visit(ast::ArrayAccessAssignment *Arr) override {}
   void visit(ast::InitListArray *InitListArr) override {}
   void visit(ast::ArrayAccess *ArrAccess) override {}
   void visit(ast::UndefVar *UndVar) override {}

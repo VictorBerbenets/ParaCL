@@ -50,7 +50,10 @@ public:
   void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
+  void setIdentExp(expression *Ident) { IdentExp = Ident; }
+
   unsigned getSize() const noexcept { return RanksId.size(); }
+  expression *getIdentExp() const noexcept { return IdentExp; }
 
   auto begin() { return RanksId.begin(); }
   auto end() { return RanksId.end(); }
@@ -59,15 +62,32 @@ public:
 
 private:
   llvm::SmallVector<expression *> RanksId;
+  expression *IdentExp;
 };
 
 class UndefVar : public expression {
 public:
-  UndefVar(statement_block *StmBlock, yy::location loc)
-      : expression(StmBlock, loc) {}
+  UndefVar(statement_block *StmBlock, yy::location Loc)
+      : expression(StmBlock, Loc) {}
 
   void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
+};
+
+class ArrayAccessAssignment: public expression {
+public:
+  ArrayAccessAssignment(statement_block *StmBlock, ArrayAccess *Access,
+             expression *Ident, yy::location Loc): expression(StmBlock, Loc), ArrAccess(Access), Identifier(Ident) {}
+  
+  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
+
+  ArrayAccess *getArrayAccess() noexcept { return ArrAccess; }
+  expression *getIdentExp() noexcept { return Identifier; }
+
+private:
+  ArrayAccess *ArrAccess;
+  expression *Identifier;
 };
 
 } // namespace ast

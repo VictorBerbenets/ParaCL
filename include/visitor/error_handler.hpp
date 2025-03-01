@@ -16,6 +16,7 @@ class error_handler : public base_visitor {
   using size_type = std::size_t;
 
 public:
+  void visit(ast::ArrayAccessAssignment *Arr) override {}
   void visit(ast::InitListArray *InitListArr) override {}
   void visit(ast::ArrayAccess *ArrAccess) override {}
   void visit(ast::UndefVar *UndVar) override {}
@@ -53,7 +54,7 @@ public:
 #endif
   }
 
-  void visit(ast::assignment *stm) override { stm->ident_exp()->accept(this); }
+  void visit(ast::assignment *stm) override { stm->getIdentExp()->accept(this); }
 
   void visit(ast::if_operator *stm) override {
     stm->condition()->accept(this);

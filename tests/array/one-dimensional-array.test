@@ -1,0 +1,28 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+ArrSize = 10;
+Arr = repeat(17, ArrSize);
+
+a = 0;
+while(a < ArrSize) {
+  print Arr[a];
+  a = a + 1;
+}
+
+a = 0;
+while(a < ArrSize) {
+  Arr[a] = 100;
+  print Arr[a];
+  a = a + 1;
+}
+
+
+//-----------------------------------------------------------------------------
+
+// COM: Checking default init
+// CHECK-COUNT-10: 17
+
+// COM: Checking assignment
+// CHECK-COUNT-10: 100
