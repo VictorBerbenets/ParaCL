@@ -18,6 +18,13 @@ while(a < ArrSize) {
   a = a + 1;
 }
 
+Arr[0] = Arr[1] = Arr[2] = Arr[3] = Arr[4] = 1000;
+a = 0;
+while(a < ArrSize) {
+  print Arr[a];
+  a = a + 1;
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -26,3 +33,7 @@ while(a < ArrSize) {
 
 // COM: Checking assignment
 // CHECK-COUNT-10: 100
+
+// COM: Checking chainable assignment
+// CHECK-COUNT-5: 1000
+// CHECK-COUNT-5: 100

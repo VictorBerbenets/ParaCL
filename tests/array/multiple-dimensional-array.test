@@ -1,0 +1,72 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+ArrSz1 = 10;
+Arr1 = repeat(10, ArrSz1);
+ArrSz2 = 5;
+Arr2 = repeat(Arr1, ArrSz2);
+
+a = 0;
+b = 0;
+while(a < ArrSz2) {
+  while (b < ArrSz1) {
+    print Arr2[a][b];
+    b = b + 1;
+  }
+  b = 0;
+  a = a + 1;
+}
+
+a = b = 0;
+while(a < ArrSz2) {
+  while (b < ArrSz1) {
+    Arr2[a][b] = 777;
+    b = b + 1;
+  }
+  b = 0;
+  a = a + 1;
+}
+
+a = b = 0;
+while(a < ArrSz2) {
+  while (b < ArrSz1) {
+    print Arr2[a][b];
+    b = b + 1;
+  }
+  b = 0;
+  a = a + 1;
+}
+
+InitValue = 123456789;
+Arr2[0][0] = Arr2[1][1] = Arr2[2][2] = Arr2[3][3] = Arr2[4][4] = 123456789;
+
+a = b = 0;
+while(a < ArrSz2) {
+  while (b < ArrSz1) {
+    print Arr2[a][b];
+    b = b + 1;
+  }
+  b = 0;
+  a = a + 1;
+}
+
+//-----------------------------------------------------------------------------
+
+// COM: Checking default init
+// CHECK-COUNT-50: 10
+
+// COM: Checking assignment
+// CHECK-COUNT-50: 777
+
+// COM: Checking chainable assignment
+// CHECK-NEXT: 123456789
+// CHECK-COUNT-10: 777
+// CHECK-NEXT: 123456789
+// CHECK-COUNT-10: 777
+// CHECK-NEXT: 123456789
+// CHECK-COUNT-10: 777
+// CHECK-NEXT: 123456789
+// CHECK-COUNT-10: 777
+// CHECK-NEXT: 123456789
+// CHECK-COUNT-5: 777
