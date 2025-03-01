@@ -38,6 +38,8 @@ using namespace paracl::ast;
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include <list>
 #include <stack>
 
 #include "driver.hpp"
@@ -56,6 +58,8 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
   using TypeID = PCLType::TypeID;
 
   std::stack<statement_block*> blocks;
+  std::list<expression*> Accesses;
+  std::vector<expression*> InitListArrElems;
   bool IsRootBlockSet = false;
 %}
 
@@ -128,6 +132,12 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         equality_expression
 %nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
+%nterm <expression*>         lvalue_operand
+%nterm <expression*>         init_list_array
+%nterm <expression*>         array_expression
+%nterm <expression*>         array_value
+%nterm <expression*>         array
+
 %nterm <function*>           function
 %nterm <ctrl_statement*>     ctrl_statement
 
@@ -177,15 +187,14 @@ statement:  OP_BRACE statement_block CL_BRACE {
           | SCOLON                            { $$ = driver.make_node<statement_block>(); }
 ;
 
-// lvalue_operand: VAR
-//              | array_value
+lvalue_operand: VAR                  { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+              | array_value          { $$ = $1; }
 
 base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
                 | NUMBER                          { $$ = driver.make_node<number>($1, @$); }
-                | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
+//                | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
                 | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
- //               | lvalue_operand                     {}
-//                | array                           {}
+                | lvalue_operand                  { $$ = $1; }
 ;
 
 unary_expression:   MINUS  base_expression %prec UMINUS   { $$ = driver.make_node<un_operator>(UnOp::MINUS, $2, @$);  }
@@ -222,38 +231,46 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
                     | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression:   VAR ASSIGN assignment_expression { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), TypeID::Int32); $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$);}
-                       | VAR ASSIGN logical_expression    { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), TypeID::Int32); $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$);
-                                                                 }
+assignment_expression: VAR ASSIGN assignment_expression { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), driver.getSymTab(), TypeID::Int32);
+                                                          $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$);
+                       }
+                     | VAR ASSIGN logical_expression    { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), driver.getSymTab(), TypeID::Int32);
+                                                          $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$);
+                       }
+                     | VAR ASSIGN array    { driver.getSymTab().tryDefine(SymbNameType($1), blocks.top(), driver.getSymTab(), TypeID::Array);
+                                             $$ = driver.make_node<assignment>(blocks.top(), std::move($1), $3, @$); }
 ;
 
-expression:   logical_expression    { $$ = $1; }
-            | assignment_expression { $$ = $1; }
+expression: logical_expression    { $$ = $1; }
+          | assignment_expression { $$ = $1; }
 ;
 
 function:  PRINT expression SCOLON   { $$ = driver.make_node<print_function>($2, @$); }
 ;
 
-array_value: VAR array_access {}
+array_value: VAR array_access { $$ = driver.make_node<ArrayAccess>(blocks.top(), std::move($1), Accesses.begin(), Accesses.end(), @$);
+                                Accesses.clear(); }
 ;
 
-array_access: OP_SQBRACK expression CL_SQBRACK array_access
-            | OP_SQBRACK expression CL_SQBRACK
+array_access: OP_SQBRACK expression CL_SQBRACK array_access { Accesses.push_front($2); }
+            | OP_SQBRACK expression CL_SQBRACK { Accesses.push_front($2); }
 ;
 
-array: REPEAT OP_BRACK array_expr COMMA expression CL_BRACK {}
-      | init_array {}
+array: REPEAT OP_BRACK array_expression COMMA expression CL_BRACK { $$ = driver.make_node<Array>(blocks.top(), $3, $5, @$); }
+     | init_list_array { $$ = $1; }
 ;
 
-array_expr: expression {}
-          | UNDEF {/*to do*/}
+array_expression: array { $$ = $1; }
+                | expression { $$ = $1; }
+                | UNDEF { $$ = driver.make_node<UndefVar>(blocks.top(), @$); }
 ;
 
-init_array: ARRAY OP_BRACK init_array_access CL_BRACK
+init_list_array: ARRAY OP_BRACK init_list_array_access CL_BRACK { $$ = driver.make_node<InitListArray>(blocks.top(), InitListArrElems.begin(), InitListArrElems.end(), @$);
+                                                                  InitListArrElems.clear(); }
 ;
 
-init_array_access: expression COMMA init_array_access 
-          | expression 
+init_list_array_access: array_expression COMMA init_list_array_access  { InitListArrElems.push_back($1); }
+                      | array_expression { InitListArrElems.push_back($1); }
 ;
 
 

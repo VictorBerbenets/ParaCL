@@ -16,7 +16,8 @@ namespace yy {
 
 class driver final {
 public:
-  driver() : scanner_{}, parser_(scanner_, *this), handler_(SymTab, ValManager) {}
+  driver()
+      : scanner_{}, parser_(scanner_, *this), handler_(SymTab, ValManager) {}
 
   void parse() { parser_.parse(); }
 

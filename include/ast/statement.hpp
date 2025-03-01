@@ -118,7 +118,7 @@ private:
 class root_statement_block : public statement_block {
 public:
   using statement_block::statement_block;
-  
+
   void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
 
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }

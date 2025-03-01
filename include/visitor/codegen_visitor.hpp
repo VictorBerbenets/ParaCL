@@ -6,17 +6,23 @@
 #include <utility>
 
 #include "codegen.hpp"
-#include "visitor.hpp"
 #include "symbol_table.hpp"
+#include "visitor.hpp"
 
 namespace paracl {
 
 class CodeGenVisitor : public base_visitor {
 public:
-  CodeGenVisitor(SymTable &SymTbl, ValueManager &ValManager, llvm::StringRef ModuleName);
+  CodeGenVisitor(SymTable &SymTbl, ValueManager &ValManager,
+                 llvm::StringRef ModuleName);
 
   virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm);
+
+  void visit(ast::InitListArray *InitListArr) override {}
+  void visit(ast::ArrayAccess *ArrAccess) override {}
+  void visit(ast::UndefVar *UndVar) override {}
+  void visit(ast::Array *Arr) override {}
 
   void visit(ast::calc_expression *stm) override;
   void visit(ast::un_operator *stm) override;
@@ -42,7 +48,7 @@ private:
   llvm::Value *getValueForVar(llvm::StringRef VarName);
 
   void printIRToOstream(llvm::raw_ostream &Os) const;
-  
+
   SymTable &SymTbl;
   ValueManager &ValManager;
   llvm::DenseMap<llvm::StringRef, llvm::Value *> NameToValue;

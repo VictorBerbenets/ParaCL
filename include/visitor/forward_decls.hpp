@@ -18,6 +18,10 @@ class if_operator;
 class while_operator;
 class print_function;
 class read_expression;
+class ArrayAccess;
+class InitListArray;
+class UndefVar;
+class Array;
 
 } // namespace ast
 

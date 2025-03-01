@@ -6,34 +6,32 @@ namespace paracl {
 
 class PCLType {
 public:
-  
-  enum class TypeID {
-    Unknown,
-    Int32,
-    Array
-  };
+  enum class TypeID { Unknown, Int32, Array };
 
-  PCLType(TypeID ID): ID(ID) {}
+  PCLType(TypeID ID) : ID(ID) {}
 
   virtual ~PCLType() = default;
-
 
   TypeID getTypeID() const noexcept { return ID; }
   bool isInt32Ty() const noexcept { return ID == TypeID::Int32; }
   bool isArrayTy() const noexcept { return ID == TypeID::Array; }
-  
+
 protected:
   TypeID ID;
 };
 
+inline bool operator==(PCLType Lhs, PCLType Rhs) {
+  return Lhs.getTypeID() == Rhs.getTypeID();
+}
+
 class IntegerTy : public PCLType {
 public:
-  IntegerTy(): PCLType(TypeID::Int32) {}
+  IntegerTy() : PCLType(TypeID::Int32) {}
 };
 
 class ArrayTy : public PCLType {
 public:
-  ArrayTy(): PCLType(TypeID::Array) {} 
+  ArrayTy() : PCLType(TypeID::Array) {}
   unsigned size() const { return ContainedTypesSize; }
 
 protected:

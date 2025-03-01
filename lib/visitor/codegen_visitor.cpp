@@ -9,7 +9,9 @@ namespace paracl {
 
 using namespace llvm;
 
-CodeGenVisitor::CodeGenVisitor(SymTable &SymTbl, ValueManager &ValManager, StringRef ModuleName) : SymTbl(SymTbl), ValManager(ValManager), CodeGen(ModuleName) {}
+CodeGenVisitor::CodeGenVisitor(SymTable &SymTbl, ValueManager &ValManager,
+                               StringRef ModuleName)
+    : SymTbl(SymTbl), ValManager(ValManager), CodeGen(ModuleName) {}
 
 // This visit method for root basic block represents the main module of the
 // program (global scope). The main function that launches the program is

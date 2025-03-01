@@ -20,12 +20,11 @@ variable::variable(statement_block *curr_block, std::string &&var_name,
                    yy::location l)
     : expression{curr_block, l}, name_{std::move(var_name)} {}
 
-void variable::declare() { 
+void variable::declare() {
 #if 0
   scope()->declare(name_);
 #endif
 }
-
 
 void variable::accept(base_visitor *b_visitor) { b_visitor->visit(this); }
 
@@ -72,7 +71,7 @@ assignment::assignment(statement_block *curr_block, const std::string &name,
 assignment::assignment(statement_block *curr_block, std::string &&name,
                        expression *expr, yy::location loc)
     : expression{curr_block, loc}, name_{std::move(name)}, identifier_{expr} {
-  #if 0
+#if 0
   parent_->declare(name_);
 #endif
 }

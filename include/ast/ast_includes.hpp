@@ -1,5 +1,6 @@
 #pragma once
 
+#include "array.hpp"
 #include "ast.hpp"
 #include "definition.hpp"
 #include "expression.hpp"

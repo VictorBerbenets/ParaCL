@@ -16,7 +16,13 @@ class error_handler : public base_visitor {
   using size_type = std::size_t;
 
 public:
-  error_handler(SymTable &SymTbl, ValueManager &ValManager): SymTbl(SymTbl), ValManager(ValManager) {}
+  void visit(ast::InitListArray *InitListArr) override {}
+  void visit(ast::ArrayAccess *ArrAccess) override {}
+  void visit(ast::UndefVar *UndVar) override {}
+  void visit(ast::Array *Arr) override {}
+
+  error_handler(SymTable &SymTbl, ValueManager &ValManager)
+      : SymTbl(SymTbl), ValManager(ValManager) {}
 
   void visit(ast::statement_block *stm) override {
     for (auto &&statement : *stm) {

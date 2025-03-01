@@ -19,16 +19,10 @@ public:
   virtual void visit(ast::while_operator *While) = 0;
   virtual void visit(ast::read_expression *ReadExpr) = 0;
   virtual void visit(ast::print_function *Print) = 0;
-};
-
-class visitor : public base_visitor {
-public:
-  int get_value() const noexcept { return curr_value_; }
-
-  void set_value(int val) noexcept { curr_value_ = val; }
-
-protected:
-  int curr_value_ = 0;
+  virtual void visit(ast::InitListArray *InitListArr) = 0;
+  virtual void visit(ast::ArrayAccess *ArrAccess) = 0;
+  virtual void visit(ast::UndefVar *UndVar) = 0;
+  virtual void visit(ast::Array *Arr) = 0;
 };
 
 } // namespace paracl
