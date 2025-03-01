@@ -54,7 +54,9 @@ public:
 #endif
   }
 
-  void visit(ast::assignment *stm) override { stm->getIdentExp()->accept(this); }
+  void visit(ast::assignment *stm) override {
+    stm->getIdentExp()->accept(this);
+  }
 
   void visit(ast::if_operator *stm) override {
     stm->condition()->accept(this);

@@ -74,11 +74,12 @@ public:
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };
 
-class ArrayAccessAssignment: public expression {
+class ArrayAccessAssignment : public expression {
 public:
   ArrayAccessAssignment(statement_block *StmBlock, ArrayAccess *Access,
-             expression *Ident, yy::location Loc): expression(StmBlock, Loc), ArrAccess(Access), Identifier(Ident) {}
-  
+                        expression *Ident, yy::location Loc)
+      : expression(StmBlock, Loc), ArrAccess(Access), Identifier(Ident) {}
+
   void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 

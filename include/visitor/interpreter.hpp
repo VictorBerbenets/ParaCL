@@ -1,7 +1,7 @@
 #include <fstream>
 
-#include "symbol_table.hpp"
 #include "statement.hpp"
+#include "symbol_table.hpp"
 #include "visitor.hpp"
 
 namespace paracl {
@@ -46,7 +46,7 @@ public:
   ValueType *getValueAfterAccept(ast::statement *Stm) {
     Stm->accept(this);
     assert(curr_value_);
-    return static_cast<ValueType*>(curr_value_);
+    return static_cast<ValueType *>(curr_value_);
   }
 
 private:

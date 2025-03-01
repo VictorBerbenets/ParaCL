@@ -144,7 +144,8 @@ void CodeGenVisitor::visit(ast::assignment *Assign) {
     CodeGen.Builder->CreateStore(getCurrValue(), Alloca);
     NameToValue[Assign->getLValue()->name()] = Alloca;
   } else {
-    CodeGen.Builder->CreateStore(getCurrValue(), NameToValue[Assign->getLValue()->name()]);
+    CodeGen.Builder->CreateStore(getCurrValue(),
+                                 NameToValue[Assign->getLValue()->name()]);
   }
 }
 

@@ -1,12 +1,12 @@
 #pragma once
 
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/DenseSet.h>
 #include <llvm/ADT/Hashing.h>
 #include <llvm/ADT/SmallString.h>
-#include <llvm/ADT/DenseSet.h>
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
 #include "types.hpp"
 
@@ -78,7 +78,8 @@ public:
       Types.try_emplace(ID, std::make_unique<ArrayTy>());
       break;
     default:
-      Types.try_emplace(TypeID::Unknown, std::make_unique<PCLType>(TypeID::Unknown));
+      Types.try_emplace(TypeID::Unknown,
+                        std::make_unique<PCLType>(TypeID::Unknown));
     }
     return Types[ID].get();
   }
@@ -140,41 +141,49 @@ private:
 
 class ArrayVal : public PCLValue {
 public:
-  ArrayVal(PCLValue *Initer, IntegerVal *Size, PCLType *Ty) : PCLValue(Ty),
-      Initer(Initer), Size(Size), Data(new PCLValue*[Size->getValue()]) {
+  ArrayVal(PCLValue *Initer, IntegerVal *Size, PCLType *Ty)
+      : PCLValue(Ty), Initer(Initer), Size(Size),
+        Data(new PCLValue *[Size->getValue()]) {
     assert(Initer && Size);
-    std::cout << "Array Address in constructor = " << std::hex << this << std::dec << '\n';
-    std::cout << "Initer Address in constructor = " << std::hex << Initer << std::dec << '\n';
-    std::cout << "Size in constructor = " << Size->getValue() << std::dec << '\n';
+    std::cout << "Array Address in constructor = " << std::hex << this
+              << std::dec << '\n';
+    std::cout << "Initer Address in constructor = " << std::hex << Initer
+              << std::dec << '\n';
+    std::cout << "Size in constructor = " << Size->getValue() << std::dec
+              << '\n';
     for (auto Id = 0; Id < Size->getValue(); ++Id) {
       if (Initer->getType()->isInt32Ty()) {
       }
-        Data[Id] = new IntegerVal(*static_cast<IntegerVal*>(Initer));
+      Data[Id] = new IntegerVal(*static_cast<IntegerVal *>(Initer));
       if (Initer->getType()->isArrayTy()) {
-        Data[Id] = new ArrayVal(*static_cast<ArrayVal*>(Initer));
+        Data[Id] = new ArrayVal(*static_cast<ArrayVal *>(Initer));
       }
     }
   }
- 
-  ArrayVal(PCLType *Ty, IntegerVal *Size): PCLValue(Ty) {}
 
-  ArrayVal(const ArrayVal &Rhs): PCLValue(Rhs.Ty), Initer(Rhs.Initer), Size(Rhs.Size), Data (new PCLValue*[Size->getValue()]) {
-    std::cout << "Array Address in COPY constructor = " << std::hex << this << std::dec << '\n';
-    std::cout << "Initer Address in COPY constructor = " << std::hex << Rhs.Initer << std::dec << '\n';
-    std::cout << "Size in COPY constructor = " << Size->getValue() << std::dec << '\n';
+  ArrayVal(PCLType *Ty, IntegerVal *Size) : PCLValue(Ty) {}
+
+  ArrayVal(const ArrayVal &Rhs)
+      : PCLValue(Rhs.Ty), Initer(Rhs.Initer), Size(Rhs.Size),
+        Data(new PCLValue *[Size->getValue()]) {
+    std::cout << "Array Address in COPY constructor = " << std::hex << this
+              << std::dec << '\n';
+    std::cout << "Initer Address in COPY constructor = " << std::hex
+              << Rhs.Initer << std::dec << '\n';
+    std::cout << "Size in COPY constructor = " << Size->getValue() << std::dec
+              << '\n';
     std::cout << "LINE = " << __LINE__ << '\n';
     assert(Initer);
     auto *InitType = Initer->getType();
     assert(InitType);
     for (auto Id = 0; Id < Size->getValue(); ++Id) {
       if (InitType->isInt32Ty()) {
-        Data[Id] = new IntegerVal(*static_cast<IntegerVal*>(Initer));
+        Data[Id] = new IntegerVal(*static_cast<IntegerVal *>(Initer));
       }
       if (InitType->isArrayTy()) {
-        Data[Id] = new ArrayVal(*static_cast<ArrayVal*>(Initer));
+        Data[Id] = new ArrayVal(*static_cast<ArrayVal *>(Initer));
       }
     }
- 
   }
 
   const ArrayVal &operator=(const ArrayVal &Rhs) {
@@ -186,30 +195,27 @@ public:
     return *this;
   }
 
-  void swap(const ArrayVal &Rhs) {
-
-  }
+  void swap(const ArrayVal &Rhs) {}
 
   ~ArrayVal() {
-    std::cout << "Destructor for array = " << std::hex << this << std::dec << std::endl;
+    std::cout << "Destructor for array = " << std::hex << this << std::dec
+              << std::endl;
     if (Data)
       destroy();
   }
 
   void destroy() {
     for (auto Id = 0; Id < Size->getValue(); ++Id) {
-        delete Data[Id];
-        Data[Id] = nullptr;
+      delete Data[Id];
+      Data[Id] = nullptr;
     }
-    delete [] Data;
+    delete[] Data;
     Data = nullptr;
     Initer = nullptr;
     Size = nullptr;
   }
 
-  PCLValue *operator[](unsigned Id) {
-    return Data[Id];
-  }
+  PCLValue *operator[](unsigned Id) { return Data[Id]; }
 
   PCLValue *getIniter() noexcept { return Initer; }
   IntegerVal *getSize() noexcept { return Size; }
@@ -229,12 +235,14 @@ public:
   PCLValue *createValueFor(SymTabKey &&SymKey, ArgTys &&...Args) {
     auto ValuePtr = std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...);
     Values.push_back(std::move(ValuePtr));
-    auto [InsIt, _] = NameToValue.insert_or_assign(std::forward<SymTabKey>(SymKey), Values.back().get());
+    auto [InsIt, _] = NameToValue.insert_or_assign(
+        std::forward<SymTabKey>(SymKey), Values.back().get());
     return InsIt->second;
   }
 
   bool linkValueWithName(SymTabKey &&SymKey, PCLValue *Val) {
-    auto [_, IsInsert] = NameToValue.insert_or_assign(std::forward<SymTabKey>(SymKey), Val); 
+    auto [_, IsInsert] =
+        NameToValue.insert_or_assign(std::forward<SymTabKey>(SymKey), Val);
     return IsInsert;
   }
 
@@ -244,17 +252,18 @@ public:
         std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...));
     return Values.back().get();
   }
-
-  PCLValue *getValueFor(SymTabKey SymKey) {
+  
+  template <DerivedFromPCLValue ValueType = PCLValue>
+  ValueType *getValueFor(SymTabKey SymKey) {
     if (!NameToValue.contains(SymKey))
       return nullptr;
-    return NameToValue[SymKey];
+    return static_cast<ValueType*>(NameToValue[SymKey]);
   }
 
   friend class driver;
 
 private:
-  llvm::DenseMap<SymTabKey, PCLValue*> NameToValue;
+  llvm::DenseMap<SymTabKey, PCLValue *> NameToValue;
   llvm::SmallVector<std::unique_ptr<PCLValue>> Values;
 };
 

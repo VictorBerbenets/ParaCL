@@ -62,8 +62,7 @@ void logic_expression::accept(CodeGenVisitor *CodeGenVis) {
 
 assignment::assignment(statement_block *curr_block, variable *LValue,
                        expression *expr, yy::location loc)
-    : expression{curr_block, loc}, LValue(LValue), Identifier{expr} {
-}
+    : expression{curr_block, loc}, LValue(LValue), Identifier{expr} {}
 
 void assignment::accept(base_visitor *base_visitor) {
   base_visitor->visit(this);

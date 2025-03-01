@@ -104,8 +104,8 @@ public:
 
 class assignment : public expression {
 public:
-  assignment(statement_block *curr_block, variable *LValue,
-             expression *expr, yy::location loc);
+  assignment(statement_block *curr_block, variable *LValue, expression *expr,
+             yy::location loc);
 
   void accept(base_visitor *base_visitor) override;
   void accept(CodeGenVisitor *CodeGenVis) override;
