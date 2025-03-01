@@ -1,5 +1,7 @@
 #pragma once
 
+#include <llvm/ADT/SmallString.h>
+
 #include "identifiers.hpp"
 #include "location.hh"
 #include "statement.hpp"

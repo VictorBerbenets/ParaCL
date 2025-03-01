@@ -1,6 +1,7 @@
 #include <fstream>
 
 #include "symbol_table.hpp"
+#include "statement.hpp"
 #include "visitor.hpp"
 
 namespace paracl {
@@ -40,6 +41,13 @@ public:
   value_type get_value() const noexcept { return curr_value_; }
 
   void set_value(value_type val) noexcept { curr_value_ = val; }
+
+  template <DerivedFromPCLValue ValueType = PCLValue>
+  ValueType *getValueAfterAccept(ast::statement *Stm) {
+    Stm->accept(this);
+    assert(curr_value_);
+    return static_cast<ValueType*>(curr_value_);
+  }
 
 private:
   SymTable &SymTbl;

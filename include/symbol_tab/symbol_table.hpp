@@ -221,11 +221,11 @@ private:
 };
 
 template <typename T>
-concept DerivedFromPCLVal = std::derived_from<T, PCLValue>;
+concept DerivedFromPCLValue = std::derived_from<T, PCLValue>;
 
 class ValueManager final {
 public:
-  template <DerivedFromPCLVal ValueTy, typename... ArgTys>
+  template <DerivedFromPCLValue ValueTy, typename... ArgTys>
   PCLValue *createValueFor(SymTabKey &&SymKey, ArgTys &&...Args) {
     auto ValuePtr = std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...);
     Values.push_back(std::move(ValuePtr));
@@ -238,7 +238,7 @@ public:
     return IsInsert;
   }
 
-  template <DerivedFromPCLVal ValueTy, typename... ArgTys>
+  template <DerivedFromPCLValue ValueTy, typename... ArgTys>
   PCLValue *createValue(ArgTys &&...Args) {
     Values.emplace_back(
         std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...));
