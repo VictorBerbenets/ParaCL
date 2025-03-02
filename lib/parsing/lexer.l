@@ -1,4 +1,6 @@
 %{
+#include <llvm/ADT/StringRef.h>
+
 #include <iostream>
 #include <numeric>
 
@@ -59,7 +61,7 @@ VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 "]"               { return parser::make_CL_SQBRACK(update_location()); }
 
 {DIGIT1}?{DIGIT}* { return parser::make_NUMBER(std::atoi(yytext), update_location()); }
-{VAR}               { return parser::make_VAR(yytext, update_location());               }
+{VAR}               { return parser::make_VAR(llvm::StringRef(yytext), update_location()); }
 .			        { throw parser::syntax_error{update_location(), "Unknown symbol"};  }
 <<EOF>>             { return parser::make_EOF(update_location());}
 

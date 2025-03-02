@@ -11,6 +11,7 @@
 #include "interpreter.hpp"
 #include "paracl_grammar.tab.hh"
 #include "scanner.hpp"
+#include "semantic_context.hpp"
 
 namespace yy {
 

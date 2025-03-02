@@ -5,6 +5,7 @@
 #include "identifiers.hpp"
 #include "location.hh"
 #include "statement.hpp"
+#include "types.hpp"
 #include "visitor.hpp"
 
 namespace paracl {
@@ -38,21 +39,17 @@ private:
 
 class variable : public expression {
 public:
-  variable(statement_block *curr_block, const std::string &var_name,
+  variable(statement_block *curr_block, SymbNameType &&var_name,
            yy::location l);
-
-  variable(statement_block *curr_block, std::string &&var_name, yy::location l);
-
-  void declare();
 
   void accept(base_visitor *b_visitor) override;
 
   void accept(CodeGenVisitor *CodeGenVis) override;
 
-  const std::string &name() const noexcept;
+  const SymbNameType &name() const noexcept;
 
 private:
-  std::string name_;
+  SymbNameType name_;
 };
 
 class un_operator : public expression {
@@ -113,9 +110,7 @@ public:
   variable *getLValue() noexcept;
   expression *getIdentExp() noexcept;
 
-  void redefine(int value);
-
-  const std::string &name() const noexcept;
+  const SymbNameType &name() const noexcept;
 
 private:
   variable *LValue;

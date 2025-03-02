@@ -1,7 +1,6 @@
 #pragma once
 
 #include <concepts>
-#include <memory>
 #include <vector>
 
 #include "codegen_visitor.hpp"
@@ -46,15 +45,11 @@ protected:
 
 class statement_block : public statement {
   using StmtsStore = std::vector<statement *>;
+
+public:
   using ScopeIter = StmtsStore::iterator;
   using ConstScopeIter = StmtsStore::const_iterator;
 
-#if 0
-  // Find the object in the current scope
-  bool has(const std::string &name) const { return sym_tab_.has(name); }
-#endif
-
-public:
   explicit statement_block(statement_block *parent) : statement{parent} {}
 
   statement_block(statement_block *parent, yy::location loc)
@@ -68,36 +63,6 @@ public:
   void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
 
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
-#if 0
-
-  void declare(const std::string &name, int value = 0) {
-    if (auto curr_scope = find(name); !curr_scope) {
-      sym_tab_.add(name, value);
-    }
-  }
-
-  void redefine(const std::string &name, int value) {
-    if (auto curr_scope = find(name); curr_scope) {
-      curr_scope->set(name, value);
-    } else {
-      std::cout << "error" << std::endl;
-    }
-  }
-#endif
-  // finding declaration in parent's scopes
-#if 0
-  statement_block *find(const std::string &name) {
-    for (auto curr_scope = this; curr_scope; curr_scope = curr_scope->parent_) {
-      if (curr_scope->has(name)) {
-        return curr_scope;
-      }
-    }
-    return nullptr;
-  }
-  void set(const std::string &name, int value) { sym_tab_[name] = value; }
-
-  int value(const std::string &name) noexcept { return sym_tab_[name]; }
-#endif
 
   void add(statement *stm) {
     stm->set_parent(this);

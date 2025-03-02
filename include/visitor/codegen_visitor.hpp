@@ -2,11 +2,8 @@
 
 #include <llvm/ADT/StringRef.h>
 
-#include <map>
-#include <utility>
-
 #include "codegen.hpp"
-#include "symbol_table.hpp"
+#include "semantic_context.hpp"
 #include "visitor.hpp"
 
 namespace paracl {

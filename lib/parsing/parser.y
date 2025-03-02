@@ -120,7 +120,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 
 // terminal tokens
 %token <int> NUMBER
-%token <std::string> VAR
+%token <paracl::SymbNameType> VAR
 
 // nterminals
 

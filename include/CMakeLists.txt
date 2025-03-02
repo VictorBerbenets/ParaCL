@@ -8,6 +8,7 @@ target_include_directories(ParaclHeaders
   visitor
   codegen
   symbol_tab
+  semantics
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   )

@@ -12,25 +12,15 @@ void number::accept(base_visitor *b_visitor) { b_visitor->visit(this); }
 
 void number::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 
-variable::variable(statement_block *curr_block, const std::string &var_name,
+variable::variable(statement_block *curr_block, SymbNameType &&var_name,
                    yy::location l)
-    : expression{curr_block, l}, name_{var_name} {}
-
-variable::variable(statement_block *curr_block, std::string &&var_name,
-                   yy::location l)
-    : expression{curr_block, l}, name_{std::move(var_name)} {}
-
-void variable::declare() {
-#if 0
-  scope()->declare(name_);
-#endif
-}
+    : expression{curr_block, l}, name_{std::forward<SymbNameType>(var_name)} {}
 
 void variable::accept(base_visitor *b_visitor) { b_visitor->visit(this); }
 
 void variable::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 
-const std::string &variable::name() const noexcept { return name_; }
+const SymbNameType &variable::name() const noexcept { return name_; }
 
 un_operator::un_operator(UnOp type, pointer_type arg, yy::location loc)
     : expression{loc}, type_{type}, arg_{arg} {}
@@ -72,12 +62,6 @@ void assignment::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 
 variable *assignment::getLValue() noexcept { return LValue; }
 expression *assignment::getIdentExp() noexcept { return Identifier; }
-
-void assignment::redefine(int value) {
-#if 0 
-  parent_->redefine(name_, value);
-#endif
-}
 
 read_expression::read_expression(yy::location loc) : expression{loc} {}
 

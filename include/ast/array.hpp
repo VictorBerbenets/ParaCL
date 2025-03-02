@@ -49,9 +49,10 @@ private:
 class ArrayAccess : public variable {
 public:
   template <typename Iter>
-  ArrayAccess(statement_block *StmBlock, std::string Name, Iter Begin, Iter End,
-              yy::location loc)
-      : variable(StmBlock, Name, loc), RanksId(Begin, End) {}
+  ArrayAccess(statement_block *StmBlock, SymbNameType &&Name, Iter Begin,
+              Iter End, yy::location loc)
+      : variable(StmBlock, std::forward<SymbNameType>(Name), loc),
+        RanksId(Begin, End) {}
 
   void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }

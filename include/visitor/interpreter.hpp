@@ -1,7 +1,6 @@
 #include <fstream>
 
 #include "statement.hpp"
-#include "symbol_table.hpp"
 #include "visitor.hpp"
 
 namespace paracl {

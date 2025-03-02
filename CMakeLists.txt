@@ -31,7 +31,7 @@ set(PARSER_PATH "lib/parsing/parser.y")
 
 aux_source_directory(./lib/ast/ AST_SOURCES)
 aux_source_directory(./lib/visitor/ VISITOR_SOURCES)
-aux_source_directory(./lib/symbol_tab/ SYMBOL_TAB_SOURCES)
+aux_source_directory(./lib/semantics/ SEMANTICS_SOURCES)
 
 flex_target(scanner
   ${LEXER_PATH}
@@ -59,7 +59,7 @@ set(SOURCES
     ./lib/option_category.cpp
     ${AST_SOURCES}
     ${VISITOR_SOURCES}
-    ${SYMBOL_TAB_SOURCES}
+    ${SEMANTICS_SOURCES}
     ${BISON_parser_OUTPUTS}
     ${FLEX_scanner_OUTPUTS}
 )
