@@ -22,7 +22,6 @@ public:
   void visit(ast::ArrayAccessAssignment *Arr) override {}
   void visit(ast::InitListArray *InitListArr) override {}
   void visit(ast::ArrayAccess *ArrAccess) override {}
-  void visit(ast::UndefVar *UndVar) override {}
   void visit(ast::Array *Arr) override {}
 
   void visit(ast::calc_expression *stm) override;

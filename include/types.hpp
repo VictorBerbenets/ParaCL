@@ -6,7 +6,7 @@ namespace paracl {
 
 class PCLType {
 public:
-  enum class TypeID { Unknown, Int32, Array };
+  enum class TypeID { Unknown, Int32, UniformArray, PresetArray };
 
   PCLType(TypeID ID) : ID(ID) {}
 
@@ -14,7 +14,9 @@ public:
 
   TypeID getTypeID() const noexcept { return ID; }
   bool isInt32Ty() const noexcept { return ID == TypeID::Int32; }
-  bool isArrayTy() const noexcept { return ID == TypeID::Array; }
+  bool isUniformArrayTy() const noexcept { return ID == TypeID::UniformArray; }
+  bool isPresetArrayTy() const noexcept { return ID == TypeID::PresetArray; }
+  bool isArrayTy() const noexcept { return isUniformArrayTy() || isPresetArrayTy(); }
 
 protected:
   TypeID ID;
@@ -26,12 +28,12 @@ inline bool operator==(PCLType Lhs, PCLType Rhs) {
 
 class IntegerTy : public PCLType {
 public:
-  IntegerTy() : PCLType(TypeID::Int32) {}
+  IntegerTy(TypeID IntID) : PCLType(IntID) {}
 };
 
 class ArrayTy : public PCLType {
 public:
-  ArrayTy() : PCLType(TypeID::Array) {}
+  ArrayTy(TypeID ArrID) : PCLType(ArrID) {}
   unsigned size() const { return ContainedTypesSize; }
 
 protected:

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "expression.hpp"
-#include "types.hpp"
 
 namespace paracl {
 namespace ast {
@@ -16,6 +15,13 @@ public:
 
   void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
+
+  auto begin() { return Elements.begin(); }
+  auto end() { return Elements.end(); }
+  auto begin() const { return Elements.begin(); }
+  auto end() const { return Elements.end(); }
+
+  unsigned size() const { return Elements.size(); }
 
 private:
   llvm::SmallVector<expression *> Elements;
@@ -63,15 +69,6 @@ public:
 private:
   llvm::SmallVector<expression *> RanksId;
   expression *IdentExp;
-};
-
-class UndefVar : public expression {
-public:
-  UndefVar(statement_block *StmBlock, yy::location Loc)
-      : expression(StmBlock, Loc) {}
-
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };
 
 class ArrayAccessAssignment : public expression {

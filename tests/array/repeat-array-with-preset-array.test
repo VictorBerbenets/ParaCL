@@ -1,0 +1,23 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+ArrSz1 = 10;
+ArrSz2 = 5;
+Arr = repeat(array(-10, -1, 2, repeat(777, 1), 77 + 23), ArrSz1);
+
+
+a = 0;
+b = 0;
+while(a < ArrSz1) {
+  while (b < ArrSz2) {
+    print Arr[a][b];
+    b = b + 1;
+  }
+  b = 0;
+  a = a + 1;
+}
+
+//-----------------------------------------------------------------------------
+
+// CHECK-COUNT-10: -10{{[[:space:]].*}}-1{{[[:space:]].*}}2{{[[:space:]].*}}777{{[[:space:]].*}}100

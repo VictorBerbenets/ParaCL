@@ -19,7 +19,6 @@ public:
   void visit(ast::ArrayAccessAssignment *Arr) override {}
   void visit(ast::InitListArray *InitListArr) override {}
   void visit(ast::ArrayAccess *ArrAccess) override {}
-  void visit(ast::UndefVar *UndVar) override {}
   void visit(ast::Array *Arr) override {}
 
   error_handler(SymTable &SymTbl, ValueManager &ValManager)

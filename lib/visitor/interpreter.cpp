@@ -155,29 +155,33 @@ void interpreter::visit(ast::assignment *Assign) {
   ValManager.linkValueWithName({Name, DeclScope}, IdentExp);
 }
 
-void interpreter::visit(ast::InitListArray *InitListArr) {}
+void interpreter::visit(ast::InitListArray *InitListArr) {
+  llvm::SmallVector<PCLValue *> PresetValues;
+  PresetValues.reserve(InitListArr->size()); 
+  for (auto *CurrExp : *InitListArr) {
+    PresetValues.push_back(getValueAfterAccept(CurrExp)); 
+  }
+
+  set_value(ValManager.createValue<PresetArrayVal>(PresetValues.begin(), PresetValues.end(),
+                                             SymTbl.getType(TypeID::PresetArray)));
+}
 
 void interpreter::visit(ast::ArrayAccess *ArrAccess) {
   SymbNameType Name(ArrAccess->name());
   auto *DeclScope = SymTbl.getDeclScopeFor(Name, ArrAccess->scope());
 
   auto AccessSize = ArrAccess->getSize();
-  auto *CurrArr = ValManager.getValueFor<ArrayVal>({Name, DeclScope});
+  auto *CurrArr = ValManager.getValueFor<ArrayBase>({Name, DeclScope});
   int CurrID = 0;
   for (unsigned ArrID = 1; auto RankID : *ArrAccess) {
     auto *RankVal = getValueAfterAccept<IntegerVal>(RankID);
     assert(RankVal);
     CurrID = RankVal->getValue();
     if (ArrID != AccessSize)
-      CurrArr = static_cast<ArrayVal *>((*CurrArr)[CurrID]);
+      CurrArr = static_cast<ArrayBase *>((*CurrArr)[CurrID]);
     ArrID++;
   }
   set_value((*CurrArr)[CurrID]);
-}
-
-void interpreter::visit(ast::UndefVar *UndVar) {
-  set_value(
-      ValManager.createValue<IntegerVal>(0, SymTbl.getType(TypeID::Int32)));
 }
 
 void interpreter::visit(ast::Array *Arr) {
@@ -185,8 +189,8 @@ void interpreter::visit(ast::Array *Arr) {
   auto *Size = getValueAfterAccept<IntegerVal>(Arr->getSize());
 
   assert(InitExpr && Size);
-  set_value(ValManager.createValue<ArrayVal>(InitExpr, Size,
-                                             SymTbl.getType(TypeID::Array)));
+  set_value(ValManager.createValue<UniformArrayVal>(InitExpr, *Size,
+                                             SymTbl.getType(TypeID::UniformArray)));
 }
 
 void interpreter::visit(ast::ArrayAccessAssignment *Arr) {

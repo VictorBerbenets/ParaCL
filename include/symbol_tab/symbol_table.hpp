@@ -3,6 +3,7 @@
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/ADT/DenseSet.h>
 #include <llvm/ADT/Hashing.h>
+#include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/SmallString.h>
 
 #include <iostream>
@@ -72,10 +73,13 @@ public:
 
     switch (ID) {
     case TypeID::Int32:
-      Types.try_emplace(ID, std::make_unique<IntegerTy>());
+      Types.try_emplace(ID, std::make_unique<IntegerTy>(ID));
       break;
-    case TypeID::Array:
-      Types.try_emplace(ID, std::make_unique<ArrayTy>());
+    case TypeID::UniformArray:
+      Types.try_emplace(ID, std::make_unique<ArrayTy>(ID));
+      break;
+    case TypeID::PresetArray:
+      Types.try_emplace(ID, std::make_unique<ArrayTy>(ID));
       break;
     default:
       Types.try_emplace(TypeID::Unknown,
@@ -111,11 +115,25 @@ private:
   llvm::DenseMap<TypeID, std::unique_ptr<PCLType>> Types;
 };
 
+class PCLValue;
+
+template <typename T>
+concept DerivedFromPCLValue = std::derived_from<T, PCLValue>;
+
+template <typename Iter>
+concept PCLValuePointerIter =
+    std::forward_iterator<Iter> &&
+    std::is_pointer_v<typename std::iterator_traits<Iter>::value_type> &&
+    DerivedFromPCLValue<
+        std::remove_pointer_t<typename std::iterator_traits<Iter>::value_type>>;
+
 class PCLValue {
 public:
   virtual ~PCLValue() = default;
 
   PCLType *getType() { return Ty; }
+
+  virtual PCLValue *clone() const = 0;
 
 protected:
   PCLValue(PCLType *Ty) : Ty(Ty) {}
@@ -133,101 +151,183 @@ public:
     Val = NewValue->getValue();
   }
 
+  IntegerVal *clone() const override { return new IntegerVal(Val, Ty); }
+
   operator int() const noexcept { return Val; }
 
 private:
   int Val;
 };
 
-class ArrayVal : public PCLValue {
-public:
-  ArrayVal(PCLValue *Initer, IntegerVal *Size, PCLType *Ty)
-      : PCLValue(Ty), Initer(Initer), Size(Size),
-        Data(new PCLValue *[Size->getValue()]) {
-    assert(Initer && Size);
-    std::cout << "Array Address in constructor = " << std::hex << this
-              << std::dec << '\n';
-    std::cout << "Initer Address in constructor = " << std::hex << Initer
-              << std::dec << '\n';
-    std::cout << "Size in constructor = " << Size->getValue() << std::dec
-              << '\n';
-    for (auto Id = 0; Id < Size->getValue(); ++Id) {
-      if (Initer->getType()->isInt32Ty()) {
-      }
-      Data[Id] = new IntegerVal(*static_cast<IntegerVal *>(Initer));
-      if (Initer->getType()->isArrayTy()) {
-        Data[Id] = new ArrayVal(*static_cast<ArrayVal *>(Initer));
-      }
-    }
-  }
+class ArrayBase: public PCLValue {
+protected:
 
-  ArrayVal(PCLType *Ty, IntegerVal *Size) : PCLValue(Ty) {}
-
-  ArrayVal(const ArrayVal &Rhs)
-      : PCLValue(Rhs.Ty), Initer(Rhs.Initer), Size(Rhs.Size),
-        Data(new PCLValue *[Size->getValue()]) {
-    std::cout << "Array Address in COPY constructor = " << std::hex << this
-              << std::dec << '\n';
-    std::cout << "Initer Address in COPY constructor = " << std::hex
-              << Rhs.Initer << std::dec << '\n';
-    std::cout << "Size in COPY constructor = " << Size->getValue() << std::dec
-              << '\n';
-    std::cout << "LINE = " << __LINE__ << '\n';
-    assert(Initer);
-    auto *InitType = Initer->getType();
-    assert(InitType);
-    for (auto Id = 0; Id < Size->getValue(); ++Id) {
-      if (InitType->isInt32Ty()) {
-        Data[Id] = new IntegerVal(*static_cast<IntegerVal *>(Initer));
-      }
-      if (InitType->isArrayTy()) {
-        Data[Id] = new ArrayVal(*static_cast<ArrayVal *>(Initer));
-      }
-    }
-  }
-
-  const ArrayVal &operator=(const ArrayVal &Rhs) {
+  ArrayBase(PCLType *Ty, unsigned Size): PCLValue(Ty), Size(Size), 
+    Data (new PCLValue *[Size]()) {}
+  
+  ArrayBase(const ArrayBase&) = delete;
+  ArrayBase(ArrayBase&& Rhs): PCLValue(std::exchange(Rhs.Ty, nullptr)), Size (std::exchange(Rhs.Size, 0)), Data(std::exchange(Rhs.Data, nullptr)) {}
+  ArrayBase &operator=(const ArrayBase&) = delete;
+  ArrayBase &operator=(ArrayBase&&Rhs) {
     if (this == std::addressof(Rhs))
       return *this;
 
-    auto Copy = Rhs;
-    swap(Copy);
+    Ty = std::exchange(Rhs.Ty, nullptr);
+    Size = std::exchange(Rhs.Size, 0);
+    Data = std::exchange(Rhs.Data, nullptr);
+
     return *this;
   }
-
-  void swap(const ArrayVal &Rhs) {}
-
-  ~ArrayVal() {
-    std::cout << "Destructor for array = " << std::hex << this << std::dec
-              << std::endl;
+  
+  ~ArrayBase() override {
     if (Data)
       destroy();
   }
 
   void destroy() {
-    for (auto Id = 0; Id < Size->getValue(); ++Id) {
-      delete Data[Id];
-      Data[Id] = nullptr;
+    for (auto &&ArrVal : llvm::make_range(begin(), end())) {
+      delete ArrVal;
+      ArrVal = nullptr;
     }
     delete[] Data;
     Data = nullptr;
-    Initer = nullptr;
-    Size = nullptr;
+    Size = 0;
   }
+
+  bool resizeIfNoData(unsigned NewSize) {
+    auto HasData = std::any_of(Data, Data + Size, [](auto *CurrVal) { return CurrVal != nullptr; });
+    if (HasData)
+      return false;
+
+    delete [] Data;
+    Size = NewSize;
+    Data = new PCLValue*[Size]();
+
+    return true;
+  }
+
+public: 
 
   PCLValue *operator[](unsigned Id) { return Data[Id]; }
 
-  PCLValue *getIniter() noexcept { return Initer; }
-  IntegerVal *getSize() noexcept { return Size; }
+  PCLValue **begin() { return Data; }
+  PCLValue **begin() const { return Data; }
+  PCLValue **end() {
+    assert(Size);
+    return Data + Size;
+  }
+  PCLValue **end() const {
+    assert(Size);
+    return Data + Size;
+  }
 
-private:
-  PCLValue *Initer = nullptr;
-  IntegerVal *Size = nullptr;
-  PCLValue **Data;
+  void copy(PCLValue **DestIter) {
+    std::transform(begin(), end(), DestIter, [](auto *CurrVal) { return CurrVal->clone(); });
+  }
+  
+  unsigned getSize() const noexcept { return Size; }
+
+protected:
+  unsigned Size = 0;
+  PCLValue **Data = nullptr;
 };
 
-template <typename T>
-concept DerivedFromPCLValue = std::derived_from<T, PCLValue>;
+class PresetArrayVal : public ArrayBase {
+  using TypeID = PCLType::TypeID;
+public:
+  template <PCLValuePointerIter Iter>
+  PresetArrayVal(Iter Begin, Iter End, PCLType *Ty): ArrayBase(Ty, std::distance(Begin, End)) {
+    resizeForConcatIfNeed(Begin, End);
+    ArrayBase *ArrPtr = nullptr;
+    for (unsigned ArrIndex = 0; auto *AssignVal : llvm::make_range(Begin, End)) {
+      auto *Type = AssignVal->getType();
+      switch(Type->getTypeID()) {
+        case TypeID::UniformArray:
+            [[fallthrough]];
+        case TypeID::PresetArray:
+            ArrPtr = static_cast<ArrayBase*>(AssignVal);
+            ArrPtr->copy(std::addressof(Data[ArrIndex]));
+            ArrIndex += ArrPtr->getSize();
+            break;
+        case TypeID::Int32:
+            Data[ArrIndex] = AssignVal->clone();
+            ArrIndex ++;
+            break;
+        case TypeID::Unknown:
+            [[fallthrough]];
+        default:
+            llvm_unreachable("Unsupported type for preset array");
+      } 
+    }
+  }
+
+  PresetArrayVal *clone() const override { return new PresetArrayVal(Data, Data + Size, Ty); };
+
+private:
+
+  template <PCLValuePointerIter Iter>
+  void resizeForConcatIfNeed(Iter Begin, Iter End) {
+    unsigned NewSize = 0;
+    std::for_each(Begin, End, [&](auto *CurrVal) {
+        auto *Type = CurrVal->getType();
+        if (Type->isArrayTy()) {
+          // Avoiding arrays of size 0
+          if (auto Sz = static_cast<ArrayBase*>(CurrVal)->getSize(); Sz)
+            NewSize += Sz;
+        } else {
+          NewSize ++;
+        } });
+
+    if (NewSize != Size) {
+      resizeIfNoData(NewSize);
+    }
+  }
+};
+
+class UniformArrayVal : public ArrayBase {
+public:
+  UniformArrayVal(PCLValue *Initer, unsigned Size, PCLType *Ty)
+      : ArrayBase(Ty, Size), Initer(Initer)
+         {
+    construct();
+  }
+
+  UniformArrayVal(const UniformArrayVal &Rhs) = delete;
+  UniformArrayVal(UniformArrayVal &&Rhs): ArrayBase(std::move(Rhs)), Initer(std::exchange(Rhs.Initer, nullptr)) {}
+  UniformArrayVal &operator=(const UniformArrayVal &Rhs) = delete;
+  UniformArrayVal &operator=(UniformArrayVal &&Rhs) {
+    if (this == std::addressof(Rhs))
+      return *this;
+
+    Ty = std::exchange(Rhs.Ty, nullptr);
+    Size = std::exchange(Rhs.Size, 0);
+    Data = std::exchange(Rhs.Data, nullptr);
+    Initer = std::exchange(Rhs.Initer, nullptr); 
+
+    return *this;
+  }
+
+  ~UniformArrayVal() override {
+    destroy();
+    Initer = nullptr;
+   }
+ 
+  UniformArrayVal *clone() const override { return new UniformArrayVal(Initer, Size, Ty); }
+
+  PCLValue *getIniter() noexcept { return Initer; }
+
+private:
+  void construct() {
+    assert(Initer);
+  std::cout << "LINE = " << __LINE__ << '\n';
+    for (auto &&ArrVal : llvm::make_range(begin(), end())) {
+      ArrVal = Initer->clone();
+    }
+  std::cout << "LINE = " << __LINE__ << '\n';
+  }
+
+  PCLValue *Initer = nullptr;
+};
 
 class ValueManager final {
 public:
@@ -252,12 +352,12 @@ public:
         std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...));
     return Values.back().get();
   }
-  
+
   template <DerivedFromPCLValue ValueType = PCLValue>
   ValueType *getValueFor(SymTabKey SymKey) {
     if (!NameToValue.contains(SymKey))
       return nullptr;
-    return static_cast<ValueType*>(NameToValue[SymKey]);
+    return static_cast<ValueType *>(NameToValue[SymKey]);
   }
 
   friend class driver;

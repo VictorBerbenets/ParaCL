@@ -20,7 +20,6 @@ class print_function;
 class read_expression;
 class ArrayAccess;
 class InitListArray;
-class UndefVar;
 class Array;
 
 } // namespace ast

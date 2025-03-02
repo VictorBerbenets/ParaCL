@@ -1,6 +1,6 @@
 #pragma once
 
-#include "forward_decls.hpp"
+// #include "forward_decls.hpp"
 
 namespace paracl {
 
@@ -23,7 +23,6 @@ class print_function;
 class read_expression;
 class ArrayAccess;
 class InitListArray;
-class UndefVar;
 class Array;
 
 } // namespace ast
@@ -45,7 +44,6 @@ public:
   virtual void visit(ast::print_function *Print) = 0;
   virtual void visit(ast::InitListArray *InitListArr) = 0;
   virtual void visit(ast::ArrayAccess *ArrAccess) = 0;
-  virtual void visit(ast::UndefVar *UndVar) = 0;
   virtual void visit(ast::Array *Arr) = 0;
   virtual void visit(ast::ArrayAccessAssignment *Arr) = 0;
 };

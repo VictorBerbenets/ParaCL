@@ -1,0 +1,21 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+Arr = array(1, 2, 3, 4, 5);
+
+a = 0;
+// array of size 5
+while (a < 5) {
+  print Arr[a];
+  a = a + 1;
+}
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 1
+// CHECK-NEXT: 2
+// CHECK-NEXT: 3
+// CHECK-NEXT: 4
+// CHECK-NEXT: 5
+

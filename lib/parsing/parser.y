@@ -37,6 +37,7 @@ using namespace paracl::ast;
 %code top {
 
 #include <iostream>
+#include <random>
 #include <string>
 #include <vector>
 #include <list>
@@ -56,10 +57,12 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %{
   using namespace paracl;
   using TypeID = PCLType::TypeID;
-
+  
+  std::mt19937 Generator(std::random_device{}());
+  std::uniform_int_distribution<int> DistrInRange(INT_MIN, INT_MAX);
   std::stack<statement_block*> blocks;
   std::list<expression*> Accesses;
-  std::vector<expression*> InitListArrElems;
+  std::list<expression*> InitListArrElems;
   bool IsRootBlockSet = false;
 %}
 
@@ -132,10 +135,11 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         equality_expression
 %nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
-%nterm <expression*>         init_list_array
+%nterm <InitListArray*>      preset_array
+%nterm <expression*>         preset_array_expression
 %nterm <expression*>         array_expression
-%nterm <expression*>         array
-%nterm <ArrayAccess*>           array_value
+%nterm <expression*>         uniform_array
+%nterm <ArrayAccess*>        array_value
 %nterm <variable*>           lvalue_operand
 %nterm <variable*>           variable
 
@@ -240,10 +244,12 @@ assignment_expression: variable ASSIGN assignment_expression { driver.getSymTab(
                      | variable ASSIGN logical_expression    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::Int32);
                                                           $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$);
                        }
+                     | variable ASSIGN uniform_array    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::UniformArray);
+                                                          $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
+                     | variable ASSIGN preset_array    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::PresetArray);
+                                                          $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
                      | array_value ASSIGN assignment_expression     { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
-                     | array_value ASSIGN logical_expression     { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
-                     | variable ASSIGN array    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::Array);
-                                             $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
+                     | array_value ASSIGN logical_expression        { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
 
 ;
 
@@ -262,21 +268,26 @@ array_access: OP_SQBRACK expression CL_SQBRACK array_access { Accesses.push_fron
             | OP_SQBRACK expression CL_SQBRACK { Accesses.push_front($2); }
 ;
 
-array: REPEAT OP_BRACK array_expression COMMA expression CL_BRACK { $$ = driver.make_node<Array>(blocks.top(), $3, $5, @$); }
-     | init_list_array { $$ = $1; }
+uniform_array: REPEAT OP_BRACK array_expression COMMA expression CL_BRACK { $$ = driver.make_node<Array>(blocks.top(), $3, $5, @$); }
 ;
 
-array_expression: array { $$ = $1; }
+array_expression: uniform_array { $$ = $1; }
+                | preset_array { $$ = $1; }
                 | expression { $$ = $1; }
-                | UNDEF { $$ = driver.make_node<UndefVar>(blocks.top(), @$); }
+                | UNDEF { $$ = driver.make_node<number>(DistrInRange(Generator), @$); }
 ;
 
-init_list_array: ARRAY OP_BRACK init_list_array_access CL_BRACK { $$ = driver.make_node<InitListArray>(blocks.top(), InitListArrElems.begin(), InitListArrElems.end(), @$);
-                                                                  InitListArrElems.clear(); }
+preset_array: ARRAY OP_BRACK preset_array_access CL_BRACK { $$ = driver.make_node<InitListArray>(blocks.top(), InitListArrElems.begin(), InitListArrElems.end(), @$);
+                                                            InitListArrElems.clear(); }
 ;
 
-init_list_array_access: array_expression COMMA init_list_array_access  { InitListArrElems.push_back($1); }
-                      | array_expression { InitListArrElems.push_back($1); }
+preset_array_expression: REPEAT OP_BRACK expression COMMA expression CL_BRACK { $$ = driver.make_node<Array>(blocks.top(), $3, $5, @$); }
+                        | expression { $$ = $1; }
+                        | UNDEF { $$ = driver.make_node<number>(DistrInRange(Generator), @$); }
+;
+
+preset_array_access: preset_array_expression COMMA preset_array_access  { InitListArrElems.push_front($1); }
+                      | preset_array_expression { InitListArrElems.push_front($1); }
 ;
 
 
