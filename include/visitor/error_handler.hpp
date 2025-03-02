@@ -17,9 +17,9 @@ class error_handler : public base_visitor {
 
 public:
   void visit(ast::ArrayAccessAssignment *Arr) override {}
-  void visit(ast::InitListArray *InitListArr) override {}
+  void visit(ast::PresetArray *InitListArr) override {}
   void visit(ast::ArrayAccess *ArrAccess) override {}
-  void visit(ast::Array *Arr) override {}
+  void visit(ast::UniformArray *Arr) override {}
 
   error_handler(SymTable &SymTbl, ValueManager &ValManager)
       : SymTbl(SymTbl), ValManager(ValManager) {}

@@ -5,11 +5,11 @@
 namespace paracl {
 namespace ast {
 
-class InitListArray : public expression {
+class PresetArray : public expression {
 public:
   using expression::expression;
   template <typename Iter>
-  InitListArray(statement_block *StmBlock, Iter Begin, Iter End,
+  PresetArray(statement_block *StmBlock, Iter Begin, Iter End,
                 yy::location Loc)
       : expression(StmBlock, Loc), Elements(Begin, End) {}
 
@@ -27,11 +27,11 @@ private:
   llvm::SmallVector<expression *> Elements;
 };
 
-class Array : public expression {
+class UniformArray : public expression {
 public:
   using expression::expression;
 
-  Array(statement_block *StmBlock, expression *InitExpr, expression *Size,
+  UniformArray(statement_block *StmBlock, expression *InitExpr, expression *Size,
         yy::location Loc)
       : expression(StmBlock, Loc), InitExpr(InitExpr), Size(Size) {}
 

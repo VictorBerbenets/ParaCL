@@ -154,7 +154,7 @@ void interpreter::visit(ast::assignment *Assign) {
   ValManager.linkValueWithName({Name, DeclScope}, IdentExp);
 }
 
-void interpreter::visit(ast::InitListArray *InitListArr) {
+void interpreter::visit(ast::PresetArray *InitListArr) {
   llvm::SmallVector<PCLValue *> PresetValues;
   PresetValues.reserve(InitListArr->size());
   for (auto *CurrExp : *InitListArr) {
@@ -184,7 +184,7 @@ void interpreter::visit(ast::ArrayAccess *ArrAccess) {
   set_value((*CurrArr)[CurrID]);
 }
 
-void interpreter::visit(ast::Array *Arr) {
+void interpreter::visit(ast::UniformArray *Arr) {
   auto *InitExpr = getValueAfterAccept(Arr->getInitExpr());
   auto *Size = getValueAfterAccept<IntegerVal>(Arr->getSize());
 

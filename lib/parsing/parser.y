@@ -62,7 +62,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
   std::uniform_int_distribution<int> DistrInRange(INT_MIN, INT_MAX);
   std::stack<statement_block*> blocks;
   std::list<expression*> Accesses;
-  std::list<expression*> InitListArrElems;
+  std::list<expression*> PresetArrElems;
   bool IsRootBlockSet = false;
 %}
 
@@ -135,10 +135,10 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         equality_expression
 %nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
-%nterm <InitListArray*>      preset_array
 %nterm <expression*>         preset_array_expression
 %nterm <expression*>         array_expression
-%nterm <expression*>         uniform_array
+%nterm <UniformArray*>       uniform_array
+%nterm <PresetArray*>        preset_array
 %nterm <ArrayAccess*>        array_value
 %nterm <variable*>           lvalue_operand
 %nterm <variable*>           variable
@@ -268,7 +268,7 @@ array_access: OP_SQBRACK expression CL_SQBRACK array_access { Accesses.push_fron
             | OP_SQBRACK expression CL_SQBRACK { Accesses.push_front($2); }
 ;
 
-uniform_array: REPEAT OP_BRACK array_expression COMMA expression CL_BRACK { $$ = driver.make_node<Array>(blocks.top(), $3, $5, @$); }
+uniform_array: REPEAT OP_BRACK array_expression COMMA expression CL_BRACK { $$ = driver.make_node<UniformArray>(blocks.top(), $3, $5, @$); }
 ;
 
 array_expression: uniform_array { $$ = $1; }
@@ -277,17 +277,17 @@ array_expression: uniform_array { $$ = $1; }
                 | UNDEF { $$ = driver.make_node<number>(DistrInRange(Generator), @$); }
 ;
 
-preset_array: ARRAY OP_BRACK preset_array_access CL_BRACK { $$ = driver.make_node<InitListArray>(blocks.top(), InitListArrElems.begin(), InitListArrElems.end(), @$);
-                                                            InitListArrElems.clear(); }
+preset_array: ARRAY OP_BRACK preset_array_access CL_BRACK { $$ = driver.make_node<PresetArray>(blocks.top(), PresetArrElems.begin(), PresetArrElems.end(), @$);
+                                                            PresetArrElems.clear(); }
 ;
 
-preset_array_expression: REPEAT OP_BRACK expression COMMA expression CL_BRACK { $$ = driver.make_node<Array>(blocks.top(), $3, $5, @$); }
+preset_array_expression: REPEAT OP_BRACK expression COMMA expression CL_BRACK { $$ = driver.make_node<UniformArray>(blocks.top(), $3, $5, @$); }
                         | expression { $$ = $1; }
                         | UNDEF { $$ = driver.make_node<number>(DistrInRange(Generator), @$); }
 ;
 
-preset_array_access: preset_array_expression COMMA preset_array_access  { InitListArrElems.push_front($1); }
-                      | preset_array_expression { InitListArrElems.push_front($1); }
+preset_array_access: preset_array_expression COMMA preset_array_access  { PresetArrElems.push_front($1); }
+                      | preset_array_expression { PresetArrElems.push_front($1); }
 ;
 
 

@@ -17,9 +17,9 @@ public:
   virtual void visit(ast::definition *stm);
 
   void visit(ast::ArrayAccessAssignment *Arr) override {}
-  void visit(ast::InitListArray *InitListArr) override {}
+  void visit(ast::PresetArray *InitListArr) override {}
   void visit(ast::ArrayAccess *ArrAccess) override {}
-  void visit(ast::Array *Arr) override {}
+  void visit(ast::UniformArray *Arr) override {}
 
   void visit(ast::calc_expression *stm) override;
   void visit(ast::un_operator *stm) override;

@@ -22,8 +22,8 @@ class while_operator;
 class print_function;
 class read_expression;
 class ArrayAccess;
-class InitListArray;
-class Array;
+class PresetArray;
+class UniformArray;
 
 } // namespace ast
 
@@ -42,9 +42,9 @@ public:
   virtual void visit(ast::while_operator *While) = 0;
   virtual void visit(ast::read_expression *ReadExpr) = 0;
   virtual void visit(ast::print_function *Print) = 0;
-  virtual void visit(ast::InitListArray *InitListArr) = 0;
+  virtual void visit(ast::PresetArray *InitListArr) = 0;
   virtual void visit(ast::ArrayAccess *ArrAccess) = 0;
-  virtual void visit(ast::Array *Arr) = 0;
+  virtual void visit(ast::UniformArray *Arr) = 0;
   virtual void visit(ast::ArrayAccessAssignment *Arr) = 0;
 };
 
