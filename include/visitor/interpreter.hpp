@@ -2,13 +2,11 @@
 
 #include "statement.hpp"
 #include "visitor.hpp"
+#include "visitor_tracker.hpp"
 
 namespace paracl {
 
-class interpreter : public VisitorBase {
-  using value_type = PCLValue *;
-  using TypeID = SymTable::TypeID;
-
+class interpreter : public VisitorTracker {
 public:
   interpreter(SymTable &SymTbl, ValueManager &ValManager, std::istream &input,
               std::ostream &output)
@@ -36,24 +34,11 @@ public:
 
   void run_program(ast::root_statement_block *StmBlock) { visit(StmBlock); }
 
-  value_type get_value() const noexcept { return CurrValue; }
-
-  void set_value(value_type Val) noexcept { CurrValue = Val; }
-
-  template <DerivedFromPCLValue ValueType = PCLValue>
-  ValueType *getValueAfterAccept(ast::statement *Stm) {
-    Stm->accept(this);
-    assert(CurrValue);
-    return static_cast<ValueType *>(CurrValue);
-  }
-
 private:
   SymTable &SymTbl;
   ValueManager &ValManager;
   std::istream &input_stream_;
   std::ostream &output_stream_;
-
-  value_type CurrValue = nullptr;
 };
 
 } // namespace paracl

@@ -34,17 +34,13 @@ void un_operator::accept(CodeGenVisitor *CodeGenVis) {
 expression *un_operator::arg() noexcept { return arg_; }
 UnOp un_operator::type() const noexcept { return type_; }
 
-void calc_expression::accept(VisitorBase *Vis) {
-  Vis->visit(this);
-}
+void calc_expression::accept(VisitorBase *Vis) { Vis->visit(this); }
 
 void calc_expression::accept(CodeGenVisitor *CodeGenVis) {
   CodeGenVis->visit(this);
 }
 
-void logic_expression::accept(VisitorBase *Vis) {
-  Vis->visit(this);
-}
+void logic_expression::accept(VisitorBase *Vis) { Vis->visit(this); }
 
 void logic_expression::accept(CodeGenVisitor *CodeGenVis) {
   CodeGenVis->visit(this);
@@ -54,9 +50,7 @@ assignment::assignment(statement_block *curr_block, variable *LValue,
                        expression *expr, yy::location loc)
     : expression{curr_block, loc}, LValue(LValue), Identifier{expr} {}
 
-void assignment::accept(VisitorBase *VisitorBase) {
-  VisitorBase->visit(this);
-}
+void assignment::accept(VisitorBase *VisitorBase) { VisitorBase->visit(this); }
 
 void assignment::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 

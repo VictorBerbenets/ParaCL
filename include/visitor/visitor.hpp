@@ -1,7 +1,5 @@
 #pragma once
 
-// #include "forward_decls.hpp"
-
 namespace paracl {
 
 namespace ast {

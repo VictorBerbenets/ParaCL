@@ -9,8 +9,7 @@ class PresetArray : public expression {
 public:
   using expression::expression;
   template <typename Iter>
-  PresetArray(statement_block *StmBlock, Iter Begin, Iter End,
-                yy::location Loc)
+  PresetArray(statement_block *StmBlock, Iter Begin, Iter End, yy::location Loc)
       : expression(StmBlock, Loc), Elements(Begin, End) {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
@@ -31,8 +30,8 @@ class UniformArray : public expression {
 public:
   using expression::expression;
 
-  UniformArray(statement_block *StmBlock, expression *InitExpr, expression *Size,
-        yy::location Loc)
+  UniformArray(statement_block *StmBlock, expression *InitExpr,
+               expression *Size, yy::location Loc)
       : expression(StmBlock, Loc), InitExpr(InitExpr), Size(Size) {}
 
   expression *getInitExpr() noexcept { return InitExpr; }

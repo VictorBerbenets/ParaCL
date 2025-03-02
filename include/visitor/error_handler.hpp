@@ -7,11 +7,11 @@
 
 #include "ast_includes.hpp"
 #include "location.hh"
-#include "visitor.hpp"
+#include "visitor_tracker.hpp"
 
 namespace paracl {
 
-class ErrorHandler : public VisitorBase {
+class ErrorHandler : public VisitorTracker {
   using error_type = std::pair<const std::string, yy::location>;
   using size_type = std::size_t;
 
