@@ -22,8 +22,8 @@ class statement {
 public:
   virtual ~statement() = default;
 
-  virtual void accept(base_visitor *b_visitor) = 0;
-  virtual void accept(CodeGenVisitor *b_visitor) = 0;
+  virtual void accept(VisitorBase *Vis) = 0;
+  virtual void accept(CodeGenVisitor *Vis) = 0;
 
   void set_parent(statement_block *parent) noexcept { parent_ = parent; }
 
@@ -60,7 +60,7 @@ public:
   template <module_identifier InputIt>
   statement_block(InputIt begin, InputIt end) : statements_{begin, end} {}
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
 
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
@@ -84,7 +84,7 @@ class root_statement_block : public statement_block {
 public:
   using statement_block::statement_block;
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
 
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };

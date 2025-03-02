@@ -5,7 +5,7 @@
 
 namespace paracl {
 
-class interpreter : public base_visitor {
+class interpreter : public VisitorBase {
   using value_type = PCLValue *;
   using TypeID = SymTable::TypeID;
 
@@ -36,15 +36,15 @@ public:
 
   void run_program(ast::root_statement_block *StmBlock) { visit(StmBlock); }
 
-  value_type get_value() const noexcept { return curr_value_; }
+  value_type get_value() const noexcept { return CurrValue; }
 
-  void set_value(value_type val) noexcept { curr_value_ = val; }
+  void set_value(value_type Val) noexcept { CurrValue = Val; }
 
   template <DerivedFromPCLValue ValueType = PCLValue>
   ValueType *getValueAfterAccept(ast::statement *Stm) {
     Stm->accept(this);
-    assert(curr_value_);
-    return static_cast<ValueType *>(curr_value_);
+    assert(CurrValue);
+    return static_cast<ValueType *>(CurrValue);
   }
 
 private:
@@ -53,7 +53,7 @@ private:
   std::istream &input_stream_;
   std::ostream &output_stream_;
 
-  value_type curr_value_ = nullptr;
+  value_type CurrValue = nullptr;
 };
 
 } // namespace paracl

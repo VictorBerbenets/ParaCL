@@ -27,9 +27,9 @@ class UniformArray;
 
 } // namespace ast
 
-class base_visitor {
+class VisitorBase {
 public:
-  virtual ~base_visitor() {};
+  virtual ~VisitorBase() {};
 
   virtual void visit(ast::statement_block *StmBlock) = 0;
   virtual void visit(ast::calc_expression *CalcExpr) = 0;

@@ -26,7 +26,7 @@ public:
   print_function(expression *expr, yy::location loc)
       : function{loc}, print_expr_{expr} {}
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
 
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 

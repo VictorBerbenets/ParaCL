@@ -8,7 +8,7 @@
 
 namespace paracl {
 
-class CodeGenVisitor : public base_visitor {
+class CodeGenVisitor : public VisitorBase {
 public:
   CodeGenVisitor(SymTable &SymTbl, ValueManager &ValManager,
                  llvm::StringRef ModuleName);

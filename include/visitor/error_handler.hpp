@@ -11,7 +11,7 @@
 
 namespace paracl {
 
-class error_handler : public base_visitor {
+class ErrorHandler : public VisitorBase {
   using error_type = std::pair<const std::string, yy::location>;
   using size_type = std::size_t;
 
@@ -21,7 +21,7 @@ public:
   void visit(ast::ArrayAccess *ArrAccess) override {}
   void visit(ast::UniformArray *Arr) override {}
 
-  error_handler(SymTable &SymTbl, ValueManager &ValManager)
+  ErrorHandler(SymTable &SymTbl, ValueManager &ValManager)
       : SymTbl(SymTbl), ValManager(ValManager) {}
 
   void visit(ast::statement_block *stm) override {

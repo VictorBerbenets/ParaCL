@@ -13,7 +13,7 @@ public:
                 yy::location Loc)
       : expression(StmBlock, Loc), Elements(Begin, End) {}
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   auto begin() { return Elements.begin(); }
@@ -38,7 +38,7 @@ public:
   expression *getInitExpr() noexcept { return InitExpr; }
   expression *getSize() noexcept { return Size; }
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
 private:
@@ -54,7 +54,7 @@ public:
       : variable(StmBlock, std::forward<SymbNameType>(Name), loc),
         RanksId(Begin, End) {}
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   void setIdentExp(expression *Ident) { IdentExp = Ident; }
@@ -78,7 +78,7 @@ public:
                         expression *Ident, yy::location Loc)
       : expression(StmBlock, Loc), ArrAccess(Access), Identifier(Ident) {}
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   ArrayAccess *getArrayAccess() noexcept { return ArrAccess; }

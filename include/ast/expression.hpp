@@ -29,7 +29,7 @@ public:
 
   const value_type &get_value() const noexcept;
 
-  void accept(base_visitor *b_visitor) override;
+  void accept(VisitorBase *Vis) override;
 
   void accept(CodeGenVisitor *CodeGenVis) override;
 
@@ -42,7 +42,7 @@ public:
   variable(statement_block *curr_block, SymbNameType &&var_name,
            yy::location l);
 
-  void accept(base_visitor *b_visitor) override;
+  void accept(VisitorBase *Vis) override;
 
   void accept(CodeGenVisitor *CodeGenVis) override;
 
@@ -56,7 +56,7 @@ class un_operator : public expression {
 public:
   un_operator(UnOp type, pointer_type arg, yy::location loc);
 
-  void accept(base_visitor *b_visitor) override;
+  void accept(VisitorBase *Vis) override;
 
   void accept(CodeGenVisitor *CodeGenVis) override;
 
@@ -87,7 +87,7 @@ class calc_expression : public bin_operator<CalcOp> {
 public:
   using bin_operator::bin_operator;
 
-  void accept(base_visitor *b_visitor) override;
+  void accept(VisitorBase *Vis) override;
   void accept(CodeGenVisitor *CodeGenVis) override;
 };
 
@@ -95,7 +95,7 @@ class logic_expression : public bin_operator<LogicOp> {
 public:
   using bin_operator::bin_operator;
 
-  void accept(base_visitor *b_visitor) override;
+  void accept(VisitorBase *Vis) override;
   void accept(CodeGenVisitor *CodeGenVis) override;
 };
 
@@ -104,7 +104,7 @@ public:
   assignment(statement_block *curr_block, variable *LValue, expression *expr,
              yy::location loc);
 
-  void accept(base_visitor *base_visitor) override;
+  void accept(VisitorBase *VisitorBase) override;
   void accept(CodeGenVisitor *CodeGenVis) override;
 
   variable *getLValue() noexcept;
@@ -123,7 +123,7 @@ class read_expression : public expression {
 public:
   read_expression(yy::location loc);
 
-  void accept(base_visitor *base_visitor) override;
+  void accept(VisitorBase *VisitorBase) override;
   void accept(CodeGenVisitor *CodeGenVis) override;
 };
 

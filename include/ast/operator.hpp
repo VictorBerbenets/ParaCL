@@ -28,7 +28,7 @@ class while_operator : public ctrl_statement {
 public:
   using ctrl_statement::ctrl_statement;
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
 
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };
@@ -41,7 +41,7 @@ public:
               yy::location loc)
       : ctrl_statement{cond, body, loc}, else_block_{else_block} {}
 
-  void accept(base_visitor *b_visitor) override { b_visitor->visit(this); }
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
 
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 

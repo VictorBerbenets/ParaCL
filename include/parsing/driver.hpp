@@ -18,7 +18,7 @@ namespace yy {
 class driver final {
 public:
   driver()
-      : scanner_{}, parser_(scanner_, *this), handler_(SymTab, ValManager) {}
+      : scanner_{}, parser_(scanner_, *this), Handler(SymTab, ValManager) {}
 
   void parse() { parser_.parse(); }
 
@@ -30,7 +30,7 @@ public:
   NodeType *make_node(Args &&...args) {
     auto node = ast_.make_node<NodeType>(std::forward<Args>(args)...);
     if (std::same_as<variable, NodeType>) {
-      handler_.visit(node);
+      Handler.visit(node);
     }
     return node;
   }
@@ -53,11 +53,11 @@ public:
     return ast_.get_curr_block();
   }
 
-  std::optional<paracl::error_handler> check_for_errors() const {
-    if (handler_.empty()) {
+  std::optional<paracl::ErrorHandler> check_for_errors() const {
+    if (Handler.empty()) {
       return {};
     }
-    return {handler_};
+    return {Handler};
   }
 
   paracl::SymTable &getSymTab() { return SymTab; }
@@ -82,7 +82,7 @@ private:
   paracl::ast::ast ast_;
   paracl::SymTable SymTab;
   paracl::ValueManager ValManager;
-  paracl::error_handler handler_;
+  paracl::ErrorHandler Handler;
 };
 
 } // namespace yy
