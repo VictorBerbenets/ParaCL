@@ -101,7 +101,7 @@ public:
 
 class assignment : public expression {
 public:
-  assignment(statement_block *curr_block, variable *LValue, expression *expr,
+  assignment(statement_block *curr_block, variable *LValue, expression *expr, PCLType::TypeID ID,
              yy::location loc);
 
   void accept(VisitorBase *VisitorBase) override;
@@ -110,11 +110,13 @@ public:
   variable *getLValue() noexcept;
   expression *getIdentExp() noexcept;
 
-  const SymbNameType &name() const noexcept;
+  SymbNameType name() const;
+  PCLType::TypeID getID() const noexcept;
 
 private:
   variable *LValue;
   expression *Identifier;
+  PCLType::TypeID ID;
 };
 
 class read_expression : public expression {

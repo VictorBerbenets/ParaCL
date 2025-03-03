@@ -47,8 +47,8 @@ void logic_expression::accept(CodeGenVisitor *CodeGenVis) {
 }
 
 assignment::assignment(statement_block *curr_block, variable *LValue,
-                       expression *expr, yy::location loc)
-    : expression{curr_block, loc}, LValue(LValue), Identifier{expr} {}
+                       expression *expr, PCLType::TypeID ID, yy::location loc)
+    : expression{curr_block, loc}, LValue(LValue), Identifier{expr}, ID(ID) {}
 
 void assignment::accept(VisitorBase *VisitorBase) { VisitorBase->visit(this); }
 
@@ -56,6 +56,10 @@ void assignment::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 
 variable *assignment::getLValue() noexcept { return LValue; }
 expression *assignment::getIdentExp() noexcept { return Identifier; }
+
+SymbNameType assignment::name() const { return LValue->name(); }
+
+PCLType::TypeID assignment::getID() const noexcept { return ID; }
 
 read_expression::read_expression(yy::location loc) : expression{loc} {}
 

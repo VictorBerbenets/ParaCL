@@ -12,8 +12,7 @@
 namespace paracl {
 
 class ErrorHandler : public VisitorTracker {
-  using error_type = std::pair<const std::string, yy::location>;
-  using size_type = std::size_t;
+  using ErrorType = std::pair<const std::string, yy::location>;
 
 public:
   void visit(ast::ArrayAccessAssignment *Arr) override {}
@@ -45,16 +44,28 @@ public:
   void visit(ast::number * /*unused*/) override {}
 
   void visit(ast::variable *Var) override {
-#if 0
     auto curr_scope = Var->scope();
-    if (!SymTbl.isDefined({Var->name(), curr_scope}))
-      errors_.push_back(
+    std::cout << "LINE = " << __LINE__ << std::endl;
+    llvm::outs() << "NAME = " << Var->name() << '\n';
+    if (!SymTbl.isDefined({Var->name(), curr_scope})) {
+      std::cout << "LINE = " << __LINE__ << std::endl;
+      Errors.push_back(
           {llvm::formatv("{0} was not declared in this scope", Var->name()), Var->location()});
-#endif
+    }
   }
 
-  void visit(ast::assignment *stm) override {
-    stm->getIdentExp()->accept(this);
+  void visit(ast::assignment *Assign) override {
+    std::cout << "LINE = " << __LINE__ << std::endl;
+    auto *IdentExp = getValueAfterAccept(Assign->getIdentExp());
+    if (ValManager.getValueFor({Assign->name(), Assign->scope()})) {
+    std::cout << "LINE = " << __LINE__ << std::endl;
+      auto *LValue = getValueAfterAccept(Assign->getLValue());
+    std::cout << "LINE = " << __LINE__ << std::endl;
+      assert(LValue);
+      assert(IdentExp);
+      if (LValue->getType() != IdentExp->getType()) {
+      }
+    }
   }
 
   void visit(ast::if_operator *stm) override {
@@ -77,23 +88,23 @@ public:
   void run(ast::statement_block *root) { visit(root); }
 
   void print_errors(std::ostream &stream) const {
-    for (auto &&err : errors_) {
+    for (auto &&err : Errors) {
       stream << err.second << " : " << err.first << std::endl;
     }
   }
 
-  [[nodiscard]] bool empty() const noexcept { return errors_.empty(); }
-  size_type size() const noexcept { return errors_.size(); }
+  [[nodiscard]] bool empty() const noexcept { return Errors.empty(); }
+  unsigned size() const noexcept { return Errors.size(); }
 
-  auto begin() noexcept { return errors_.begin(); }
-  auto end() noexcept { return errors_.end(); }
-  auto cbegin() const noexcept { return errors_.cbegin(); }
-  auto cend() const noexcept { return errors_.cend(); }
+  auto begin() noexcept { return Errors.begin(); }
+  auto end() noexcept { return Errors.end(); }
+  auto cbegin() const noexcept { return Errors.cbegin(); }
+  auto cend() const noexcept { return Errors.cend(); }
 
 private:
   SymTable &SymTbl;
   ValueManager &ValManager;
-  std::vector<error_type> errors_;
+  std::vector<ErrorType> Errors;
 };
 
 } // namespace paracl

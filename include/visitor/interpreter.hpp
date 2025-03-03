@@ -32,8 +32,6 @@ public:
   void visit(ast::while_operator *While) override;
   void visit(ast::print_function *Print) override;
 
-  void run_program(ast::root_statement_block *StmBlock) { visit(StmBlock); }
-
 private:
   SymTable &SymTbl;
   ValueManager &ValManager;

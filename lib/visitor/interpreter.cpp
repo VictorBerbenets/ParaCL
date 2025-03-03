@@ -149,7 +149,8 @@ void interpreter::visit(ast::print_function *Print) {
 
 void interpreter::visit(ast::assignment *Assign) {
   auto *IdentExp = getValueAfterAccept(Assign->getIdentExp());
-  auto Name = Assign->getLValue()->name();
+  auto Name = Assign->name();
+  SymTbl.tryDefine(Name, Assign->scope(), SymTbl.getType(Assign->getID()));
   auto *DeclScope = SymTbl.getDeclScopeFor(Name, Assign->scope());
   ValManager.linkValueWithName({Name, DeclScope}, IdentExp);
 }

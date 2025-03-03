@@ -8,6 +8,9 @@
 namespace paracl {
 
 class VisitorTracker : public VisitorBase {
+public:
+  void run_program(ast::root_statement_block *StmBlock) { visit(StmBlock); }
+
 protected:
   using ValueTypePtr = PCLValue *;
   using TypeID = SymTable::TypeID;
@@ -21,9 +24,8 @@ protected:
   template <DerivedFromPCLValue ValueType = PCLValue>
   ValueType *getValueAfterAccept(ast::statement *Stm) {
     Stm->accept(this);
-    assert(CurrValue);
     return static_cast<ValueType *>(CurrValue);
-  }
+  } 
 
   ValueTypePtr CurrValue = nullptr;
 };

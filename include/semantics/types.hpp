@@ -46,6 +46,10 @@ template <> struct DenseMapInfo<paracl::SymTabKey> {
 namespace paracl {
 
 class PCLType {
+  static constexpr llvm::StringRef NameForInt32Ty = "int32";
+  static constexpr llvm::StringRef NameForUniformArrayTy = "repeat";
+  static constexpr llvm::StringRef NameForPresetArrayTy = "array";
+  static constexpr llvm::StringRef NameForUnknownTy = "unknown";
 public:
   enum class TypeID { Unknown, Int32, UniformArray, PresetArray };
 
@@ -59,6 +63,15 @@ public:
   bool isPresetArrayTy() const noexcept { return ID == TypeID::PresetArray; }
   bool isArrayTy() const noexcept {
     return isUniformArrayTy() || isPresetArrayTy();
+  }
+
+  llvm::StringRef getName() const {
+    switch(ID) {
+      case TypeID::Int32: return NameForInt32Ty;
+      case TypeID::UniformArray: return NameForUniformArrayTy;
+      case TypeID::PresetArray: return NameForPresetArrayTy;
+      default: return NameForUnknownTy;
+    }
   }
 
 protected:

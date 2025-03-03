@@ -238,16 +238,10 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
                     | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression: variable ASSIGN assignment_expression { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::Int32);
-                                                          $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$);
-                       }
-                     | variable ASSIGN logical_expression    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::Int32);
-                                                          $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$);
-                       }
-                     | variable ASSIGN uniform_array    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::UniformArray);
-                                                          $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
-                     | variable ASSIGN preset_array    { driver.getSymTab().tryDefine(SymbNameType($1->name()), blocks.top(), driver.getSymTab(), TypeID::PresetArray);
-                                                          $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
+assignment_expression: variable ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, TypeID::Int32, @$); }
+                     | variable ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, TypeID::Int32, @$); }
+                     | variable ASSIGN uniform_array         { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, TypeID::UniformArray, @$); }
+                     | variable ASSIGN preset_array          { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, TypeID::PresetArray, @$); }
                      | array_value ASSIGN assignment_expression     { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
                      | array_value ASSIGN logical_expression        { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
 
