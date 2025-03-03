@@ -39,7 +39,7 @@ protected:
 
 class IntegerVal : public PCLValue {
 public:
-  IntegerVal(int Val, PCLType *Ty) : PCLValue(Ty), Val(Val) {}
+  IntegerVal(int Val, PCLType *Ty, bool IsLiteral = true) : PCLValue(Ty), Val(Val), IsLiteral(IsLiteral) {}
 
   int getValue() const noexcept { return Val; }
   void setValue(IntegerVal *NewValue) noexcept {
@@ -53,6 +53,7 @@ public:
 
 private:
   int Val;
+  bool IsLiteral;
 };
 
 class ArrayBase : public PCLValue {

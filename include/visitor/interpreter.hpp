@@ -8,12 +8,12 @@ namespace paracl {
 
 class interpreter : public VisitorTracker {
 public:
-  interpreter(SymTable &SymTbl, ValueManager &ValManager, std::istream &input,
-              std::ostream &output)
-      : SymTbl(SymTbl), ValManager(ValManager), input_stream_{input},
+  interpreter(std::istream &input,
+            std::ostream &output)
+      : input_stream_{input},
         output_stream_{output} {}
 
-  void virtual visit(ast::root_statement_block *StmBlock);
+  void virtual visit(ast::root_statement_block *StmBlock) override;
   void visit(ast::ArrayAccessAssignment *Arr) override;
 
   void visit(ast::PresetArray *InitListArr) override;
@@ -33,8 +33,6 @@ public:
   void visit(ast::print_function *Print) override;
 
 private:
-  SymTable &SymTbl;
-  ValueManager &ValManager;
   std::istream &input_stream_;
   std::ostream &output_stream_;
 };

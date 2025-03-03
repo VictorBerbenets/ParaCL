@@ -69,39 +69,13 @@ void interpreter::visit(ast::un_operator *UnOp) {
   }
 }
 
-void interpreter::visit(ast::logic_expression *LogExpr) {
-  auto *Lhs = getValueAfterAccept<IntegerVal>(LogExpr->left());
-  auto *Rhs = getValueAfterAccept<IntegerVal>(LogExpr->right());
+void interpreter::visit(ast::logic_expression *LogExp) {
+  auto *Lhs = getValueAfterAccept<IntegerVal>(LogExp->left());
+  auto *Rhs = getValueAfterAccept<IntegerVal>(LogExp->right());
   auto *Type = Lhs->getType();
-
-  switch (LogExpr->type()) {
-  case ast::LogicOp::LESS:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs < *Rhs, Type));
-    break;
-  case ast::LogicOp::LESS_EQ:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs <= *Rhs, Type));
-    break;
-  case ast::LogicOp::LOGIC_AND:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs && *Rhs, Type));
-    break;
-  case ast::LogicOp::LOGIC_OR:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs || *Rhs, Type));
-    break;
-  case ast::LogicOp::GREATER:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs > *Rhs, Type));
-    break;
-  case ast::LogicOp::GREATER_EQ:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs >= *Rhs, Type));
-    break;
-  case ast::LogicOp::EQ:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs == *Rhs, Type));
-    break;
-  case ast::LogicOp::NEQ:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs != *Rhs, Type));
-    break;
-  default:
-    throw std::logic_error{"unrecognized logic type"};
-  }
+  assert(Type->isInt32Ty());
+  
+  set_value(performLogicalOperation(LogExp->type(), Lhs, Rhs, static_cast<IntegerTy*>(Type)));
 }
 
 void interpreter::visit(ast::number *Num) {

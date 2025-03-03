@@ -16,6 +16,8 @@ SymTable::getDeclScopeFor(const SymbNameType &Name,
 PCLType *SymTable::getTypeFor(const SymbNameType &Name,
                               ast::statement_block *CurrScope) {
   auto *Decl = getDeclScopeFor(Name, CurrScope);
+  if (!Decl)
+    return nullptr;
 
   return NamesInfo.find({Name, Decl})->second.getType();
 }

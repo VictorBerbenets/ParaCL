@@ -10,10 +10,9 @@ namespace paracl {
 
 class CodeGenVisitor : public VisitorBase {
 public:
-  CodeGenVisitor(SymTable &SymTbl, ValueManager &ValManager,
-                 llvm::StringRef ModuleName);
+  CodeGenVisitor(llvm::StringRef ModuleName);
 
-  virtual void visit(ast::root_statement_block *stm);
+  void visit(ast::root_statement_block *stm) override;
   virtual void visit(ast::definition *stm);
 
   void visit(ast::ArrayAccessAssignment *Arr) override {}
@@ -46,8 +45,8 @@ private:
 
   void printIRToOstream(llvm::raw_ostream &Os) const;
 
-  SymTable &SymTbl;
-  ValueManager &ValManager;
+  SymTable SymTbl;
+  ValueManager ValManager;
   llvm::DenseMap<llvm::StringRef, llvm::Value *> NameToValue;
   codegen::IRCodeGenerator CodeGen;
   llvm::Value *CurrVal;

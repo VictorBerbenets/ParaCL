@@ -29,6 +29,7 @@ class VisitorBase {
 public:
   virtual ~VisitorBase() {};
 
+  virtual void visit(ast::root_statement_block *StmBlock) = 0;
   virtual void visit(ast::statement_block *StmBlock) = 0;
   virtual void visit(ast::calc_expression *CalcExpr) = 0;
   virtual void visit(ast::logic_expression *LogExpr) = 0;

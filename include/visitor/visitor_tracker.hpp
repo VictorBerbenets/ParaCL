@@ -4,6 +4,7 @@
 #include "statement.hpp"
 #include "values.hpp"
 #include "visitor.hpp"
+#include "identifiers.hpp"
 
 namespace paracl {
 
@@ -16,17 +17,21 @@ protected:
   using TypeID = SymTable::TypeID;
 
   VisitorTracker() = default;
+  ValueTypePtr performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs, IntegerVal *Rhs, IntegerTy *Type);
+
 
   ValueTypePtr get_value() const noexcept { return CurrValue; }
 
-  void set_value(ValueTypePtr Val) noexcept { CurrValue = Val; }
+  virtual void set_value(ValueTypePtr Val) { CurrValue = Val; }
 
   template <DerivedFromPCLValue ValueType = PCLValue>
   ValueType *getValueAfterAccept(ast::statement *Stm) {
     Stm->accept(this);
     return static_cast<ValueType *>(CurrValue);
-  } 
-
+  }
+  
+  SymTable SymTbl;
+  ValueManager ValManager;
   ValueTypePtr CurrValue = nullptr;
 };
 

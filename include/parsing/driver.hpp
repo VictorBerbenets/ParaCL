@@ -11,14 +11,13 @@
 #include "interpreter.hpp"
 #include "paracl_grammar.tab.hh"
 #include "scanner.hpp"
-#include "semantic_context.hpp"
 
 namespace yy {
 
 class driver final {
 public:
   driver()
-      : scanner_{}, parser_(scanner_, *this), Handler(SymTab, ValManager) {}
+      : scanner_{}, parser_(scanner_, *this) {}
 
   void parse() { parser_.parse(); }
 
@@ -55,26 +54,25 @@ public:
     return ast_.get_curr_block();
   }
 
-  std::optional<paracl::ErrorHandler> check_for_errors() const {
+  std::optional<paracl::ErrorHandler> validate() const {
+    paracl::ErrorHandler Handler;
+   // Handler.run_program(ast_.root_ptr());
     if (Handler.empty()) {
       return {};
     }
-    return {Handler};
+    return {std::move(Handler)};
   }
-
-  paracl::SymTable &getSymTab() { return SymTab; }
-  paracl::ValueManager &getValManager() { return ValManager; }
 
   void evaluate(std::ostream &output = std::cout,
                 std::istream &input = std::cin) {
  //   Handler.run_program(ast_.root_ptr());
-    paracl::interpreter runner(SymTab, ValManager, input, output);
+    paracl::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }
 
   void compile(llvm::StringRef ModuleName, llvm::raw_ostream &Os) {
 //    Handler.run_program(ast_.root_ptr());
-    paracl::CodeGenVisitor CodeGenVis(SymTab, ValManager, ModuleName);
+    paracl::CodeGenVisitor CodeGenVis(ModuleName);
     CodeGenVis.generateIRCode(ast_.root_ptr(), Os);
   }
 
@@ -84,9 +82,6 @@ private:
   std::string file_;
 
   paracl::ast::ast ast_;
-  paracl::SymTable SymTab;
-  paracl::ValueManager ValManager;
-  paracl::ErrorHandler Handler;
 };
 
 } // namespace yy

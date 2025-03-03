@@ -50,7 +50,6 @@ public:
     if (isDefined({Name, CurrScope}))
       return false;
 
-    llvm::outs() << Name << " is defined\n";
     auto [_, IsEmplaced] = NamesInfo.try_emplace(
         {Name, CurrScope}, SymbInfo(std::forward<ArgsTy>(Args)...));
     assert(IsEmplaced && "can't emplace the symbol");
