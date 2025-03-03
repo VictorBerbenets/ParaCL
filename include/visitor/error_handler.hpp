@@ -14,6 +14,7 @@ namespace paracl {
 
 class ErrorHandler : public VisitorTracker {
   using ErrorType = std::pair<const std::string, yy::location>;
+  using TypePtr = PCLType*;
 
 public:
   void visit(ast::ArrayAccessAssignment *Arr) override {}
@@ -66,38 +67,20 @@ public:
     }
   }
 
-  void visit(ast::logic_expression *LogExpr) override {
-    auto *Lhs = getValueAfterAccept<IntegerVal>(LogExpr->left());
-    auto *Rhs = getValueAfterAccept<IntegerVal>(LogExpr->right());
-    auto *Type = Lhs->getType();
-
-    switch (LogExpr->type()) {
-    case ast::LogicOp::LESS:
-      set_value(ValManager.createValue<IntegerVal>(*Lhs < *Rhs, Type));
-      break;
-    case ast::LogicOp::LESS_EQ:
-      set_value(ValManager.createValue<IntegerVal>(*Lhs <= *Rhs, Type));
-      break;
-    case ast::LogicOp::LOGIC_AND:
-      set_value(ValManager.createValue<IntegerVal>(*Lhs && *Rhs, Type));
-      break;
-    case ast::LogicOp::LOGIC_OR:
-      set_value(ValManager.createValue<IntegerVal>(*Lhs || *Rhs, Type));
-      break;
-    case ast::LogicOp::GREATER:
-      set_value(ValManager.createValue<IntegerVal>(*Lhs > *Rhs, Type));
-      break;
-    case ast::LogicOp::GREATER_EQ:
-      set_value(ValManager.createValue<IntegerVal>(*Lhs >= *Rhs, Type));
-      break;
-    case ast::LogicOp::EQ:
-      set_value(ValManager.createValue<IntegerVal>(*Lhs == *Rhs, Type));
-      break;
-    case ast::LogicOp::NEQ:
-      set_value(ValManager.createValue<IntegerVal>(*Lhs != *Rhs, Type));
-      break;
-    default:
-      throw std::logic_error{"unrecognized logic type"};
+  void visit(ast::logic_expression *LogExp) override {
+    auto [LhsTy, LhsVal] = getTypeAndValueAfterAccept(LogExp->left());
+    auto [RhsTy, RhsVal] = getTypeAndValueAfterAccept(LogExp->right());
+    if (!LhsTy || !RhsTy) {
+      Errors.emplace_back("Expression is not comparable. Couldn't deduce the types for logic comparison.", LogExp->location());
+    } else {
+      if (*LhsTy != *RhsTy)
+        Errors.push_back({llvm::formatv("Expression is not comparable. Couldn't compare {0} and {1}", LhsTy->getName(), RhsTy->getName()), LogExp->location()});  
+      else if (!LhsTy->isInt32Ty())
+        Errors.push_back({llvm::formatv("Expression is not comparable. Couldn't compare values of {0} type.", LhsTy->getName()), LogExp->location()});  
+      else if (LhsVal && RhsVal)
+        setTypeAndValue(LhsTy, performLogicalOperation(LogExp->type(), static_cast<IntegerVal*>(LhsVal), static_cast<IntegerVal*>(RhsVal), static_cast<IntegerTy*>(LhsTy)));
+      else
+        setTypeAndValue(LhsTy, nullptr);
     }
   }
 
@@ -122,7 +105,11 @@ public:
     }
   }
 
-  void visit(ast::number * /*unused*/) override {}
+  void visit(ast::number * Num) override {
+    auto *Type = SymTbl.getType(TypeID::Int32);
+    setTypeAndValue(Type, ValManager.createValue<IntegerVal>(Num->get_value(),
+                                                 Type));
+  }
 
   void visit(ast::variable *Var) override {
     auto *CurrScope = Var->scope();
@@ -195,7 +182,7 @@ public:
   auto begin() const noexcept { return Errors.begin(); }
   auto end() const noexcept { return Errors.end(); }
       
-  void setTypeAndValue(PCLType *Ty, PCLValue* Val) {
+  void setTypeAndValue(TypePtr Ty, ValueTypePtr Val) {
     CurrTy = Ty;
     CurrValue = Val;
   }
@@ -207,7 +194,7 @@ public:
 
 private:
   std::vector<ErrorType> Errors;
-  PCLType *CurrTy;
+  TypePtr CurrTy;
 };
 
 } // namespace paracl

@@ -56,7 +56,7 @@ public:
 
   std::optional<paracl::ErrorHandler> validate() const {
     paracl::ErrorHandler Handler;
-   // Handler.run_program(ast_.root_ptr());
+    Handler.run_program(ast_.root_ptr());
     if (Handler.empty()) {
       return {};
     }
