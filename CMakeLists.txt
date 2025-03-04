@@ -52,7 +52,7 @@ add_library(bison_parser STATIC ${BISON_parser_OUTPUTS} ${FLEX_scanner_OUTPUTS})
 target_include_directories(bison_parser PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(bison_parser PUBLIC ParaclHeaders)
 
-add_compile_options(-Wall -Wextra -g)
+add_compile_options(-Wall -Wextra)
 
 set(SOURCES
     ./lib/codegen.cpp

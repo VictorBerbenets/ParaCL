@@ -101,8 +101,8 @@ public:
 
 class assignment : public expression {
 public:
-  assignment(statement_block *curr_block, variable *LValue, expression *expr, PCLType::TypeID ID,
-             yy::location loc);
+  assignment(statement_block *curr_block, variable *LValue, expression *expr,
+             PCLType::TypeID ID, yy::location loc);
 
   void accept(VisitorBase *VisitorBase) override;
   void accept(CodeGenVisitor *CodeGenVis) override;

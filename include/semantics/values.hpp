@@ -27,7 +27,7 @@ class PCLValue {
 public:
   virtual ~PCLValue() = default;
 
-  PCLType *getType() { return Ty; }
+  virtual PCLType *getType() const { return Ty; }
 
   virtual PCLValue *clone() const = 0;
 
@@ -39,7 +39,11 @@ protected:
 
 class IntegerVal : public PCLValue {
 public:
-  IntegerVal(int Val, PCLType *Ty, bool IsLiteral = true) : PCLValue(Ty), Val(Val), IsLiteral(IsLiteral) {}
+  IntegerVal(int Val, PCLType *Ty) : PCLValue(Ty), Val(Val) {}
+
+  virtual IntegerTy *getType() const override {
+    return static_cast<IntegerTy *>(Ty);
+  }
 
   int getValue() const noexcept { return Val; }
   void setValue(IntegerVal *NewValue) noexcept {
@@ -53,13 +57,14 @@ public:
 
 private:
   int Val;
-  bool IsLiteral;
 };
 
 class ArrayBase : public PCLValue {
 protected:
-  ArrayBase(PCLType *Ty, unsigned Size)
-      : PCLValue(Ty), Size(Size), Data(new PCLValue *[Size]()) {}
+  ArrayBase(ArrayTy *Ty, unsigned Size)
+      : PCLValue(Ty), Size(Size), Data(new PCLValue *[Size]()) {
+    Ty->setSize(Size);
+  }
 
   ArrayBase(const ArrayBase &) = delete;
   ArrayBase(ArrayBase &&Rhs)
@@ -82,6 +87,8 @@ protected:
     if (Data)
       destroy();
   }
+
+  ArrayTy *getType() const override { return static_cast<ArrayTy *>(Ty); }
 
   void destroy() {
     for (auto &&ArrVal : llvm::make_range(begin(), end())) {
@@ -137,12 +144,13 @@ class PresetArrayVal : public ArrayBase {
 
 public:
   template <PCLValuePointerIter Iter>
-  PresetArrayVal(Iter Begin, Iter End, PCLType *Ty)
+  PresetArrayVal(Iter Begin, Iter End, ArrayTy *Ty)
       : ArrayBase(Ty, std::distance(Begin, End)) {
     resizeForConcatIfNeed(Begin, End);
     ArrayBase *ArrPtr = nullptr;
     for (unsigned ArrIndex = 0;
          auto *AssignVal : llvm::make_range(Begin, End)) {
+      assert(AssignVal);
       auto *Type = AssignVal->getType();
       switch (Type->getTypeID()) {
       case TypeID::UniformArray:
@@ -162,10 +170,11 @@ public:
         llvm_unreachable("Unsupported type for preset array");
       }
     }
+    getType()->setSize(Size);
   }
 
   PresetArrayVal *clone() const override {
-    return new PresetArrayVal(Data, Data + Size, Ty);
+    return new PresetArrayVal(Data, Data + Size, getType());
   };
 
 private:
@@ -191,8 +200,11 @@ private:
 
 class UniformArrayVal : public ArrayBase {
 public:
-  UniformArrayVal(PCLValue *Initer, unsigned Size, PCLType *Ty)
+  UniformArrayVal(PCLValue *Initer, unsigned Size, ArrayTy *Ty)
       : ArrayBase(Ty, Size), Initer(Initer) {
+    Ty->setSize(Size);
+    assert(Initer);
+    Ty->setContainedType(Initer->getType());
     construct();
   }
 
@@ -218,7 +230,7 @@ public:
   }
 
   UniformArrayVal *clone() const override {
-    return new UniformArrayVal(Initer, Size, Ty);
+    return new UniformArrayVal(Initer, Size, getType());
   }
 
   PCLValue *getIniter() noexcept { return Initer; }

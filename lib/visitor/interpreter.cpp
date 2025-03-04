@@ -1,5 +1,4 @@
 #include <iostream>
-#include <stdexcept>
 
 #include "ast_includes.hpp"
 #include "identifiers.hpp"
@@ -7,66 +6,28 @@
 
 namespace paracl {
 
-void interpreter::visit(ast::root_statement_block *StmBlock) {
-  for (auto &&statement : *StmBlock) {
-    statement->accept(this);
-  }
-}
-
 void interpreter::visit(ast::statement_block *StmBlock) {
   for (auto &&statement : *StmBlock) {
     statement->accept(this);
   }
 }
 
-void interpreter::visit(ast::calc_expression *CalcExpr) {
-  auto *Lhs = getValueAfterAccept<IntegerVal>(CalcExpr->left());
-  auto *Rhs = getValueAfterAccept<IntegerVal>(CalcExpr->right());
+void interpreter::visit(ast::calc_expression *CalcExp) {
+  auto *Lhs = getValueAfterAccept<IntegerVal>(CalcExp->left());
+  auto *Rhs = getValueAfterAccept<IntegerVal>(CalcExp->right());
   auto *Type = Lhs->getType();
+  assert(Type->isInt32Ty());
 
-  switch (CalcExpr->type()) {
-  case ast::CalcOp::ADD:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs + *Rhs, Type));
-    break;
-  case ast::CalcOp::SUB:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs - *Rhs, Type));
-    break;
-  case ast::CalcOp::MUL:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs * *Rhs, Type));
-    break;
-  case ast::CalcOp::PERCENT:
-    set_value(ValManager.createValue<IntegerVal>(*Lhs % *Rhs, Type));
-    break;
-  case ast::CalcOp::DIV:
-    if (int check = *Rhs; check) {
-      set_value(ValManager.createValue<IntegerVal>(*Lhs / check, Type));
-    } else {
-      throw std::runtime_error{"trying to divide by 0"};
-    }
-    break;
-  default:
-    throw std::logic_error{"unrecognized logic type"};
-  }
+  set_value(performArithmeticOperation(CalcExp->type(), Lhs, Rhs, Type,
+                                       CalcExp->location()));
 }
 
 void interpreter::visit(ast::un_operator *UnOp) {
   auto *Value = getValueAfterAccept<IntegerVal>(UnOp->arg());
   auto *Type = Value->getType();
-  UnOp->arg()->accept(this);
+  assert(Type->isInt32Ty());
 
-  switch (UnOp->type()) {
-  case ast::UnOp::PLUS:
-    set_value(Value);
-    break;
-  case ast::UnOp::MINUS:
-    set_value(ValManager.createValue<IntegerVal>(-*Value, Type));
-    break;
-  case ast::UnOp::NEGATE:
-    set_value(ValManager.createValue<IntegerVal>(!*Value, Type));
-    break;
-  default:
-    throw std::logic_error{"unrecognized logic type"};
-  }
+  set_value(performUnaryOperation(UnOp->type(), Value, Type));
 }
 
 void interpreter::visit(ast::logic_expression *LogExp) {
@@ -74,18 +35,18 @@ void interpreter::visit(ast::logic_expression *LogExp) {
   auto *Rhs = getValueAfterAccept<IntegerVal>(LogExp->right());
   auto *Type = Lhs->getType();
   assert(Type->isInt32Ty());
-  
-  set_value(performLogicalOperation(LogExp->type(), Lhs, Rhs, static_cast<IntegerTy*>(Type)));
+
+  set_value(performLogicalOperation(LogExp->type(), Lhs, Rhs, Type));
 }
 
 void interpreter::visit(ast::number *Num) {
-  set_value(ValManager.createValue<IntegerVal>(Num->get_value(),
-                                               SymTbl.getType(TypeID::Int32)));
+  set_value(ValManager.createValue<IntegerVal>(
+      Num->get_value(), SymTbl.createType(TypeID::Int32)));
 }
 
 void interpreter::visit(ast::variable *Var) {
   auto *DeclScope = SymTbl.getDeclScopeFor(Var->name(), Var->scope());
-  auto *Ty = SymTbl.getTypeFor(Var->name(), Var->scope());
+  [[maybe_unused]] auto *Ty = SymTbl.getTypeFor(Var->name(), Var->scope());
   assert(DeclScope && Ty);
   auto *Value = ValManager.getValueFor({Var->name(), DeclScope});
   set_value(Value);
@@ -112,8 +73,8 @@ void interpreter::visit(ast::while_operator *While) {
 void interpreter::visit(ast::read_expression * /* unused */) {
   int tmp{0};
   input_stream_ >> tmp;
-  set_value(
-      ValManager.createValue<IntegerVal>(tmp, SymTbl.getType(TypeID::Int32)));
+  set_value(ValManager.createValue<IntegerVal>(
+      tmp, SymTbl.createType(TypeID::Int32)));
 }
 
 void interpreter::visit(ast::print_function *Print) {
@@ -124,7 +85,11 @@ void interpreter::visit(ast::print_function *Print) {
 void interpreter::visit(ast::assignment *Assign) {
   auto *IdentExp = getValueAfterAccept(Assign->getIdentExp());
   auto Name = Assign->name();
-  SymTbl.tryDefine(Name, Assign->scope(), SymTbl.getType(Assign->getID()));
+  if (!SymTbl.isDefined({Name, Assign->scope()})) {
+    [[maybe_unused]] auto IsDefined =
+        SymTbl.tryDefine(Name, Assign->scope(), IdentExp->getType());
+    assert(IsDefined);
+  }
   auto *DeclScope = SymTbl.getDeclScopeFor(Name, Assign->scope());
   ValManager.linkValueWithName({Name, DeclScope}, IdentExp);
 }
@@ -138,7 +103,7 @@ void interpreter::visit(ast::PresetArray *InitListArr) {
 
   set_value(ValManager.createValue<PresetArrayVal>(
       PresetValues.begin(), PresetValues.end(),
-      SymTbl.getType(TypeID::PresetArray)));
+      static_cast<ArrayTy *>(SymTbl.createType(TypeID::PresetArray))));
 }
 
 void interpreter::visit(ast::ArrayAccess *ArrAccess) {
@@ -165,7 +130,8 @@ void interpreter::visit(ast::UniformArray *Arr) {
 
   assert(InitExpr && Size);
   set_value(ValManager.createValue<UniformArrayVal>(
-      InitExpr, *Size, SymTbl.getType(TypeID::UniformArray)));
+      InitExpr, *Size,
+      static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray))));
 }
 
 void interpreter::visit(ast::ArrayAccessAssignment *Arr) {

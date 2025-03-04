@@ -1,0 +1,29 @@
+// RUN: echo "10  -325 10 0 43 234 325432 -1233 10000001 0 0"%paracl %s |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+ArrSize = ?;
+Arr = repeat(undef, ArrSize);
+if (ArrSize > 0) {
+  // fill the array
+  a = 0;
+  while (a < ArrSize) {
+    Arr[a] = ?;
+    a = a + 1;
+  }
+
+  tmp = Arr[0];
+  a = 1;
+  while (a < ArrSize) {
+    if (Arr[a] > tmp)
+      tmp = Arr[a];
+    a = a + 1;
+  }
+
+  print tmp;
+}
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 10000001
+

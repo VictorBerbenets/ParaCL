@@ -12,7 +12,7 @@ class CodeGenVisitor : public VisitorBase {
 public:
   CodeGenVisitor(llvm::StringRef ModuleName);
 
-  void visit(ast::root_statement_block *stm) override;
+  virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm);
 
   void visit(ast::ArrayAccessAssignment *Arr) override {}

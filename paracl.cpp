@@ -58,8 +58,7 @@ int main(int argc, char **argv) try {
   ParseDriver.switch_input_stream(&InputFileStream);
   ParseDriver.parse();
   if (auto errors = ParseDriver.validate(); errors) {
-    llvm::errs() << "The program has been stopped. Found errors:" << '\n';
-    errors.value().print_errors(std::cerr);
+    errors.value().print_errors(llvm::errs(), InputFileName);
     return ParseErr;
   }
 

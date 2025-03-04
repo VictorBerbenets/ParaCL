@@ -50,6 +50,7 @@ class PCLType {
   static constexpr llvm::StringRef NameForUniformArrayTy = "repeat";
   static constexpr llvm::StringRef NameForPresetArrayTy = "array";
   static constexpr llvm::StringRef NameForUnknownTy = "unknown";
+
 public:
   enum class TypeID { Unknown, Int32, UniformArray, PresetArray };
 
@@ -66,11 +67,15 @@ public:
   }
 
   llvm::StringRef getName() const {
-    switch(ID) {
-      case TypeID::Int32: return NameForInt32Ty;
-      case TypeID::UniformArray: return NameForUniformArrayTy;
-      case TypeID::PresetArray: return NameForPresetArrayTy;
-      default: return NameForUnknownTy;
+    switch (ID) {
+    case TypeID::Int32:
+      return NameForInt32Ty;
+    case TypeID::UniformArray:
+      return NameForUniformArrayTy;
+    case TypeID::PresetArray:
+      return NameForPresetArrayTy;
+    default:
+      return NameForUnknownTy;
     }
   }
 
@@ -90,11 +95,21 @@ public:
 class ArrayTy : public PCLType {
 public:
   ArrayTy(TypeID ArrID) : PCLType(ArrID) {}
-  unsigned size() const { return ContainedTypesSize; }
+
+  PCLType *getContainedType() const { return ContainedType; }
+  std::optional<unsigned> getSize() const { return NumberOfElements; }
+  void setSize(unsigned ArrSz) { NumberOfElements = ArrSz; }
+  void setContainedType(PCLType *TypeToContain) {
+    ContainedType = TypeToContain;
+  }
 
 protected:
-  unsigned ContainedTypesSize;
-  llvm::SmallVector<PCLType *> ContainedTypes;
+  // Use optional here because we want to be able to handle simple cases of
+  // accessing the boundaries of the array in the ErrorHandler class before
+  // executing the program. If the size of the array is known at 'compile time',
+  // we set the size and have the opportunity to report an error.
+  std::optional<unsigned> NumberOfElements = std::nullopt;
+  PCLType *ContainedType = nullptr;
 };
 
 } // namespace paracl

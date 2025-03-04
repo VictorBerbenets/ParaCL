@@ -16,8 +16,7 @@ namespace yy {
 
 class driver final {
 public:
-  driver()
-      : scanner_{}, parser_(scanner_, *this) {}
+  driver() : scanner_{}, parser_(scanner_, *this) {}
 
   void parse() { parser_.parse(); }
 
@@ -28,11 +27,6 @@ public:
   template <paracl::ast::derived_from NodeType, typename... Args>
   NodeType *make_node(Args &&...args) {
     auto node = ast_.make_node<NodeType>(std::forward<Args>(args)...);
-#if 0
-    if (std::same_as<variable, NodeType>) {
-      Handler.visit(node);
-    }
-#endif
     return node;
   }
 
@@ -65,13 +59,11 @@ public:
 
   void evaluate(std::ostream &output = std::cout,
                 std::istream &input = std::cin) {
- //   Handler.run_program(ast_.root_ptr());
     paracl::interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }
 
   void compile(llvm::StringRef ModuleName, llvm::raw_ostream &Os) {
-//    Handler.run_program(ast_.root_ptr());
     paracl::CodeGenVisitor CodeGenVis(ModuleName);
     CodeGenVis.generateIRCode(ast_.root_ptr(), Os);
   }

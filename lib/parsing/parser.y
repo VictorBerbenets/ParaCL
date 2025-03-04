@@ -135,7 +135,6 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <expression*>         equality_expression
 %nterm <expression*>         comparable_expression
 %nterm <expression*>         assignment_expression
-%nterm <expression*>         preset_array_expression
 %nterm <expression*>         array_expression
 %nterm <UniformArray*>       uniform_array
 %nterm <PresetArray*>        preset_array
@@ -275,13 +274,8 @@ preset_array: ARRAY OP_BRACK preset_array_access CL_BRACK { $$ = driver.make_nod
                                                             PresetArrElems.clear(); }
 ;
 
-preset_array_expression: REPEAT OP_BRACK expression COMMA expression CL_BRACK { $$ = driver.make_node<UniformArray>(blocks.top(), $3, $5, @$); }
-                        | expression { $$ = $1; }
-                        | UNDEF { $$ = driver.make_node<number>(DistrInRange(Generator), @$); }
-;
-
-preset_array_access: preset_array_expression COMMA preset_array_access  { PresetArrElems.push_front($1); }
-                      | preset_array_expression { PresetArrElems.push_front($1); }
+preset_array_access: array_expression COMMA preset_array_access  { PresetArrElems.push_front($1); }
+                      | array_expression { PresetArrElems.push_front($1); }
 ;
 
 

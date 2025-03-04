@@ -83,6 +83,8 @@ public:
   ArrayAccess *getArrayAccess() noexcept { return ArrAccess; }
   expression *getIdentExp() noexcept { return Identifier; }
 
+  SymbNameType name() const { return ArrAccess->name(); }
+
 private:
   ArrayAccess *ArrAccess;
   expression *Identifier;

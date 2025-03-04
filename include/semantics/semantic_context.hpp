@@ -1,7 +1,7 @@
 #pragma once
 
-#include <llvm/ADT/DenseMap.h>
 #include "llvm/Support/raw_ostream.h"
+#include <llvm/ADT/DenseMap.h>
 
 #include "types.hpp"
 #include "values.hpp"
@@ -15,7 +15,7 @@ public:
   struct SymbInfo final {
   public:
     SymbInfo(PCLType *Ty) : Ty(Ty) {}
-    SymbInfo(SymTable &SymTbl, TypeID ID) : Ty(SymTbl.getType(ID)) {}
+    SymbInfo(SymTable &SymTbl, TypeID ID) : Ty(SymTbl.createType(ID)) {}
 
     PCLType *getType() { return Ty; }
 
@@ -23,37 +23,32 @@ public:
     PCLType *Ty;
   };
 
-  PCLType *getType(TypeID ID) {
-    if (Types.contains(ID))
-      return Types[ID].get();
-
+  PCLType *createType(TypeID ID) {
     switch (ID) {
     case TypeID::Int32:
-      Types.try_emplace(ID, std::make_unique<IntegerTy>(ID));
+      Types.emplace_back(std::make_unique<IntegerTy>(ID));
       break;
     case TypeID::UniformArray:
-      Types.try_emplace(ID, std::make_unique<ArrayTy>(ID));
+      Types.emplace_back(std::make_unique<ArrayTy>(ID));
       break;
     case TypeID::PresetArray:
-      Types.try_emplace(ID, std::make_unique<ArrayTy>(ID));
+      Types.emplace_back(std::make_unique<ArrayTy>(ID));
       break;
+    case TypeID::Unknown:
+      Types.emplace_back(std::make_unique<PCLType>(TypeID::Unknown));
     default:
-      Types.try_emplace(TypeID::Unknown,
-                        std::make_unique<PCLType>(TypeID::Unknown));
+      llvm_unreachable("Unknown type ID");
     }
-    return Types[ID].get();
+    assert(!Types.empty());
+    return Types.back().get();
   }
 
   template <typename... ArgsTy>
   bool tryDefine(const SymbNameType &Name, ast::statement_block *CurrScope,
                  ArgsTy &&...Args) {
-    if (isDefined({Name, CurrScope}))
-      return false;
-
     auto [_, IsEmplaced] = NamesInfo.try_emplace(
         {Name, CurrScope}, SymbInfo(std::forward<ArgsTy>(Args)...));
-    assert(IsEmplaced && "can't emplace the symbol");
-    return true;
+    return IsEmplaced;
   }
 
   ast::statement_block *getDeclScopeFor(const SymbNameType &Name,
@@ -68,7 +63,7 @@ public:
 
 private:
   llvm::DenseMap<SymTabKey, SymbInfo> NamesInfo;
-  llvm::DenseMap<TypeID, std::unique_ptr<PCLType>> Types;
+  llvm::SmallVector<std::unique_ptr<PCLType>> Types;
 };
 
 class ValueManager final {

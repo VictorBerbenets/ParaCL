@@ -8,12 +8,9 @@ namespace paracl {
 
 class interpreter : public VisitorTracker {
 public:
-  interpreter(std::istream &input,
-            std::ostream &output)
-      : input_stream_{input},
-        output_stream_{output} {}
+  interpreter(std::istream &input, std::ostream &output)
+      : input_stream_{input}, output_stream_{output} {}
 
-  void virtual visit(ast::root_statement_block *StmBlock) override;
   void visit(ast::ArrayAccessAssignment *Arr) override;
 
   void visit(ast::PresetArray *InitListArr) override;
