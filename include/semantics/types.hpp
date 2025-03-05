@@ -15,6 +15,8 @@ using SymbNameType = llvm::SmallString<16>;
 struct SymTabKey final {
   SymbNameType Name;
   ast::statement_block *CurrScope;
+
+  bool isValid() const { return CurrScope != nullptr; }
 };
 
 } // namespace paracl

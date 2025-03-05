@@ -44,18 +44,23 @@ public:
   }
 
   template <typename... ArgsTy>
-  bool tryDefine(const SymbNameType &Name, ast::statement_block *CurrScope,
-                 ArgsTy &&...Args) {
-    auto [_, IsEmplaced] = NamesInfo.try_emplace(
-        {Name, CurrScope}, SymbInfo(std::forward<ArgsTy>(Args)...));
+  bool tryDefine(const SymTabKey &Key, ArgsTy &&...Args) {
+    auto [_, IsEmplaced] =
+        NamesInfo.try_emplace(Key, SymbInfo(std::forward<ArgsTy>(Args)...));
     return IsEmplaced;
   }
 
+  SymTabKey getDeclKeyFor(const SymbNameType &Name,
+                          ast::statement_block *CurrScope);
+  SymTabKey getDeclKeyFor(const SymTabKey &Key);
+
   ast::statement_block *getDeclScopeFor(const SymbNameType &Name,
                                         ast::statement_block *CurrScope);
+  ast::statement_block *getDeclScopeFor(const SymTabKey &Key);
 
   PCLType *getTypeFor(const SymbNameType &Name,
                       ast::statement_block *CurrScope);
+  PCLType *getTypeFor(const SymTabKey &Key);
 
   bool isDefined(SymTabKey TabKey);
 
@@ -77,9 +82,8 @@ public:
     return InsIt->second;
   }
 
-  bool linkValueWithName(SymTabKey &&SymKey, PCLValue *Val) {
-    auto [_, IsInsert] =
-        NameToValue.insert_or_assign(std::forward<SymTabKey>(SymKey), Val);
+  bool linkValueWithName(const SymTabKey &SymKey, PCLValue *Val) {
+    auto [_, IsInsert] = NameToValue.insert_or_assign(SymKey, Val);
     return IsInsert;
   }
 

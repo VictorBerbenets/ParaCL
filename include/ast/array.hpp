@@ -84,6 +84,10 @@ public:
   expression *getIdentExp() noexcept { return Identifier; }
 
   SymbNameType name() const { return ArrAccess->name(); }
+  SymTabKey entityKey() {
+    assert(ArrAccess);
+    return ArrAccess->entityKey();
+  }
 
 private:
   ArrayAccess *ArrAccess;

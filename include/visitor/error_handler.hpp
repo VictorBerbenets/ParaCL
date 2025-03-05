@@ -117,44 +117,39 @@ public:
   }
 
   void visit(ast::variable *Var) override {
-    auto *CurrScope = Var->scope();
-    auto Name = Var->name();
-    if (!SymTbl.isDefined({Name, CurrScope})) {
+    auto EntityKey = Var->entityKey();
+    if (!SymTbl.isDefined(EntityKey)) {
       Errors.push_back(
-          {llvm::formatv("{0} was not declared in this scope", Name),
+          {llvm::formatv("{0} was not declared in this scope", Var->name()),
            Var->location()});
       setTypeAndValue(nullptr, nullptr);
     } else {
-      auto *Type = SymTbl.getTypeFor(Name, CurrScope);
+      auto *Type = SymTbl.getTypeFor(EntityKey);
       assert(Type);
-      auto *DeclScope = SymTbl.getDeclScopeFor(Name, CurrScope);
-      auto *Value = ValManager.getValueFor({Name, DeclScope});
+      auto *Value = ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey));
       setTypeAndValue(Type, Value);
     }
   }
 
   void visit(ast::assignment *Assign) override {
-    auto VarName = Assign->name();
-
     auto [IdentType, IdentVal] =
         getTypeAndValueAfterAccept(Assign->getIdentExp());
-    if (!SymTbl.isDefined({VarName, Assign->scope()})) {
-      [[maybe_unused]] auto IsDefined =
-          SymTbl.tryDefine(VarName, Assign->scope(), IdentType);
+    auto EntityKey = Assign->entityKey();
+    if (!SymTbl.isDefined(EntityKey)) {
+      [[maybe_unused]] auto IsDefined = SymTbl.tryDefine(EntityKey, IdentType);
       assert(IsDefined);
     } else if (IdentType && IdentType->isArrayTy()) {
       Errors.emplace_back(
           "expression is not assignable. Arrays cannot be assigned",
           Assign->location());
     }
-    auto *DeclScope = SymTbl.getDeclScopeFor(VarName, Assign->scope());
-    auto [LValueType, LVal] = getTypeAndValueAfterAccept(Assign->getLValue());
 
+    auto [LValueType, LVal] = getTypeAndValueAfterAccept(Assign->getLValue());
     if (!IdentType || !LValueType)
       Errors.emplace_back(
           llvm::formatv("expression is not assignable. Couldn't deduce the "
                         "types for initializing the {0} variable",
-                        VarName),
+                        Assign->name()),
           Assign->location());
     else if (IdentType && LValueType && *IdentType != *LValueType)
       Errors.push_back(
@@ -163,7 +158,7 @@ public:
                IdentType->getName(), LValueType->getName()),
            Assign->location()});
     else
-      ValManager.linkValueWithName({VarName, DeclScope}, nullptr);
+      ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), nullptr);
   }
 
   void visit(ast::if_operator *If) override {
@@ -277,8 +272,7 @@ public:
   }
 
   void visit(ast::ArrayAccess *ArrAccess) override {
-    auto Name = ArrAccess->name();
-    auto *DeclScope = SymTbl.getDeclScopeFor(Name, ArrAccess->scope());
+    auto [Name, DeclScope] = SymTbl.getDeclKeyFor(ArrAccess->entityKey());
     if (!DeclScope) {
       Errors.emplace_back(
           llvm::formatv("use of undeclared identifier '{0}'", Name),
@@ -328,11 +322,10 @@ public:
   }
 
   void visit(ast::ArrayAccessAssignment *ArrAssign) override {
-    auto VarName = ArrAssign->name();
-    if (!SymTbl.isDefined({VarName, ArrAssign->scope()})) {
-      Errors.emplace_back(
-          llvm::formatv("use of undeclared identifier '{0}'", VarName),
-          ArrAssign->location());
+    if (!SymTbl.isDefined(ArrAssign->entityKey())) {
+      Errors.emplace_back(llvm::formatv("use of undeclared identifier '{0}'",
+                                        ArrAssign->name()),
+                          ArrAssign->location());
       setTypeAndValue(nullptr, nullptr);
     } else {
       auto [LhsTy, AccVal] =

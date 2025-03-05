@@ -45,10 +45,10 @@ void interpreter::visit(ast::number *Num) {
 }
 
 void interpreter::visit(ast::variable *Var) {
-  auto *DeclScope = SymTbl.getDeclScopeFor(Var->name(), Var->scope());
-  [[maybe_unused]] auto *Ty = SymTbl.getTypeFor(Var->name(), Var->scope());
-  assert(DeclScope && Ty);
-  auto *Value = ValManager.getValueFor({Var->name(), DeclScope});
+  auto EntityKey = Var->entityKey();
+  [[maybe_unused]] auto *Ty = SymTbl.getTypeFor(EntityKey);
+  assert(Ty);
+  auto *Value = ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey));
   set_value(Value);
 }
 
@@ -84,14 +84,13 @@ void interpreter::visit(ast::print_function *Print) {
 
 void interpreter::visit(ast::assignment *Assign) {
   auto *IdentExp = getValueAfterAccept(Assign->getIdentExp());
-  auto Name = Assign->name();
-  if (!SymTbl.isDefined({Name, Assign->scope()})) {
+  auto EntityKey = Assign->entityKey();
+  if (!SymTbl.isDefined(EntityKey)) {
     [[maybe_unused]] auto IsDefined =
-        SymTbl.tryDefine(Name, Assign->scope(), IdentExp->getType());
+        SymTbl.tryDefine(EntityKey, IdentExp->getType());
     assert(IsDefined);
   }
-  auto *DeclScope = SymTbl.getDeclScopeFor(Name, Assign->scope());
-  ValManager.linkValueWithName({Name, DeclScope}, IdentExp);
+  ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), IdentExp);
 }
 
 void interpreter::visit(ast::PresetArray *InitListArr) {
@@ -107,11 +106,9 @@ void interpreter::visit(ast::PresetArray *InitListArr) {
 }
 
 void interpreter::visit(ast::ArrayAccess *ArrAccess) {
-  auto Name = ArrAccess->name();
-  auto *DeclScope = SymTbl.getDeclScopeFor(Name, ArrAccess->scope());
-
   auto AccessSize = ArrAccess->getSize();
-  auto *CurrArr = ValManager.getValueFor<ArrayBase>({Name, DeclScope});
+  auto *CurrArr = ValManager.getValueFor<ArrayBase>(
+      SymTbl.getDeclKeyFor(ArrAccess->entityKey()));
   int CurrID = 0;
   for (unsigned ArrID = 1; auto RankID : *ArrAccess) {
     auto *RankVal = getValueAfterAccept<IntegerVal>(RankID);

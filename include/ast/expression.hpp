@@ -48,6 +48,8 @@ public:
 
   const SymbNameType &name() const noexcept;
 
+  SymTabKey entityKey();
+
 private:
   SymbNameType name_;
 };
@@ -112,6 +114,8 @@ public:
 
   SymbNameType name() const;
   PCLType::TypeID getID() const noexcept;
+
+  SymTabKey entityKey();
 
 private:
   variable *LValue;

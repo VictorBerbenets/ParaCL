@@ -20,6 +20,8 @@ void variable::accept(VisitorBase *Vis) { Vis->visit(this); }
 
 void variable::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 
+SymTabKey variable::entityKey() { return {name_, scope()}; }
+
 const SymbNameType &variable::name() const noexcept { return name_; }
 
 un_operator::un_operator(UnOp type, pointer_type arg, yy::location loc)
@@ -58,6 +60,11 @@ variable *assignment::getLValue() noexcept { return LValue; }
 expression *assignment::getIdentExp() noexcept { return Identifier; }
 
 SymbNameType assignment::name() const { return LValue->name(); }
+
+SymTabKey assignment::entityKey() {
+  assert(LValue);
+  return LValue->entityKey();
+}
 
 PCLType::TypeID assignment::getID() const noexcept { return ID; }
 
