@@ -1,4 +1,7 @@
-#include <fstream>
+#include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/SmallVector.h>
+
+#include <istream>
 
 #include "statement.hpp"
 #include "visitor.hpp"
@@ -30,8 +33,14 @@ public:
   void visit(ast::print_function *Print) override;
 
 private:
+  void freeResources(ast::statement_block *StmBlock);
+  void addResourceForFree(PCLValue *ValToFree,
+                          ast::statement_block *ScopeToFree);
+
   std::istream &input_stream_;
   std::ostream &output_stream_;
+  llvm::DenseMap<ast::statement_block *, llvm::SmallVector<PCLValue *>>
+      ResourceHandleMap;
 };
 
 } // namespace paracl

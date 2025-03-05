@@ -8,8 +8,8 @@ set(PARACL_EXEC_NAME "${PROJECT_NAME}")
 set(PARACL_SOURCE_PATH "${CMAKE_SOURCE_DIR}/paracl.cpp")
 
 find_package(LLVM REQUIRED CONFIG)
-if (LLVM_FOUND)
-  message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+if(LLVM_FOUND)
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 endif()
 
 include_directories(${LLVM_INCLUDE_DIRS})
@@ -33,16 +33,19 @@ aux_source_directory(./lib/ast/ AST_SOURCES)
 aux_source_directory(./lib/visitor/ VISITOR_SOURCES)
 aux_source_directory(./lib/semantics/ SEMANTICS_SOURCES)
 
-flex_target(scanner
-  ${LEXER_PATH}
-  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cc
-  DEFINES_FILE
+flex_target(
+    scanner
+    ${LEXER_PATH}
+    ${CMAKE_CURRENT_BINARY_DIR}/lexer.cc
+    DEFINES_FILE
 )
 
-bison_target(parser
-  ${PARSER_PATH}
-  ${CMAKE_CURRENT_BINARY_DIR}/parser.cc
-  DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/paracl_grammar.tab.hh)
+bison_target(
+    parser
+    ${PARSER_PATH}
+    ${CMAKE_CURRENT_BINARY_DIR}/parser.cc
+    DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/paracl_grammar.tab.hh
+)
 
 add_flex_bison_dependency(scanner parser)
 
@@ -64,10 +67,13 @@ set(SOURCES
     ${FLEX_scanner_OUTPUTS}
 )
 
-add_executable(${PARACL_EXEC_NAME}
-  paracl.cpp
-  ${SOURCES}
-)
+add_executable(${PARACL_EXEC_NAME} paracl.cpp ${SOURCES})
 
-target_include_directories(${PARACL_EXEC_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(${PARACL_EXEC_NAME} PUBLIC ParaclHeaders ${llvm_libs} bison_parser)
+target_include_directories(
+    ${PARACL_EXEC_NAME}
+    PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+)
+target_link_libraries(
+    ${PARACL_EXEC_NAME}
+    PUBLIC ParaclHeaders ${llvm_libs} bison_parser
+)

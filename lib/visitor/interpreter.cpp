@@ -10,6 +10,7 @@ void interpreter::visit(ast::statement_block *StmBlock) {
   for (auto &&statement : *StmBlock) {
     statement->accept(this);
   }
+  freeResources(StmBlock);
 }
 
 void interpreter::visit(ast::calc_expression *CalcExp) {
@@ -93,16 +94,18 @@ void interpreter::visit(ast::assignment *Assign) {
   ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), IdentExp);
 }
 
-void interpreter::visit(ast::PresetArray *InitListArr) {
+void interpreter::visit(ast::PresetArray *PresetArr) {
   llvm::SmallVector<PCLValue *> PresetValues;
-  PresetValues.reserve(InitListArr->size());
-  for (auto *CurrExp : *InitListArr) {
+  PresetValues.reserve(PresetArr->size());
+  for (auto *CurrExp : *PresetArr) {
     PresetValues.push_back(getValueAfterAccept(CurrExp));
   }
 
-  set_value(ValManager.createValue<PresetArrayVal>(
+  auto *ArrVal = ValManager.createValue<PresetArrayVal>(
       PresetValues.begin(), PresetValues.end(),
-      static_cast<ArrayTy *>(SymTbl.createType(TypeID::PresetArray))));
+      static_cast<ArrayTy *>(SymTbl.createType(TypeID::PresetArray)));
+  addResourceForFree(ArrVal, PresetArr->scope());
+  set_value(ArrVal);
 }
 
 void interpreter::visit(ast::ArrayAccess *ArrAccess) {
@@ -121,14 +124,16 @@ void interpreter::visit(ast::ArrayAccess *ArrAccess) {
   set_value((*CurrArr)[CurrID]);
 }
 
-void interpreter::visit(ast::UniformArray *Arr) {
-  auto *InitExpr = getValueAfterAccept(Arr->getInitExpr());
-  auto *Size = getValueAfterAccept<IntegerVal>(Arr->getSize());
+void interpreter::visit(ast::UniformArray *UnifArr) {
+  auto *InitExpr = getValueAfterAccept(UnifArr->getInitExpr());
+  auto *Size = getValueAfterAccept<IntegerVal>(UnifArr->getSize());
 
   assert(InitExpr && Size);
-  set_value(ValManager.createValue<UniformArrayVal>(
+  auto *ArrVal = ValManager.createValue<UniformArrayVal>(
       InitExpr, *Size,
-      static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray))));
+      static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray)));
+  addResourceForFree(ArrVal, UnifArr->scope());
+  set_value(ArrVal);
 }
 
 void interpreter::visit(ast::ArrayAccessAssignment *Arr) {
@@ -137,6 +142,25 @@ void interpreter::visit(ast::ArrayAccessAssignment *Arr) {
 
   assert(LValue && IdentExp);
   LValue->setValue(IdentExp);
+}
+
+void interpreter::freeResources(ast::statement_block *StmBlock) {
+  assert(StmBlock);
+  if (ResourceHandleMap.contains(StmBlock))
+    llvm::for_each(ResourceHandleMap[StmBlock], [](auto *Val) {
+      assert(Val);
+      auto *Type = Val->getType();
+      assert(Type);
+      if (Type->isArrayTy()) {
+        static_cast<ArrayBase *>(Val)->destroy();
+      }
+    });
+}
+
+void interpreter::addResourceForFree(PCLValue *ValToFree,
+                                     ast::statement_block *ScopeToFree) {
+  assert(ScopeToFree);
+  ResourceHandleMap[ScopeToFree].push_back(ValToFree);
 }
 
 } // namespace paracl

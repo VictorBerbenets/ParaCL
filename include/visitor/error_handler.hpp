@@ -209,7 +209,7 @@ public:
                           Print->location());
   }
 
-  void visit(ast::PresetArray *InitListArr) override {
+  void visit(ast::PresetArray *PresetArr) override {
     llvm::SmallVector<StringErrType> InvalidArrArgs;
     std::optional<unsigned> ArrSz = 0;
     auto IncreaseIfNotNullopt = [&](auto Sz) {
@@ -217,7 +217,7 @@ public:
         ArrSz.value() += Sz;
     };
 
-    for (auto *CurrElem : *InitListArr) {
+    for (auto *CurrElem : *PresetArr) {
       auto [Type, _] = getTypeAndValueAfterAccept(CurrElem);
       if (!Type) {
         InvalidArrArgs.emplace_back(makeValidationErrMessage(
@@ -243,7 +243,7 @@ public:
     if (!InvalidArrArgs.empty()) {
       StringErrType TopErrorMes("couldn't create preset array:\n\t");
       Errors.emplace_back(TopErrorMes + llvm::join(InvalidArrArgs, "\n\t"),
-                          InitListArr->location());
+                          PresetArr->location());
     }
     auto *ArrType =
         static_cast<ArrayTy *>(SymTbl.createType(TypeID::PresetArray));
@@ -253,9 +253,9 @@ public:
     setTypeAndValue(ArrType, nullptr);
   }
 
-  void visit(ast::UniformArray *Arr) override {
-    auto [ContainType, _] = getTypeAndValueAfterAccept(Arr->getInitExpr());
-    auto [SizeType, SizeVal] = getTypeAndValueAfterAccept(Arr->getSize());
+  void visit(ast::UniformArray *UnifArr) override {
+    auto [ContainType, _] = getTypeAndValueAfterAccept(UnifArr->getInitExpr());
+    auto [SizeType, SizeVal] = getTypeAndValueAfterAccept(UnifArr->getSize());
     auto *ArrType =
         static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray));
     if (SizeType) {
@@ -263,7 +263,7 @@ public:
         Errors.emplace_back(
             llvm::formatv("couldn't convert '{0} to integer type",
                           SizeType->getName()),
-            Arr->location());
+            UnifArr->location());
       else if (SizeVal)
         ArrType->setSize(static_cast<IntegerVal *>(SizeVal)->getValue());
     }

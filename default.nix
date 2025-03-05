@@ -9,6 +9,7 @@ stdenv.mkDerivation {
     cmake
     lit
     filecheck
+    gersemi
   ];
   buildInputs = [pkgs.llvm_19];
   checkInputs = with pkgs; [ gtest ];

@@ -15,10 +15,18 @@ public:
   virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm);
 
-  void visit(ast::ArrayAccessAssignment *Arr) override {}
-  void visit(ast::PresetArray *InitListArr) override {}
-  void visit(ast::ArrayAccess *ArrAccess) override {}
-  void visit(ast::UniformArray *Arr) override {}
+  void visit(ast::ArrayAccessAssignment *Arr) override {
+    llvm_unreachable("Arrays are not yet supported for llvm IR generation");
+  }
+  void visit(ast::PresetArray *InitListArr) override {
+    llvm_unreachable("Arrays are not yet supported for llvm IR generation");
+  }
+  void visit(ast::ArrayAccess *ArrAccess) override {
+    llvm_unreachable("Arrays are not yet supported for llvm IR generation");
+  }
+  void visit(ast::UniformArray *Arr) override {
+    llvm_unreachable("Arrays are not yet supported for llvm IR generation");
+  }
 
   void visit(ast::calc_expression *stm) override;
   void visit(ast::un_operator *stm) override;

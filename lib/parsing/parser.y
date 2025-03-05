@@ -198,7 +198,6 @@ lvalue_operand: variable             { $$ = $1; }
 
 base_expression:  OP_BRACK expression CL_BRACK    { $$ = $2; }
                 | NUMBER                          { $$ = driver.make_node<number>($1, @$); }
-//                | VAR                             { $$ = driver.make_node<variable>(blocks.top(), std::move($1), @$); }
                 | SCAN                            { $$ = driver.make_node<read_expression>(@$); }
                 | lvalue_operand                  { $$ = $1; }
 ;

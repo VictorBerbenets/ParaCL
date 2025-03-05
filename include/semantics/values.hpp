@@ -90,16 +90,6 @@ protected:
 
   ArrayTy *getType() const override { return static_cast<ArrayTy *>(Ty); }
 
-  void destroy() {
-    for (auto &&ArrVal : llvm::make_range(begin(), end())) {
-      delete ArrVal;
-      ArrVal = nullptr;
-    }
-    delete[] Data;
-    Data = nullptr;
-    Size = 0;
-  }
-
   bool resizeIfNoData(unsigned NewSize) {
     auto HasData = std::any_of(
         Data, Data + Size, [](auto *CurrVal) { return CurrVal != nullptr; });
@@ -133,6 +123,16 @@ public:
   }
 
   unsigned getSize() const noexcept { return Size; }
+
+  void destroy() {
+    for (auto &&ArrVal : llvm::make_range(begin(), end())) {
+      delete ArrVal;
+      ArrVal = nullptr;
+    }
+    delete[] Data;
+    Data = nullptr;
+    Size = 0;
+  }
 
 protected:
   unsigned Size = 0;
