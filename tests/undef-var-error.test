@@ -1,0 +1,14 @@
+// RUN: not %paracl %s |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+a = 10;
+
+aa;
+
+print a;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 7.1-2: error: aa was not declared in this scope
+

@@ -1,0 +1,13 @@
+// RUN: not %paracl %s |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+Arr1 = array(12, array(undef, undef, 100, undef, undef), 21);
+Arr2 = repeat(10, 5);
+
+Arr2 = Arr1;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 8.1-11: error: expression is not assignable. Arrays cannot be assigned
+// CHECK: 8.1-11: error: expression is not assignable. Couldn't convert 'array' to 'repeat'

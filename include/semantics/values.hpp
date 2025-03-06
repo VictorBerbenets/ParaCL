@@ -84,8 +84,9 @@ protected:
   }
 
   ~ArrayBase() override {
-    if (Data)
+    if (Data) {
       destroy();
+    }
   }
 
   ArrayTy *getType() const override { return static_cast<ArrayTy *>(Ty); }
@@ -108,14 +109,8 @@ public:
 
   PCLValue **begin() { return Data; }
   PCLValue **begin() const { return Data; }
-  PCLValue **end() {
-    assert(Size);
-    return Data + Size;
-  }
-  PCLValue **end() const {
-    assert(Size);
-    return Data + Size;
-  }
+  PCLValue **end() { return Data + Size; }
+  PCLValue **end() const { return Data + Size; }
 
   void copy(PCLValue **DestIter) {
     std::transform(begin(), end(), DestIter,

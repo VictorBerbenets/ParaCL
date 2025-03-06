@@ -1,6 +1,7 @@
 #pragma once
 
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/Support/raw_ostream.h>
 
 #include "types.hpp"
 #include "values.hpp"
@@ -73,12 +74,11 @@ private:
 class ValueManager final {
 public:
   template <DerivedFromPCLValue ValueTy, typename... ArgTys>
-  PCLValue *createValueFor(SymTabKey &&SymKey, ArgTys &&...Args) {
+  ValueTy *createValueFor(const SymTabKey &SymKey, ArgTys &&...Args) {
     auto ValuePtr = std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...);
     Values.push_back(std::move(ValuePtr));
-    auto [InsIt, _] = NameToValue.insert_or_assign(
-        std::forward<SymTabKey>(SymKey), Values.back().get());
-    return InsIt->second;
+    auto [InsIt, _] = NameToValue.insert_or_assign(SymKey, Values.back().get());
+    return static_cast<ValueTy *>(InsIt->second);
   }
 
   bool linkValueWithName(const SymTabKey &SymKey, PCLValue *Val) {
@@ -87,10 +87,10 @@ public:
   }
 
   template <DerivedFromPCLValue ValueTy, typename... ArgTys>
-  PCLValue *createValue(ArgTys &&...Args) {
+  ValueTy *createValue(ArgTys &&...Args) {
     Values.emplace_back(
         std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...));
-    return Values.back().get();
+    return static_cast<ValueTy *>(Values.back().get());
   }
 
   template <DerivedFromPCLValue ValueType = PCLValue>

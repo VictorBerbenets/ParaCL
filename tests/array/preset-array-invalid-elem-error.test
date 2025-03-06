@@ -1,0 +1,12 @@
+// RUN: not %paracl %s |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+Arr1 = repeat(10, 10);
+Arr2 = array(repeat(Arr1, 2), 10, repeat(repeat(Arr1, 32), 4), undef);
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 6.8-69: error: couldn't create preset array:
+// CHECK-NEXT: 6.14-28: error: it is forbidden to pass arrays of more than one dimension
+// CHECK-NEXT: 6.35-61: error: it is forbidden to pass arrays of more than one dimension

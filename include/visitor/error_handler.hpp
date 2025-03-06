@@ -287,6 +287,7 @@ public:
             ArrAccess->getSize()) {
       Errors.emplace_back("subscripted value is not an array",
                           ArrAccess->location());
+      setTypeAndValue(nullptr, nullptr);
       return;
     }
     for (auto *CurrArrTy = static_cast<ArrayTy *>(CurrTy);
@@ -318,7 +319,7 @@ public:
       }
       CurrArrTy = static_cast<ArrayTy *>(CurrArrTy->getContainedType());
     }
-    setTypeAndValue(nullptr, nullptr);
+    setTypeAndValue(SymTbl.createType(TypeID::Int32), nullptr);
   }
 
   void visit(ast::ArrayAccessAssignment *ArrAssign) override {

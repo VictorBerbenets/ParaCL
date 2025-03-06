@@ -1,0 +1,48 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+ArrSize = 16;
+Arr = array(-11, 100, 0, 150, 1488, 8814, 32, 1777, 1945, 32, 1, 1, 2, 2, -1777, 3);
+Arr2 = Arr;
+
+a = 0;
+while (a < ArrSize) {
+  b = a + 1;
+  while (b < ArrSize) {
+    if (Arr[a] > Arr[b]) {
+      tmp =  Arr[a];
+      Arr[a] = Arr[b];
+      Arr[b] = tmp;
+    }
+    b = b + 1;
+  }
+  a = a + 1;
+}
+
+a = 0;
+while (a < ArrSize) {
+  print Arr[a];
+  a = a + 1;
+}
+
+//-----------------------------------------------------------------------------
+
+// COM: Buble sorting
+// CHECK: -1777
+// CHECK-NEXT:-11
+// CHECK-NEXT: 0
+// CHECK-NEXT: 1 
+// CHECK-NEXT: 1 
+// CHECK-NEXT: 2
+// CHECK-NEXT: 2 
+// CHECK-NEXT: 3 
+// CHECK-NEXT: 32
+// CHECK-NEXT: 32 
+// CHECK-NEXT: 100 
+// CHECK-NEXT: 150 
+// CHECK-NEXT: 1488 
+// CHECK-NEXT: 1777 
+// CHECK-NEXT: 1945 
+// CHECK-NEXT: 8814
+

@@ -1,0 +1,21 @@
+// RUN: not %paracl %s |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+Arr1 = array(12, 32, 21);
+Arr2 = repeat(Arr1, 5);
+
+// The boundary error case
+Arr2[5][3] = 100;
+
+Arr2[1000][1000] = 32432;
+// Negative index check
+Arr2[-1][0] = 432;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 9.1-10: error: array index 5 is past the end of the array (that has size 5)
+// CHECK-NEXT: 9.1-10: error: array index 3 is past the end of the array (that has size 3)
+// CHECK-NEXT: 11.1-16: error: array index 1000 is past the end of the array (that has size 5)
+// CHECK-NEXT: 11.1-16: error: array index 1000 is past the end of the array (that has size 3)
+// CHECK-NEXT: 13.1-11: error: array index -1 is before the beginning of the array 'Arr2'

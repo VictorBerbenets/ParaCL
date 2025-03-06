@@ -1,0 +1,10 @@
+// RUN: not %paracl %s |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+arr = array(12, 32, 21);
+arr[23][432] = 32;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 6.1-12: error: subscripted value is not an array
