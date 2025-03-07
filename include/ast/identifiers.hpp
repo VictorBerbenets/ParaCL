@@ -11,8 +11,8 @@ enum class LogicOp : char {
   GREATER_EQ,
   EQ,
   NEQ,
-  LOGIC_AND,
-  LOGIC_OR
+  AND,
+  OR
 };
 
 enum class CalcOp : char { PERCENT, ADD, SUB, MUL, DIV };

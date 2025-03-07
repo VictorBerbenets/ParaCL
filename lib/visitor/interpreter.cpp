@@ -33,11 +33,20 @@ void interpreter::visit(ast::un_operator *UnOp) {
 
 void interpreter::visit(ast::logic_expression *LogExp) {
   auto *Lhs = getValueAfterAccept<IntegerVal>(LogExp->left());
-  auto *Rhs = getValueAfterAccept<IntegerVal>(LogExp->right());
   auto *Type = Lhs->getType();
   assert(Type->isInt32Ty());
+  assert(Lhs);
+  if (LogExp->type() == ast::LogicOp::AND && !*Lhs) {
+    set_value(ValManager.createValue<IntegerVal>(0, Type));
+  }
+  else if (LogExp->type() == ast::LogicOp::OR && *Lhs) {
+    set_value(ValManager.createValue<IntegerVal>(1, Type));
+  }
+  else {
+    auto *Rhs = getValueAfterAccept<IntegerVal>(LogExp->right());
+    set_value(performLogicalOperation(LogExp->type(), Lhs, Rhs, Type));
+  }
 
-  set_value(performLogicalOperation(LogExp->type(), Lhs, Rhs, Type));
 }
 
 void interpreter::visit(ast::number *Num) {

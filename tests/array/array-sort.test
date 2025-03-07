@@ -4,8 +4,8 @@
 
 ArrSize = 16;
 Arr = array(-11, 100, 0, 150, 1488, 8814, 32, 1777, 1945, 32, 1, 1, 2, 2, -1777, 3);
-Arr2 = Arr;
 
+// Buble sort
 a = 0;
 while (a < ArrSize) {
   b = a + 1;
@@ -26,9 +26,47 @@ while (a < ArrSize) {
   a = a + 1;
 }
 
+Arr2 = array(-11, 100, 0, 150, 1488, 8814, 32, 1777, 1945, 32, 1, 1, 2, 2, -1777, 3);
+// Insertion sort
+i = 1;
+while(i < ArrSize) {
+  NewElem = Arr2[i];
+  Location = i - 1;
+  while (Location >= 0 && (Arr2[Location] > NewElem)) {
+    Arr2[Location + 1] = Arr2[Location];
+    Location = Location - 1;
+  }
+  Arr2[Location + 1] = NewElem;
+  i = i + 1;
+}
+
+a = 0;
+while (a < ArrSize) {
+  print Arr2[a];
+  a = a + 1;
+}
+
 //-----------------------------------------------------------------------------
 
-// COM: Buble sorting
+// COM: Buble sort
+// CHECK: -1777
+// CHECK-NEXT:-11
+// CHECK-NEXT: 0
+// CHECK-NEXT: 1 
+// CHECK-NEXT: 1 
+// CHECK-NEXT: 2
+// CHECK-NEXT: 2 
+// CHECK-NEXT: 3 
+// CHECK-NEXT: 32
+// CHECK-NEXT: 32 
+// CHECK-NEXT: 100 
+// CHECK-NEXT: 150 
+// CHECK-NEXT: 1488 
+// CHECK-NEXT: 1777 
+// CHECK-NEXT: 1945 
+// CHECK-NEXT: 8814
+
+// COM: Insertion sort
 // CHECK: -1777
 // CHECK-NEXT:-11
 // CHECK-NEXT: 0

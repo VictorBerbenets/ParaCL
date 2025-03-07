@@ -9,16 +9,19 @@ namespace paracl {
 VisitorTracker::ValueTypePtr
 VisitorTracker::performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs,
                                         IntegerVal *Rhs, IntegerTy *Type) {
+  assert(Lhs);
+  assert(Rhs);
+  assert(Type);
   switch (Op) {
   case ast::LogicOp::LESS:
     return ValManager.createValue<IntegerVal>(*Lhs < *Rhs, Type);
   case ast::LogicOp::LESS_EQ:
     return ValManager.createValue<IntegerVal>(*Lhs <= *Rhs, Type);
     break;
-  case ast::LogicOp::LOGIC_AND:
+  case ast::LogicOp::AND:
     return ValManager.createValue<IntegerVal>(*Lhs && *Rhs, Type);
     break;
-  case ast::LogicOp::LOGIC_OR:
+  case ast::LogicOp::OR:
     return ValManager.createValue<IntegerVal>(*Lhs || *Rhs, Type);
     break;
   case ast::LogicOp::GREATER:
@@ -41,6 +44,8 @@ VisitorTracker::performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs,
 VisitorTracker::ValueTypePtr
 VisitorTracker::performUnaryOperation(ast::UnOp Op, IntegerVal *Value,
                                       IntegerTy *Type) {
+  assert(Value);
+  assert(Type);
   switch (Op) {
   case ast::UnOp::PLUS:
     return Value;
@@ -60,6 +65,9 @@ VisitorTracker::ValueTypePtr
 VisitorTracker::performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
                                            IntegerVal *Rhs, IntegerTy *Type,
                                            yy::location Loc) {
+  assert(Lhs);
+  assert(Rhs);
+  assert(Type);
   switch (Op) {
   case ast::CalcOp::ADD:
     return ValManager.createValue<IntegerVal>(*Lhs + *Rhs, Type);

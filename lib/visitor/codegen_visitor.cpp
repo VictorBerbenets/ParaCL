@@ -74,10 +74,10 @@ void CodeGenVisitor::visit(ast::logic_expression *LogicExpr) {
   auto *Rhs = getCurrValue();
 
   switch (LogicExpr->type()) {
-  case ast::LogicOp::LOGIC_AND:
+  case ast::LogicOp::AND:
     setCurrValue(CodeGen.Builder->CreateAnd(Lhs, Rhs));
     break;
-  case ast::LogicOp::LOGIC_OR:
+  case ast::LogicOp::OR:
     setCurrValue(CodeGen.Builder->CreateOr(Lhs, Rhs));
     break;
   case ast::LogicOp::LESS:

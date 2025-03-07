@@ -231,8 +231,8 @@ equality_expression:  equality_expression EQ  comparable_expression        { $$ 
                     | comparable_expression                                { $$ = $1; }
 ;
 
-logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_AND, $1, $3, @$);  }
-                    | logical_expression LOGIC_OR  equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::LOGIC_OR, $1, $3, @$);   }
+logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::AND, $1, $3, @$);  }
+                    | logical_expression LOGIC_OR  equality_expression   { $$ = driver.make_node<logic_expression>(LogicOp::OR, $1, $3, @$);   }
                     | equality_expression                                { $$ = $1; }
 ;
 
@@ -275,6 +275,7 @@ preset_array: ARRAY OP_BRACK preset_array_access CL_BRACK { $$ = driver.make_nod
 
 preset_array_access: array_expression COMMA preset_array_access  { PresetArrElems.push_front($1); }
                       | array_expression { PresetArrElems.push_front($1); }
+                      | %empty {}
 ;
 
 
