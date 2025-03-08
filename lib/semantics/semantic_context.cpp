@@ -45,4 +45,9 @@ bool SymTable::isDefined(SymTabKey TabKey) {
   return getDeclScopeFor(TabKey.Name, TabKey.CurrScope) != nullptr;
 }
 
+bool SymTable::containsKeyWithType(PCLType *Ty) const {
+  return llvm::any_of(llvm::make_second_range(NamesInfo),
+                      [Ty](auto &&Info) { return Ty == Info.getType(); });
+}
+
 } // namespace paracl

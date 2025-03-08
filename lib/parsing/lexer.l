@@ -32,7 +32,7 @@ VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 "%"               { return parser::make_PERCENT(update_location()); }
 "="               { return parser::make_ASSIGN(update_location());  }
 ";"               { return parser::make_SCOLON(update_location());  }
-","               { return parser::make_COMMA(update_location());  }
+","               { return parser::make_COMMA(update_location());   }
 
 ">"               { return parser::make_GREATER(update_location());    }
 "<"               { return parser::make_LESS(update_location());       }
@@ -49,14 +49,14 @@ VAR     [a-zA-Z_][a-zA-Z_0-9_]*
 "while"           { return parser::make_WHILE(update_location());    }
 "print"           { return parser::make_PRINT(update_location());    }
 "array"           { return parser::make_ARRAY(update_location());    }
-"repeat"           { return parser::make_REPEAT(update_location());    }
+"repeat"          { return parser::make_REPEAT(update_location());   }
 "undef"           { return parser::make_UNDEF(update_location());    }
 
-"?"               { return parser::make_SCAN(update_location());     }
-"("               { return parser::make_OP_BRACK(update_location()); }
-")"               { return parser::make_CL_BRACK(update_location()); }
-"{"               { return parser::make_OP_BRACE(update_location()); }
-"}"               { return parser::make_CL_BRACE(update_location()); }
+"?"               { return parser::make_SCAN(update_location());       }
+"("               { return parser::make_OP_BRACK(update_location());   }
+")"               { return parser::make_CL_BRACK(update_location());   }
+"{"               { return parser::make_OP_BRACE(update_location());   }
+"}"               { return parser::make_CL_BRACE(update_location());   }
 "["               { return parser::make_OP_SQBRACK(update_location()); }
 "]"               { return parser::make_CL_SQBRACK(update_location()); }
 

@@ -9,5 +9,6 @@ Arr2 = Arr1;
 
 //-----------------------------------------------------------------------------
 
-// CHECK: 8.1-11: error: expression is not assignable. Arrays cannot be assigned
-// CHECK: 8.1-11: error: expression is not assignable. Couldn't convert 'array' to 'repeat'
+// CHECK: 8.1-11: error: expression is not assignable: arrays cannot be assigned
+// CHECK: 8.1-11: error: expression is not assignable: couldn't convert 'array'
+// CHECK-SAME: to 'repeat'

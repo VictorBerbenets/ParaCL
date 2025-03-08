@@ -17,7 +17,7 @@ public:
     SymbInfo(PCLType *Ty) : Ty(Ty) {}
     SymbInfo(SymTable &SymTbl, TypeID ID) : Ty(SymTbl.createType(ID)) {}
 
-    PCLType *getType() { return Ty; }
+    PCLType *getType() const { return Ty; }
 
   private:
     PCLType *Ty;
@@ -64,6 +64,8 @@ public:
 
   bool isDefined(SymTabKey TabKey);
 
+  bool containsKeyWithType(PCLType *Ty) const;
+
   friend class driver;
 
 private:
@@ -98,6 +100,12 @@ public:
     if (!NameToValue.contains(SymKey))
       return nullptr;
     return static_cast<ValueType *>(NameToValue[SymKey]);
+  }
+
+  bool containsValue(PCLValue *Val) const {
+    return llvm::find_if(NameToValue, [Val](auto &&MapPair) {
+             return MapPair.second == Val;
+           }) != NameToValue.end();
   }
 
   friend class driver;

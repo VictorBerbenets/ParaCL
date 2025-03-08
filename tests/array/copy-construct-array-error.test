@@ -1,0 +1,16 @@
+// RUN: not %paracl %s |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+Arr = array(repeat(4, 10), undef, undef, undef);
+Arr2 = Arr;
+
+Arr3 = repeat(repeat(3, 10), 10);
+Arr4 = Arr3;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 6.1-10: error: expression is not assignable: arrays cannot be copy
+// CHECK-SAME: constructed
+// CHECK-NEXT: 9.1-11: error: expression is not assignable: arrays cannot be copy
+// CHECK-SAME: constructed

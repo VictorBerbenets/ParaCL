@@ -59,7 +59,7 @@ public:
 
   void evaluate(std::ostream &output = std::cout,
                 std::istream &input = std::cin) {
-    paracl::interpreter runner(input, output);
+    paracl::Interpreter runner(input, output);
     runner.run_program(ast_.root_ptr());
   }
 

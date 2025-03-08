@@ -1,3 +1,5 @@
+#pragma once
+
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/ADT/SmallVector.h>
 
@@ -9,9 +11,27 @@
 
 namespace paracl {
 
-class interpreter : public VisitorTracker {
+class InterpreterBase : public VisitorTracker {
 public:
-  interpreter(std::istream &input, std::ostream &output)
+  void run_program(ast::root_statement_block *StmBlock) { visit(StmBlock); }
+
+protected:
+  InterpreterBase() = default;
+  ValueTypePtr performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs,
+                                       IntegerVal *Rhs, IntegerTy *Type);
+  ValueTypePtr performUnaryOperation(ast::UnOp Op, IntegerVal *Val,
+                                     IntegerTy *Type);
+  ValueTypePtr performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
+                                          IntegerVal *Rhs, IntegerTy *Type,
+                                          yy::location Loc);
+
+  SymTable SymTbl;
+  ValueManager ValManager;
+};
+
+class Interpreter : public InterpreterBase {
+public:
+  Interpreter(std::istream &input, std::ostream &output)
       : input_stream_{input}, output_stream_{output} {}
 
   void visit(ast::ArrayAccessAssignment *Arr) override;

@@ -46,6 +46,7 @@ public:
 
 private:
   llvm::Value *getCurrValue() const noexcept { return CurrVal; }
+  llvm::Value *getValueAfterAccept(ast::statement *Stm);
 
   void setCurrValue(llvm::Value *Value) noexcept { CurrVal = Value; }
 

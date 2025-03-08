@@ -9,12 +9,12 @@
 #include <vector>
 
 #include "ast_includes.hpp"
+#include "interpreter.hpp"
 #include "location.hh"
-#include "visitor_tracker.hpp"
 
 namespace paracl {
 
-class ErrorHandler : public VisitorTracker {
+class ErrorHandler : public InterpreterBase {
   using StringErrType = std::string;
   using ErrorType = std::pair<StringErrType, yy::location>;
   using TypePtr = PCLType *;
@@ -132,30 +132,38 @@ public:
   }
 
   void visit(ast::assignment *Assign) override {
+    static constexpr llvm::StringRef ErrDesc = "expression is not assignable";
+
     auto [IdentType, IdentVal] =
         getTypeAndValueAfterAccept(Assign->getIdentExp());
     auto EntityKey = Assign->entityKey();
     if (!SymTbl.isDefined(EntityKey)) {
+      assert(IdentType);
+      if (SymTbl.containsKeyWithType(IdentType) && IdentType->isArrayTy()) {
+        Errors.emplace_back(
+            llvm::formatv("{0}: arrays cannot be copy constructed", ErrDesc),
+            Assign->location());
+        return;
+      }
       [[maybe_unused]] auto IsDefined = SymTbl.tryDefine(EntityKey, IdentType);
       assert(IsDefined);
     } else if (IdentType && IdentType->isArrayTy()) {
       Errors.emplace_back(
-          "expression is not assignable. Arrays cannot be assigned",
+          llvm::formatv("{0}: arrays cannot be assigned", ErrDesc),
           Assign->location());
     }
 
     auto [LValueType, LVal] = getTypeAndValueAfterAccept(Assign->getLValue());
     if (!IdentType || !LValueType)
       Errors.emplace_back(
-          llvm::formatv("expression is not assignable. Couldn't deduce the "
-                        "types for initializing the {0} variable",
-                        Assign->name()),
+          llvm::formatv("{0}: couldn't deduce the "
+                        "types for initializing the {1} variable",
+                        ErrDesc, Assign->name()),
           Assign->location());
     else if (IdentType && LValueType && *IdentType != *LValueType)
       Errors.push_back(
-          {llvm::formatv(
-               "expression is not assignable. Couldn't convert '{0}' to '{1}'",
-               IdentType->getName(), LValueType->getName()),
+          {llvm::formatv("{0}: couldn't convert '{1}' to '{2}'", ErrDesc,
+                         IdentType->getName(), LValueType->getName()),
            Assign->location()});
     else
       ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), nullptr);

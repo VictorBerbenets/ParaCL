@@ -41,10 +41,8 @@ void CodeGenVisitor::visit(ast::statement_block *StmBlock) {
 void CodeGenVisitor::visit(ast::definition *) { /*unused*/ }
 
 void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {
-  CalcExpr->left()->accept(this);
-  auto *Lhs = getCurrValue();
-  CalcExpr->right()->accept(this);
-  auto *Rhs = getCurrValue();
+  auto *Lhs = getValueAfterAccept(CalcExpr->left());
+  auto *Rhs = getValueAfterAccept(CalcExpr->right());
 
   switch (CalcExpr->type()) {
   case ast::CalcOp::ADD:
@@ -67,13 +65,21 @@ void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {
   }
 }
 
-void CodeGenVisitor::visit(ast::logic_expression *LogicExpr) {
-  LogicExpr->left()->accept(this);
-  auto *Lhs = getCurrValue();
-  LogicExpr->right()->accept(this);
-  auto *Rhs = getCurrValue();
+void CodeGenVisitor::visit(ast::logic_expression *LogicExp) {
+  auto *Lhs = getValueAfterAccept(LogicExp->left());
+#if 0
+  auto *Type = Lhs->getType();
+  assert(Lhs);
+  assert(Type->isIntegerTy());
+  if (LogicExp->type() == ast::LogicOp::AND && !Lhs) {
+    setCurrValue(nullptr);
+  } else if (LogicExp->type() == ast::LogicOp::OR && Lhs) {
+    setCurrValue(nullptr);
+  }
+#endif
+  auto *Rhs = getValueAfterAccept(LogicExp->right());
 
-  switch (LogicExpr->type()) {
+  switch (LogicExp->type()) {
   case ast::LogicOp::AND:
     setCurrValue(CodeGen.Builder->CreateAnd(Lhs, Rhs));
     break;
@@ -104,19 +110,19 @@ void CodeGenVisitor::visit(ast::logic_expression *LogicExpr) {
 }
 
 void CodeGenVisitor::visit(ast::un_operator *UnOper) {
-  UnOper->arg()->accept(this);
+  auto *Val = getValueAfterAccept(UnOper->arg());
 
   switch (UnOper->type()) {
   case ast::UnOp::PLUS:
     // Do nothing with the value
-    setCurrValue(getCurrValue());
+    setCurrValue(Val);
     break;
   case ast::UnOp::MINUS:
-    setCurrValue(CodeGen.Builder->CreateNeg(getCurrValue()));
+    setCurrValue(CodeGen.Builder->CreateNeg(Val));
     break;
   case ast::UnOp::NEGATE:
-    setCurrValue(CodeGen.Builder->CreateICmpEQ(
-        getCurrValue(), CodeGen.createConstantSInt32(0)));
+    setCurrValue(
+        CodeGen.Builder->CreateICmpEQ(Val, CodeGen.createConstantSInt32(0)));
     break;
   default:
     llvm_unreachable("unrecognized type for un_operator");
@@ -151,8 +157,8 @@ void CodeGenVisitor::visit(ast::if_operator *If) {
   auto *CurrBlock = CodeGen.createBlockAndLinkWith(
       CodeGen.Builder->GetInsertBlock(), "if-cond");
   // Evaluate condition
-  If->condition()->accept(this);
-  auto *CondValue = CodeGen.createCondValueIfNeed(getCurrValue());
+  auto *CondValue =
+      CodeGen.createCondValueIfNeed(getValueAfterAccept(If->condition()));
 
   auto *IfBodyBlock =
       BasicBlock::Create(CodeGen.Context, "if-body", CurrBlock->getParent());
@@ -181,8 +187,8 @@ void CodeGenVisitor::visit(ast::while_operator *While) {
   auto *CurrBlock = CodeGen.createBlockAndLinkWith(
       CodeGen.Builder->GetInsertBlock(), "while-cond");
   // Condition codegen
-  While->condition()->accept(this);
-  auto *EntryCondValue = CodeGen.createCondValueIfNeed(getCurrValue());
+  auto *EntryCondValue =
+      CodeGen.createCondValueIfNeed(getValueAfterAccept(While->condition()));
 
   auto *WhileBodyBlock =
       BasicBlock::Create(CodeGen.Context, "while-body", CurrBlock->getParent());
@@ -194,8 +200,8 @@ void CodeGenVisitor::visit(ast::while_operator *While) {
   // While body codegen
   While->body()->accept(this);
 
-  While->condition()->accept(this);
-  auto *CondValue = CodeGen.createCondValueIfNeed(getCurrValue());
+  auto *CondValue =
+      CodeGen.createCondValueIfNeed(getValueAfterAccept(While->condition()));
   CodeGen.Builder->CreateCondBr(CondValue, WhileBodyBlock, WhileEndBlock);
   CodeGen.Builder->SetInsertPoint(WhileEndBlock);
 }
@@ -232,6 +238,12 @@ void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock,
 
 void CodeGenVisitor::printIRToOstream(raw_ostream &Os) const {
   CodeGen.Mod->print(Os, nullptr);
+}
+
+llvm::Value *CodeGenVisitor::getValueAfterAccept(ast::statement *Stm) {
+  assert(Stm);
+  Stm->accept(this);
+  return CurrVal;
 }
 
 } // namespace paracl
