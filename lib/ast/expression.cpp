@@ -22,7 +22,7 @@ void variable::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 
 SymTabKey variable::entityKey() { return {name_, scope()}; }
 
-const SymbNameType &variable::name() const noexcept { return name_; }
+llvm::StringRef variable::name() const noexcept { return name_; }
 
 un_operator::un_operator(UnOp type, pointer_type arg, yy::location loc)
     : expression{loc}, type_{type}, arg_{arg} {}
@@ -59,7 +59,7 @@ void assignment::accept(CodeGenVisitor *CodeGenVis) { CodeGenVis->visit(this); }
 variable *assignment::getLValue() noexcept { return LValue; }
 expression *assignment::getIdentExp() noexcept { return Identifier; }
 
-SymbNameType assignment::name() const { return LValue->name(); }
+llvm::StringRef assignment::name() const { return LValue->name(); }
 
 SymTabKey assignment::entityKey() {
   assert(LValue);

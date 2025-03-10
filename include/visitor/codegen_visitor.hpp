@@ -1,12 +1,18 @@
 #pragma once
 
 #include <llvm/ADT/StringRef.h>
+#include <llvm/Support/Casting.h>
+
+#include <concepts>
 
 #include "codegen.hpp"
 #include "semantic_context.hpp"
 #include "visitor.hpp"
 
 namespace paracl {
+
+template <typename ConstTy>
+concept DerivedFromLLVMConstant = std::derived_from<ConstTy, llvm::Constant>;
 
 class CodeGenVisitor : public VisitorBase {
 public:
@@ -21,12 +27,8 @@ public:
   void visit(ast::PresetArray *InitListArr) override {
     llvm_unreachable("Arrays are not yet supported for llvm IR generation");
   }
-  void visit(ast::ArrayAccess *ArrAccess) override {
-    llvm_unreachable("Arrays are not yet supported for llvm IR generation");
-  }
-  void visit(ast::UniformArray *Arr) override {
-    llvm_unreachable("Arrays are not yet supported for llvm IR generation");
-  }
+  void visit(ast::ArrayAccess *ArrAccess) override;
+  void visit(ast::UniformArray *Arr) override;
 
   void visit(ast::calc_expression *stm) override;
   void visit(ast::un_operator *stm) override;
@@ -54,8 +56,11 @@ private:
 
   void printIRToOstream(llvm::raw_ostream &Os) const;
 
-  SymTable SymTbl;
-  ValueManager ValManager;
+  template <DerivedFromLLVMConstant ConstTy = llvm::Constant>
+  ConstTy *isCompileTimeConstant(llvm::Value *Val) const {
+    return dyn_cast<ConstTy>(Val);
+  }
+
   llvm::DenseMap<llvm::StringRef, llvm::Value *> NameToValue;
   codegen::IRCodeGenerator CodeGen;
   llvm::Value *CurrVal;

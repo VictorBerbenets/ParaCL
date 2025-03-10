@@ -46,7 +46,7 @@ public:
 
   void accept(CodeGenVisitor *CodeGenVis) override;
 
-  const SymbNameType &name() const noexcept;
+  llvm::StringRef name() const noexcept;
 
   SymTabKey entityKey();
 
@@ -112,7 +112,7 @@ public:
   variable *getLValue() noexcept;
   expression *getIdentExp() noexcept;
 
-  SymbNameType name() const;
+  llvm::StringRef name() const;
   PCLType::TypeID getID() const noexcept;
 
   SymTabKey entityKey();
