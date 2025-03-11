@@ -208,8 +208,8 @@ void Interpreter::visit(ast::assignment *Assign) {
     Value->setValue(static_cast<IntegerVal *>(IdentExp));
   }
 }
-  
-void Interpreter::visit(ast::ArrayStore *ArrStore) {
+
+void Interpreter::visit(ast::ArrayHolder *ArrStore) {
   auto *Arr = ArrStore->get();
   assert(Arr);
   Arr->accept(this);

@@ -5,7 +5,7 @@
 namespace paracl {
 namespace ast {
 
-class IArray: public expression {
+class IArray : public expression {
 protected:
   using expression::expression;
 };
@@ -96,17 +96,17 @@ private:
   expression *Identifier;
 };
 
-class ArrayStore: public expression {
-  public:
-
-  ArrayStore(statement_block *StmBlock, IArray *Arr, yy::location Loc): expression(StmBlock, Loc), Arr(Arr) {}
+class ArrayHolder : public expression {
+public:
+  ArrayHolder(statement_block *StmBlock, IArray *Arr, yy::location Loc)
+      : expression(StmBlock, Loc), Arr(Arr) {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   IArray *get() noexcept { return Arr; }
 
-  private:
+private:
   IArray *Arr;
 };
 

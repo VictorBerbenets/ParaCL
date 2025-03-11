@@ -148,17 +148,16 @@ void CodeGenVisitor::visit(ast::assignment *Assign) {
     InitValTy->print(llvm::outs());
     llvm::outs() << '\n';
     if (InitValTy->isIntegerTy()) {
-      auto *Alloca = CodeGen.Builder->CreateAlloca(CodeGen.getInt32Ty(), nullptr,
-                                                   Assign->name());
+      auto *Alloca = CodeGen.Builder->CreateAlloca(CodeGen.getInt32Ty(),
+                                                   nullptr, Assign->name());
       CodeGen.Builder->CreateStore(InitVal, Alloca);
       NameToValue[Assign->name()] = Alloca;
     } else {
-      InitVal->setName(Assign->name()); 
+      InitVal->setName(Assign->name());
       NameToValue[Assign->name()] = InitVal;
     }
   } else {
-    CodeGen.Builder->CreateStore(InitVal,
-                                 NameToValue[Assign->name()]);
+    CodeGen.Builder->CreateStore(InitVal, NameToValue[Assign->name()]);
   }
 }
 
@@ -233,13 +232,13 @@ void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
       CodeGen.Mod->getFunction(codegen::IRCodeGenerator::ParaCLPrintFuncName);
   CodeGen.Builder->CreateCall(PrintType, PrintFunc, ArgValue);
 }
-  
-void CodeGenVisitor::visit(ast::ArrayStore *ArrStore) {
-    auto *Arr = ArrStore->get();
-    assert(Arr);
-    Arr->accept(this); 
+
+void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
+  auto *Arr = ArrStore->get();
+  assert(Arr);
+  Arr->accept(this);
 }
-  
+
 void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   auto *InitVal = getValueAfterAccept(UnifArr->getInitExpr());
   auto *Size = getValueAfterAccept(UnifArr->getSize());
@@ -278,36 +277,33 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
 #endif
 }
 
-void CodeGenVisitor::visit(ast::PresetArray *InitListArr) {
-
-}
+void CodeGenVisitor::visit(ast::PresetArray *InitListArr) {}
 
 void CodeGenVisitor::visit(ast::ArrayAccess *ArrAccess) {
-  llvm::SmallVector<llvm::Value*> GEPIndexes;
+  llvm::SmallVector<llvm::Value *> GEPIndexes;
   GEPIndexes.reserve(ArrAccess->getSize() + 1);
   GEPIndexes.push_back(llvm::ConstantInt::get(CodeGen.getInt32Ty(), 0));
   llvm::for_each(*ArrAccess, [&](auto *Exp) {
-      auto *IndexVal = getValueAfterAccept(Exp);
-      assert(IndexVal->getType()->isIntegerTy());
-      GEPIndexes.push_back(IndexVal);
-      });
+    auto *IndexVal = getValueAfterAccept(Exp);
+    assert(IndexVal->getType()->isIntegerTy());
+    GEPIndexes.push_back(IndexVal);
+  });
 
   auto *ArrayPtr = NameToValue[ArrAccess->name()];
   assert(ArrayPtr);
-  auto *GEPPtr = CodeGen.Builder->CreateGEP(ValueToType[ArrayPtr], ArrayPtr, GEPIndexes);
+  auto *GEPPtr =
+      CodeGen.Builder->CreateGEP(ValueToType[ArrayPtr], ArrayPtr, GEPIndexes);
   auto *Load = CodeGen.Builder->CreateLoad(CodeGen.getInt32Ty(), GEPPtr);
   setCurrValue(Load);
 }
 
-void CodeGenVisitor::visit(ast::ArrayAccessAssignment *Arr) {
-  
-}
+void CodeGenVisitor::visit(ast::ArrayAccessAssignment *Arr) {}
 
 Value *CodeGenVisitor::getValueForVar(StringRef ValueName) {
   assert(NameToValue.contains(ValueName));
   return NameToValue[ValueName];
 }
-  
+
 Type *CodeGenVisitor::getValueType(llvm::Value *Val) {
   assert(ValueToType.contains(Val));
   return ValueToType[Val];

@@ -12,7 +12,6 @@ public:
   using TypeID = SymTable::TypeID;
 
 protected:
-
   VisitorTracker() = default;
 
   ValueTypePtr getValue() const noexcept { return CurrValue; }

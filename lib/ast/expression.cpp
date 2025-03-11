@@ -49,8 +49,8 @@ void logic_expression::accept(CodeGenVisitor *CodeGenVis) {
 }
 
 assignment::assignment(statement_block *curr_block, variable *LValue,
-                       expression *expr, PCLType::TypeID ID, yy::location loc)
-    : expression{curr_block, loc}, LValue(LValue), Identifier{expr}, ID(ID) {}
+                       expression *expr, yy::location loc)
+    : expression{curr_block, loc}, LValue(LValue), Identifier{expr} {}
 
 void assignment::accept(VisitorBase *VisitorBase) { VisitorBase->visit(this); }
 
@@ -65,8 +65,6 @@ SymTabKey assignment::entityKey() {
   assert(LValue);
   return LValue->entityKey();
 }
-
-PCLType::TypeID assignment::getID() const noexcept { return ID; }
 
 read_expression::read_expression(yy::location loc) : expression{loc} {}
 

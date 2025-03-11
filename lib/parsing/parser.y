@@ -139,6 +139,7 @@ static yy::parser::symbol_type yylex(yy::scanner &scanner) {
 %nterm <UniformArray*>       uniform_array
 %nterm <PresetArray*>        preset_array
 %nterm <ArrayAccess*>        array_value
+%nterm <ArrayHolder*>        array
 %nterm <variable*>           lvalue_operand
 %nterm <variable*>           variable
 
@@ -236,10 +237,9 @@ logical_expression:   logical_expression LOGIC_AND equality_expression   { $$ = 
                     | equality_expression                                { $$ = $1; }
 ;
 
-assignment_expression: variable ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, TypeID::Int32, @$); }
-                     | variable ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, TypeID::Int32, @$); }
-                     | variable ASSIGN uniform_array         { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, TypeID::UniformArray, @$); }
-                     | variable ASSIGN preset_array          { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, TypeID::PresetArray, @$); }
+assignment_expression: variable ASSIGN assignment_expression { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
+                     | variable ASSIGN logical_expression    { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
+                     | variable ASSIGN array                 { $$ = driver.make_node<assignment>(blocks.top(), $1, $3, @$); }
                      | array_value ASSIGN assignment_expression     { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
                      | array_value ASSIGN logical_expression        { $$ = driver.make_node<ArrayAccessAssignment>(blocks.top(), $1, $3, @$); }
 
@@ -259,6 +259,9 @@ array_value: VAR array_access { $$ = driver.make_node<ArrayAccess>(blocks.top(),
 array_access: OP_SQBRACK expression CL_SQBRACK array_access { Accesses.push_front($2); }
             | OP_SQBRACK expression CL_SQBRACK { Accesses.push_front($2); }
 ;
+
+array: uniform_array { $$ = driver.make_node<ArrayHolder>(blocks.top(), $1, @$); }
+     | preset_array  { $$ = driver.make_node<ArrayHolder>(blocks.top(), $1, @$); }
 
 uniform_array: REPEAT OP_BRACK array_expression COMMA expression CL_BRACK { $$ = driver.make_node<UniformArray>(blocks.top(), $3, $5, @$); }
 ;

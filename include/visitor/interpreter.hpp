@@ -35,7 +35,7 @@ public:
   Interpreter(std::istream &input, std::ostream &output)
       : input_stream_{input}, output_stream_{output} {}
 
-  void visit(ast::ArrayStore *ArrStore) override;
+  void visit(ast::ArrayHolder *ArrStore) override;
   void visit(ast::ArrayAccessAssignment *Arr) override;
   void visit(ast::PresetArray *PresArr) override;
   void visit(ast::ArrayAccess *ArrAccess) override;

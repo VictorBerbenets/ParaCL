@@ -24,13 +24,14 @@ class CodeGenVisitor : public VisitorBase {
       Data.clear();
     }
   };
+
 public:
   CodeGenVisitor(llvm::StringRef ModuleName);
 
   virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm);
 
-  void visit(ast::ArrayStore *ArrStore) override;
+  void visit(ast::ArrayHolder *ArrStore) override;
   void visit(ast::ArrayAccessAssignment *Arr) override;
   void visit(ast::PresetArray *PresetArr) override;
   void visit(ast::ArrayAccess *ArrAccess) override;
@@ -69,7 +70,7 @@ private:
   }
 
   llvm::DenseMap<llvm::StringRef, llvm::Value *> NameToValue;
-  llvm::DenseMap<llvm::Value *, llvm::Type*> ValueToType;
+  llvm::DenseMap<llvm::Value *, llvm::Type *> ValueToType;
   codegen::IRCodeGenerator CodeGen;
   llvm::Value *CurrVal;
 };

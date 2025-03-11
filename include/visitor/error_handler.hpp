@@ -216,8 +216,8 @@ public:
                                         Type->getName()),
                           Print->location());
   }
-  
-  void visit(ast::ArrayStore *ArrStore) override {
+
+  void visit(ast::ArrayHolder *ArrStore) override {
     auto *Arr = ArrStore->get();
     assert(Arr);
     Arr->accept(this);
