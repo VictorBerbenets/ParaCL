@@ -122,7 +122,9 @@ void CodeGenVisitor::visit(ast::un_operator *UnOper) {
 }
 
 void CodeGenVisitor::visit(ast::number *Num) {
-  setCurrValue(CodeGen.createConstantSInt32(Num->get_value()));
+  auto Val = CodeGen.createConstantSInt32(Num->get_value());
+  ValueToType[Val] = CodeGen.getInt32Ty();
+  setCurrValue(Val);
 }
 
 void CodeGenVisitor::visit(ast::variable *Var) {
@@ -130,6 +132,7 @@ void CodeGenVisitor::visit(ast::variable *Var) {
   auto *Value = getValueForVar(Var->name());
   auto *AllocTy = static_cast<AllocaInst *>(Value)->getAllocatedType();
   auto *Load = CodeGen.Builder->CreateLoad(AllocTy, Value, Var->name());
+  ValueToType[Load] = AllocTy;
   setCurrValue(Load);
 }
 
@@ -231,19 +234,28 @@ void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
   CodeGen.Builder->CreateCall(PrintType, PrintFunc, ArgValue);
 }
   
+void CodeGenVisitor::visit(ast::ArrayStore *ArrStore) {
+    auto *Arr = ArrStore->get();
+    assert(Arr);
+    Arr->accept(this); 
+}
+  
 void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   auto *InitVal = getValueAfterAccept(UnifArr->getInitExpr());
   auto *Size = getValueAfterAccept(UnifArr->getSize());
-
+#if 0
   assert(InitVal);
   assert(Size);
   assert(Size->getType()->isIntegerTy()); 
-  auto *ElementType = InitVal->getType();
+  auto *ElementType = getValueType(InitVal);
   if (auto *ConstIntVal = isCompileTimeConstant<llvm::ConstantInt>(Size); ConstIntVal) {
     auto ArrSize = ConstIntVal->getZExtValue();
+    llvm::outs() << "ArrSize = " << ArrSize << '\n';
     // Stack allocation
     auto *ArrType = llvm::ArrayType::get(ElementType, ArrSize);
-    auto *ArrAloca = CodeGen.Builder->CreateAlloca(ArrType, ConstIntVal, "uniform_arr");
+    auto *ArrAloca = CodeGen.Builder->CreateAlloca(ArrType, 0, "uniform_arr");
+    if (ElementType->isArrayTy())
+      InitVal = CodeGen.Builder->CreateLoad(ElementType, InitVal);
     for (unsigned Index = 0; Index < ArrSize; ++Index) {
       auto *IndexVal = CodeGen.createConstantSInt32(Index);
       auto *ElemPtr = CodeGen.Builder->CreateInBoundsGEP(ArrType, ArrAloca, IndexVal, llvm::formatv("arr_elem{0}", Index));
@@ -251,6 +263,7 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
     }
     auto *ArrPtrTy = llvm::PointerType::get(ArrType, 0);
     auto *ArrPtr = CodeGen.Builder->CreatePointerCast(ArrAloca, ArrPtrTy);
+    ValueToType[ArrPtr] = ArrType;
     setCurrValue(ArrPtr);
   } else {
     // Heap allocation
@@ -262,6 +275,11 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
 
     setCurrValue(ArrPtr);
   }
+#endif
+}
+
+void CodeGenVisitor::visit(ast::PresetArray *InitListArr) {
+
 }
 
 void CodeGenVisitor::visit(ast::ArrayAccess *ArrAccess) {
@@ -276,13 +294,23 @@ void CodeGenVisitor::visit(ast::ArrayAccess *ArrAccess) {
 
   auto *ArrayPtr = NameToValue[ArrAccess->name()];
   assert(ArrayPtr);
-  auto *GEPPtr = CodeGen.Builder->CreateGEP(ArrayPtr->getType(), ArrayPtr, GEPIndexes);
-  setCurrValue(GEPPtr);
+  auto *GEPPtr = CodeGen.Builder->CreateGEP(ValueToType[ArrayPtr], ArrayPtr, GEPIndexes);
+  auto *Load = CodeGen.Builder->CreateLoad(CodeGen.getInt32Ty(), GEPPtr);
+  setCurrValue(Load);
+}
+
+void CodeGenVisitor::visit(ast::ArrayAccessAssignment *Arr) {
+  
 }
 
 Value *CodeGenVisitor::getValueForVar(StringRef ValueName) {
   assert(NameToValue.contains(ValueName));
   return NameToValue[ValueName];
+}
+  
+Type *CodeGenVisitor::getValueType(llvm::Value *Val) {
+  assert(ValueToType.contains(Val));
+  return ValueToType[Val];
 }
 
 void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock,

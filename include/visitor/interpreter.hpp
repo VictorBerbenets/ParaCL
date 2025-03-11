@@ -5,6 +5,7 @@
 
 #include <istream>
 
+#include "identifiers.hpp"
 #include "statement.hpp"
 #include "visitor.hpp"
 #include "visitor_tracker.hpp"
@@ -34,11 +35,11 @@ public:
   Interpreter(std::istream &input, std::ostream &output)
       : input_stream_{input}, output_stream_{output} {}
 
+  void visit(ast::ArrayStore *ArrStore) override;
   void visit(ast::ArrayAccessAssignment *Arr) override;
-
-  void visit(ast::PresetArray *InitListArr) override;
+  void visit(ast::PresetArray *PresArr) override;
   void visit(ast::ArrayAccess *ArrAccess) override;
-  void visit(ast::UniformArray *Arr) override;
+  void visit(ast::UniformArray *UnifArr) override;
 
   void visit(ast::calc_expression *CalcExpr) override;
   void visit(ast::un_operator *UnOp) override;

@@ -5,12 +5,16 @@
 namespace paracl {
 namespace ast {
 
-class PresetArray : public expression {
-public:
+class IArray: public expression {
+protected:
   using expression::expression;
+};
+
+class PresetArray : public IArray {
+public:
   template <typename Iter>
   PresetArray(statement_block *StmBlock, Iter Begin, Iter End, yy::location Loc)
-      : expression(StmBlock, Loc), Elements(Begin, End) {}
+      : IArray(StmBlock, Loc), Elements(Begin, End) {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
   void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
@@ -26,13 +30,11 @@ private:
   llvm::SmallVector<expression *> Elements;
 };
 
-class UniformArray : public expression {
+class UniformArray : public IArray {
 public:
-  using expression::expression;
-
   UniformArray(statement_block *StmBlock, expression *InitExpr,
                expression *Size, yy::location Loc)
-      : expression(StmBlock, Loc), InitExpr(InitExpr), Size(Size) {}
+      : IArray(StmBlock, Loc), InitExpr(InitExpr), Size(Size) {}
 
   expression *getInitExpr() noexcept { return InitExpr; }
   expression *getSize() noexcept { return Size; }
@@ -92,6 +94,20 @@ public:
 private:
   ArrayAccess *ArrAccess;
   expression *Identifier;
+};
+
+class ArrayStore: public expression {
+  public:
+
+  ArrayStore(statement_block *StmBlock, IArray *Arr, yy::location Loc): expression(StmBlock, Loc), Arr(Arr) {}
+
+  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
+
+  IArray *get() noexcept { return Arr; }
+
+  private:
+  IArray *Arr;
 };
 
 } // namespace ast

@@ -216,6 +216,12 @@ public:
                                         Type->getName()),
                           Print->location());
   }
+  
+  void visit(ast::ArrayStore *ArrStore) override {
+    auto *Arr = ArrStore->get();
+    assert(Arr);
+    Arr->accept(this);
+  }
 
   void visit(ast::PresetArray *PresetArr) override {
     llvm::SmallVector<StringErrType> InvalidArrArgs;

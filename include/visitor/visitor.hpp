@@ -22,6 +22,7 @@ class read_expression;
 class ArrayAccess;
 class PresetArray;
 class UniformArray;
+class ArrayStore;
 
 } // namespace ast
 
@@ -40,6 +41,7 @@ public:
   virtual void visit(ast::while_operator *While) = 0;
   virtual void visit(ast::read_expression *ReadExpr) = 0;
   virtual void visit(ast::print_function *Print) = 0;
+  virtual void visit(ast::ArrayStore *InitListArr) = 0;
   virtual void visit(ast::PresetArray *InitListArr) = 0;
   virtual void visit(ast::ArrayAccess *ArrAccess) = 0;
   virtual void visit(ast::UniformArray *Arr) = 0;

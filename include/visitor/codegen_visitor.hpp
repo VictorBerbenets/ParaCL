@@ -15,20 +15,26 @@ template <typename ConstTy>
 concept DerivedFromLLVMConstant = std::derived_from<ConstTy, llvm::Constant>;
 
 class CodeGenVisitor : public VisitorBase {
+  struct ArrayInfo {
+    llvm::SmallVector<llvm::Value *> Sizes;
+    llvm::SmallVector<llvm::Value *> Data;
+
+    void clear() {
+      Sizes.clear();
+      Data.clear();
+    }
+  };
 public:
   CodeGenVisitor(llvm::StringRef ModuleName);
 
   virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm);
 
-  void visit(ast::ArrayAccessAssignment *Arr) override {
-    llvm_unreachable("Arrays are not yet supported for llvm IR generation");
-  }
-  void visit(ast::PresetArray *InitListArr) override {
-    llvm_unreachable("Arrays are not yet supported for llvm IR generation");
-  }
+  void visit(ast::ArrayStore *ArrStore) override;
+  void visit(ast::ArrayAccessAssignment *Arr) override;
+  void visit(ast::PresetArray *PresetArr) override;
   void visit(ast::ArrayAccess *ArrAccess) override;
-  void visit(ast::UniformArray *Arr) override;
+  void visit(ast::UniformArray *UnifArr) override;
 
   void visit(ast::calc_expression *stm) override;
   void visit(ast::un_operator *stm) override;
@@ -53,6 +59,7 @@ private:
   void setCurrValue(llvm::Value *Value) noexcept { CurrVal = Value; }
 
   llvm::Value *getValueForVar(llvm::StringRef VarName);
+  llvm::Type *getValueType(llvm::Value *Val);
 
   void printIRToOstream(llvm::raw_ostream &Os) const;
 
@@ -62,6 +69,7 @@ private:
   }
 
   llvm::DenseMap<llvm::StringRef, llvm::Value *> NameToValue;
+  llvm::DenseMap<llvm::Value *, llvm::Type*> ValueToType;
   codegen::IRCodeGenerator CodeGen;
   llvm::Value *CurrVal;
 };

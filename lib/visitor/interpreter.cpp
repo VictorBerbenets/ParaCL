@@ -208,6 +208,12 @@ void Interpreter::visit(ast::assignment *Assign) {
     Value->setValue(static_cast<IntegerVal *>(IdentExp));
   }
 }
+  
+void Interpreter::visit(ast::ArrayStore *ArrStore) {
+  auto *Arr = ArrStore->get();
+  assert(Arr);
+  Arr->accept(this);
+}
 
 void Interpreter::visit(ast::PresetArray *PresetArr) {
   llvm::SmallVector<PCLValue *> PresetValues;
