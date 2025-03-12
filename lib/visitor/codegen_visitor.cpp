@@ -9,8 +9,6 @@
 
 namespace paracl {
 
-using namespace llvm;
-
 CodeGenVisitor::CodeGenVisitor(StringRef ModuleName) : CodeGen(ModuleName) {}
 
 // This visit method for root basic block represents the main module of the
@@ -114,7 +112,7 @@ void CodeGenVisitor::visit(ast::un_operator *UnOper) {
     break;
   case ast::UnOp::NEGATE:
     setCurrValue(
-        CodeGen.Builder->CreateICmpEQ(Val, CodeGen.createConstantSInt32(0)));
+        CodeGen.Builder->CreateICmpEQ(Val, CodeGen.createConstantInt32(0)));
     break;
   default:
     llvm_unreachable("unrecognized type for un_operator");
@@ -122,7 +120,7 @@ void CodeGenVisitor::visit(ast::un_operator *UnOper) {
 }
 
 void CodeGenVisitor::visit(ast::number *Num) {
-  auto Val = CodeGen.createConstantSInt32(Num->get_value());
+  auto Val = CodeGen.createConstantInt32(Num->get_value());
   ValueToType[Val] = CodeGen.getInt32Ty();
   setCurrValue(Val);
 }
@@ -192,26 +190,13 @@ void CodeGenVisitor::visit(ast::if_operator *If) {
 }
 
 void CodeGenVisitor::visit(ast::while_operator *While) {
-  auto *CurrBlock = CodeGen.createBlockAndLinkWith(
-      CodeGen.Builder->GetInsertBlock(), "while-cond");
-  // Condition codegen
-  auto *EntryCondValue =
-      CodeGen.createCondValueIfNeed(getValueAfterAccept(While->condition()));
-
-  auto *WhileBodyBlock =
-      BasicBlock::Create(CodeGen.Context, "while-body", CurrBlock->getParent());
-  auto *WhileEndBlock =
-      BasicBlock::Create(CodeGen.Context, "while-end", CurrBlock->getParent());
-  CodeGen.Builder->CreateCondBr(EntryCondValue, WhileBodyBlock, WhileEndBlock);
-
-  CodeGen.Builder->SetInsertPoint(WhileBodyBlock);
+  auto [WhileBodyBlock, WhileEndBlock] =
+      createStartWhile(getValueAfterAccept(While->condition()));
   // While body codegen
   While->body()->accept(this);
 
-  auto *CondValue =
-      CodeGen.createCondValueIfNeed(getValueAfterAccept(While->condition()));
-  CodeGen.Builder->CreateCondBr(CondValue, WhileBodyBlock, WhileEndBlock);
-  CodeGen.Builder->SetInsertPoint(WhileEndBlock);
+  createEndWhile(getValueAfterAccept(While->condition()), WhileBodyBlock,
+                 WhileEndBlock);
 }
 
 void CodeGenVisitor::visit(ast::read_expression * /*unused*/) {
@@ -234,14 +219,69 @@ void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
 }
 
 void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
+  auto *CurrBlock = CodeGen.createBlockAndLinkWith(
+      CodeGen.Builder->GetInsertBlock(), "array_creation_block");
+
   auto *Arr = ArrStore->get();
   assert(Arr);
+  // Obtain information about the array: initial values and size.
   Arr->accept(this);
+  // Create a struct type for the array: a pointer type and types for sizes (if
+  // the array is multidimensional).
+  auto *DataTy = CodeGen.getInt32Ty();
+  auto *DataPtrTy = PointerType::get(DataTy, 0);
+  SmallVector<Type *> Types;
+  Types.reserve(ArrInfo.Sizes.size() + 1);
+  Types.push_back(DataPtrTy);
+  llvm::outs() << "TYPES SZ = " << Types.size() << '\n';
+  llvm::outs() << "ARR INFO SZ = " << ArrInfo.Sizes.size() << '\n';
+  llvm::transform(ArrInfo.Sizes, std::back_inserter(Types),
+                  [](auto *Sz) { return Sz->getType(); });
+  llvm::outs() << "TYPES SZ = " << Types.size() << '\n';
+
+  auto *ArrStructTy = StructType::get(CodeGen.Context, Types);
+  if (ArrInfo.isConstant()) {
+    // Stack allocation
+    unsigned ArrSize = 1;
+    llvm::for_each(ArrInfo.Sizes, [&ArrSize](auto *Sz) {
+      auto *ConstIntVal = dyn_cast<ConstantInt>(Sz);
+      assert(ConstIntVal);
+      ArrSize *= ConstIntVal->getZExtValue();
+    });
+    auto *AllocaStructPtr =
+        CodeGen.Builder->CreateAlloca(ArrStructTy, nullptr, "arr-struct");
+    auto *ArrPtrGEP =
+        CodeGen.Builder->CreateStructGEP(ArrStructTy, AllocaStructPtr, 0);
+    auto *ArrType = ArrayType::get(DataTy, ArrSize);
+    auto *AllocaArr = CodeGen.Builder->CreateAlloca(ArrType, nullptr, "array");
+    CodeGen.Builder->CreateStore(AllocaArr, ArrPtrGEP);
+    ValueToType[ArrPtrGEP] = ArrType;
+    llvm::outs() << "HOLDER PTR = " << ArrPtrGEP << '\n';
+    for (unsigned Index = 1; Index <= ArrInfo.Sizes.size(); ++Index) {
+      auto *PtrGEP =
+          CodeGen.Builder->CreateStructGEP(ArrStructTy, AllocaStructPtr, Index);
+      CodeGen.Builder->CreateStore(ArrInfo.Sizes[Index - 1], PtrGEP);
+    }
+
+    ValueToType[AllocaStructPtr] = ArrStructTy;
+    setCurrValue(AllocaStructPtr);
+  } else {
+    // Heap allocation
+  }
+  ArrInfo.clear();
+
+  CodeGen.createBlockAndLinkWith(CodeGen.Builder->GetInsertBlock());
 }
 
 void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   auto *InitVal = getValueAfterAccept(UnifArr->getInitExpr());
   auto *Size = getValueAfterAccept(UnifArr->getSize());
+
+  if (InitVal)
+    ArrInfo.pushData(InitVal);
+  llvm::outs() << "PUSH SIZE = " << Size << '\n';
+  ArrInfo.pushSize(Size);
+  setCurrValue(nullptr);
 #if 0
   assert(InitVal);
   assert(Size);
@@ -277,24 +317,74 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
 #endif
 }
 
-void CodeGenVisitor::visit(ast::PresetArray *InitListArr) {}
+void CodeGenVisitor::visit(ast::PresetArray *PresetArr) {
+  llvm::for_each(*PresetArr, [&](auto *Exp) {
+    auto *Val = getValueAfterAccept(Exp);
+    if (Val)
+      ArrInfo.pushData(Val);
+  });
+
+  ArrInfo.clearSize();
+  ArrInfo.pushSize(CodeGen.createConstantInt32(ArrInfo.Data.size(), false));
+  setCurrValue(nullptr);
+}
 
 void CodeGenVisitor::visit(ast::ArrayAccess *ArrAccess) {
-  llvm::SmallVector<llvm::Value *> GEPIndexes;
-  GEPIndexes.reserve(ArrAccess->getSize() + 1);
-  GEPIndexes.push_back(llvm::ConstantInt::get(CodeGen.getInt32Ty(), 0));
+  llvm::SmallVector<llvm::Value *> Indexes;
+  Indexes.reserve(ArrAccess->getSize() + 1);
   llvm::for_each(*ArrAccess, [&](auto *Exp) {
     auto *IndexVal = getValueAfterAccept(Exp);
     assert(IndexVal->getType()->isIntegerTy());
-    GEPIndexes.push_back(IndexVal);
+    Indexes.push_back(IndexVal);
   });
 
-  auto *ArrayPtr = NameToValue[ArrAccess->name()];
-  assert(ArrayPtr);
+  auto *ArrStructPtr = NameToValue[ArrAccess->name()];
+  assert(ValueToType[ArrStructPtr]->isStructTy());
+
+  Value *AccessIndex = ConstantInt::get(Type::getInt64Ty(CodeGen.Context), 0);
+  for (unsigned i = 0, IndexNum = Indexes.size(); i < IndexNum; ++i) {
+    auto *CurrIndex = Indexes[i];
+    Value *Multiplier = ConstantInt::get(CodeGen.getInt32Ty(), 1);
+    for (unsigned j = i + 1; j < IndexNum; ++j) {
+      auto *DimPtr = CodeGen.Builder->CreateStructGEP(ValueToType[ArrStructPtr],
+                                                      ArrStructPtr, j);
+      auto *Dim = CodeGen.Builder->CreateLoad(CodeGen.getInt32Ty(), DimPtr);
+      llvm::outs() << "MULLLLLLL\n";
+      Multiplier = CodeGen.Builder->CreateMul(Multiplier, Dim);
+      llvm::outs() << "MULLLLLLL\n";
+    }
+    llvm::outs() << "LINE = " << __LINE__ << "\n";
+    Value *Term = CodeGen.Builder->CreateMul(CurrIndex, Multiplier);
+    AccessIndex = CodeGen.Builder->CreateAdd(AccessIndex, Term, "access_index");
+  }
+  auto *ArrPtr = CodeGen.Builder->CreateStructGEP(ValueToType[ArrStructPtr],
+                                                  ArrStructPtr, 0);
+  llvm::outs() << "Access PTR = " << ArrPtr << '\n';
+  auto *ArrType = ArrayType::get(CodeGen.getInt32Ty(), 5);
+  auto *ElemPtr = CodeGen.Builder->CreateGEP(
+      ArrType, ArrPtr, {CodeGen.createConstantInt32(0), AccessIndex});
+  auto *Load = CodeGen.Builder->CreateLoad(CodeGen.getInt32Ty(), ElemPtr);
+  setCurrValue(Load);
+  auto *Alloca = CodeGen.Builder->CreateAlloca(CodeGen.getInt32Ty(), nullptr);
+  CodeGen.Builder->CreateStore(AccessIndex, Alloca);
+  auto *Val = CodeGen.Builder->CreateLoad(CodeGen.getInt32Ty(), Alloca);
+  SmallVector<Value *, 1> ArgValue{Val};
+  SmallVector<Type *, 1> ArgTy{CodeGen.getInt32Ty()};
+  auto *PrintType = FunctionType::get(CodeGen.getVoidTy(), ArgTy, false);
+  auto *PrintFunc =
+      CodeGen.Mod->getFunction(codegen::IRCodeGenerator::ParaCLPrintFuncName);
+  CodeGen.Builder->CreateCall(PrintType, PrintFunc, ArgValue);
+#if 0
+  assert(ArrType);
+  assert(ArrType->isArrayTy());
+#endif
+#if 0
+  assert(ArrPtr);
   auto *GEPPtr =
-      CodeGen.Builder->CreateGEP(ValueToType[ArrayPtr], ArrayPtr, GEPIndexes);
+      CodeGen.Builder->CreateStructGEP(ValueToType[ArrayPtr], ArrayPtr, );
   auto *Load = CodeGen.Builder->CreateLoad(CodeGen.getInt32Ty(), GEPPtr);
   setCurrValue(Load);
+#endif
 }
 
 void CodeGenVisitor::visit(ast::ArrayAccessAssignment *Arr) {}
@@ -307,6 +397,30 @@ Value *CodeGenVisitor::getValueForVar(StringRef ValueName) {
 Type *CodeGenVisitor::getValueType(llvm::Value *Val) {
   assert(ValueToType.contains(Val));
   return ValueToType[Val];
+}
+
+std::pair<BasicBlock *, BasicBlock *>
+CodeGenVisitor::createStartWhile(Value *Condition) {
+  auto *CurrBlock = CodeGen.createBlockAndLinkWith(
+      CodeGen.Builder->GetInsertBlock(), "while-cond");
+  // Condition codegen
+  auto *EntryCondValue = CodeGen.createCondValueIfNeed(Condition);
+
+  auto *WhileBodyBlock =
+      BasicBlock::Create(CodeGen.Context, "while-body", CurrBlock->getParent());
+  auto *WhileEndBlock =
+      BasicBlock::Create(CodeGen.Context, "while-end", CurrBlock->getParent());
+  CodeGen.Builder->CreateCondBr(EntryCondValue, WhileBodyBlock, WhileEndBlock);
+
+  CodeGen.Builder->SetInsertPoint(WhileBodyBlock);
+  return std::make_pair(WhileBodyBlock, WhileEndBlock);
+}
+
+void CodeGenVisitor::createEndWhile(Value *Condition, BasicBlock *BodyBlock,
+                                    BasicBlock *EndBlock) {
+  auto *CondValue = CodeGen.createCondValueIfNeed(Condition);
+  CodeGen.Builder->CreateCondBr(CondValue, BodyBlock, EndBlock);
+  CodeGen.Builder->SetInsertPoint(EndBlock);
 }
 
 void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock,

@@ -35,12 +35,12 @@ Value *IRCodeGenerator::createCondValueIfNeed(Value *Val) {
     return Val;
   }
 
-  auto *ZeroVal = createConstantSInt32(0);
+  auto *ZeroVal = createConstantInt32(0);
   return Builder->CreateICmpNE(Val, ZeroVal);
 }
 
-ConstantInt *IRCodeGenerator::createConstantSInt32(unsigned Val) {
-  return ConstantInt::get(getInt32Ty(), Val, true);
+ConstantInt *IRCodeGenerator::createConstantInt32(unsigned Val, bool IsSigned) {
+  return ConstantInt::get(getInt32Ty(), Val, IsSigned);
 }
 
 void IRCodeGenerator::createParaCLStdLibFuncsDecls() {

@@ -35,12 +35,12 @@ public:
   Value *createCondValueIfNeed(Value *Val);
 
   // Create signed constant int32
-  ConstantInt *createConstantSInt32(unsigned Val);
+  ConstantInt *createConstantInt32(unsigned Val, bool IsSigned = true);
 
   // Create a block and make a branch from the current block to the new one.
   // Changes the insertion location to the end of the new block if
   // InsertInNewBlock == true
-  BasicBlock *createBlockAndLinkWith(BasicBlock *CurrBlock, StringRef Name,
+  BasicBlock *createBlockAndLinkWith(BasicBlock *CurrBlock, StringRef Name = "",
                                      bool InsertInNewBlock = true);
 
   template <typename... ArgsTy,

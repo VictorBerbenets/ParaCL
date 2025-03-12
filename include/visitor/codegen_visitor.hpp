@@ -11,22 +11,42 @@
 
 namespace paracl {
 
+using namespace llvm;
+
 template <typename ConstTy>
-concept DerivedFromLLVMConstant = std::derived_from<ConstTy, llvm::Constant>;
+concept DerivedFromLLVMConstant = std::derived_from<ConstTy, Constant>;
 
 class CodeGenVisitor : public VisitorBase {
   struct ArrayInfo {
-    llvm::SmallVector<llvm::Value *> Sizes;
-    llvm::SmallVector<llvm::Value *> Data;
+    SmallVector<Value *> Sizes;
+    SmallVector<Value *> Data;
+
+    bool isConstant() const {
+      return all_of(Data, [](auto *Val) { return isa<ConstantInt>(Val); }) &&
+             all_of(Sizes, [](auto *Val) { return isa<ConstantInt>(Val); });
+    }
+
+    void pushSize(Value *Sz) { Sizes.push_back(Sz); }
+
+    void pushData(Value *Dat) { Data.push_back(Dat); }
+
+    template <std::input_iterator InputIt>
+    void pushData(InputIt Begin, InputIt End) {
+      Data.insert(Data.end(), Begin, End);
+    }
+
+    void clearSize() { Sizes.clear(); }
+
+    void clearData() { Data.clear(); }
 
     void clear() {
-      Sizes.clear();
-      Data.clear();
+      clearSize();
+      clearData();
     }
   };
 
 public:
-  CodeGenVisitor(llvm::StringRef ModuleName);
+  CodeGenVisitor(StringRef ModuleName);
 
   virtual void visit(ast::root_statement_block *stm);
   virtual void visit(ast::definition *stm);
@@ -50,29 +70,33 @@ public:
   void visit(ast::print_function *stm) override;
 
   // Generate LLVM IR and write it to Os
-  void generateIRCode(ast::root_statement_block *RootBlock,
-                      llvm::raw_ostream &Os);
+  void generateIRCode(ast::root_statement_block *RootBlock, raw_ostream &Os);
 
 private:
-  llvm::Value *getCurrValue() const noexcept { return CurrVal; }
-  llvm::Value *getValueAfterAccept(ast::statement *Stm);
+  Value *getCurrValue() const noexcept { return CurrVal; }
+  Value *getValueAfterAccept(ast::statement *Stm);
 
-  void setCurrValue(llvm::Value *Value) noexcept { CurrVal = Value; }
+  std::pair<BasicBlock *, BasicBlock *> createStartWhile(Value *Condition);
+  void createEndWhile(Value *Condition, BasicBlock *BodyBlock,
+                      BasicBlock *EndBlock);
 
-  llvm::Value *getValueForVar(llvm::StringRef VarName);
-  llvm::Type *getValueType(llvm::Value *Val);
+  void setCurrValue(Value *Value) noexcept { CurrVal = Value; }
 
-  void printIRToOstream(llvm::raw_ostream &Os) const;
+  Value *getValueForVar(StringRef VarName);
+  Type *getValueType(Value *Val);
 
-  template <DerivedFromLLVMConstant ConstTy = llvm::Constant>
-  ConstTy *isCompileTimeConstant(llvm::Value *Val) const {
+  void printIRToOstream(raw_ostream &Os) const;
+
+  template <DerivedFromLLVMConstant ConstTy = Constant>
+  ConstTy *isCompileTimeConstant(Value *Val) const {
     return dyn_cast<ConstTy>(Val);
   }
 
-  llvm::DenseMap<llvm::StringRef, llvm::Value *> NameToValue;
-  llvm::DenseMap<llvm::Value *, llvm::Type *> ValueToType;
+  DenseMap<StringRef, Value *> NameToValue;
+  DenseMap<Value *, Type *> ValueToType;
   codegen::IRCodeGenerator CodeGen;
-  llvm::Value *CurrVal;
+  ArrayInfo ArrInfo;
+  Value *CurrVal;
 };
 
 } // namespace paracl
