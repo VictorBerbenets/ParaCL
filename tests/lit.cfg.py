@@ -11,6 +11,7 @@ config.test_source_root = os.path.dirname(__file__)
 
 _directory = os.path.dirname(os.path.abspath(__file__)) 
 pcl_lib_path = _directory + "/../lib/std_pcl_lib/"
+compiler_path = _directory + "/../"
 config.test_source_root = _directory
 _directory += "/../build/"
 config.test_exec_root = _directory
@@ -18,4 +19,5 @@ config.test_exec_root = _directory
 
 config.substitutions += [("%paracl", os.path.join(config.test_exec_root, "paracl")),]
 config.substitutions += [("%pcllib", os.path.join(pcl_lib_path, "pcllib.cpp")),]
+config.substitutions += [("%compiler", os.path.join(compiler_path, "compiler.sh")),]
 print(pcl_lib_path)
