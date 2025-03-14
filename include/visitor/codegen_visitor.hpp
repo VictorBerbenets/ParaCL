@@ -17,14 +17,42 @@ template <typename ConstTy>
 concept DerivedFromLLVMConstant = std::derived_from<ConstTy, Constant>;
 
 class CodeGenVisitor : public VisitorBase {
-  struct ArrayInfo {
+
+  struct ArrayInfo final {
     SmallVector<Value *> Sizes;
     SmallVector<Value *> Data;
 
-    bool isConstant() const {
-      return all_of(Data, [](auto *Val) { return isa<ConstantInt>(Val); }) &&
-             all_of(Sizes, [](auto *Val) { return isa<ConstantInt>(Val); });
+    std::optional<SmallVector<Constant *>> tryConvertDataToConstant() {
+      SmallVector<Constant *> ConstData;
+      ConstData.reserve(Data.size());
+      if (!isConstantData())
+        return {};
+
+      llvm::transform(Data, std::back_inserter(ConstData), [](auto *Val) {
+        auto *ConstVal = dyn_cast<Constant>(Val);
+        assert(ConstVal);
+        return ConstVal;
+      });
+      return ConstData;
     }
+
+    void fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr, Type *DataTy) {
+      for (unsigned Id = 0; Id < Data.size(); ++Id) {
+        auto *GEPPtr =
+            Builder.CreateGEP(DataTy, ArrPtr, ConstantInt::get(DataTy, Id));
+        Builder.CreateStore(Data[Id], GEPPtr);
+      }
+    }
+
+    bool isConstantData() const {
+      return all_of(Data, [](auto *Val) { return isa<ConstantInt>(Val); });
+    }
+
+    bool isConstantSizes() const {
+      return all_of(Sizes, [](auto *Val) { return isa<ConstantInt>(Val); });
+    }
+
+    bool isConstant() const { return isConstantData() && isConstantSizes(); }
 
     void pushSize(Value *Sz) { Sizes.push_back(Sz); }
 
@@ -73,12 +101,21 @@ public:
   void generateIRCode(ast::root_statement_block *RootBlock, raw_ostream &Os);
 
 private:
+  IRBuilder<> &Builder() { return *CodeGen.Builder.get(); }
+
+  Module &Module() { return *CodeGen.Mod.get(); }
+
   Value *getCurrValue() const noexcept { return CurrVal; }
   Value *getValueAfterAccept(ast::statement *Stm);
 
   std::pair<BasicBlock *, BasicBlock *> createStartWhile(Value *Condition);
   void createEndWhile(Value *Condition, BasicBlock *BodyBlock,
                       BasicBlock *EndBlock);
+
+  Value *createLogicAnd(ast::logic_expression *LogExp);
+  Value *createLogicOr(ast::logic_expression *LogExp);
+
+  void printIntegerValue(Value *Val);
 
   void setCurrValue(Value *Value) noexcept { CurrVal = Value; }
 
@@ -91,6 +128,8 @@ private:
   ConstTy *isCompileTimeConstant(Value *Val) const {
     return dyn_cast<ConstTy>(Val);
   }
+
+  Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 
   DenseMap<StringRef, Value *> NameToValue;
   DenseMap<Value *, Type *> ValueToType;

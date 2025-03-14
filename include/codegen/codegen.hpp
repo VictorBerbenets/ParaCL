@@ -35,7 +35,7 @@ public:
   Value *createCondValueIfNeed(Value *Val);
 
   // Create signed constant int32
-  ConstantInt *createConstantInt32(unsigned Val, bool IsSigned = true);
+  ConstantInt *createConstantInt32(unsigned Val, bool IsSigned = false);
 
   // Create a block and make a branch from the current block to the new one.
   // Changes the insertion location to the end of the new block if
