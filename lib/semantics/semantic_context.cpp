@@ -30,7 +30,7 @@ PCLType *SymTable::getTypeFor(const SymbNameType &Name,
   if (!Decl)
     return nullptr;
 
-  return NamesInfo.find({Name, Decl})->second.getType();
+  return NamesInfo.find({Name, Decl})->second;
 }
 
 PCLType *SymTable::getTypeFor(const SymTabKey &Key) {
@@ -47,7 +47,7 @@ bool SymTable::isDefined(SymTabKey TabKey) {
 
 bool SymTable::containsKeyWithType(PCLType *Ty) const {
   return llvm::any_of(llvm::make_second_range(NamesInfo),
-                      [Ty](auto &&Info) { return Ty == Info.getType(); });
+                      [Ty](auto &&InfoTy) { return Ty == InfoTy; });
 }
 
 } // namespace paracl

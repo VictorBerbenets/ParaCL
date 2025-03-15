@@ -12,17 +12,6 @@ class SymTable final {
 public:
   using TypeID = PCLType::TypeID;
 
-  struct SymbInfo final {
-  public:
-    SymbInfo(PCLType *Ty) : Ty(Ty) {}
-    SymbInfo(SymTable &SymTbl, TypeID ID) : Ty(SymTbl.createType(ID)) {}
-
-    PCLType *getType() const { return Ty; }
-
-  private:
-    PCLType *Ty;
-  };
-
   PCLType *createType(TypeID ID) {
     switch (ID) {
     case TypeID::Int32:
@@ -43,10 +32,15 @@ public:
     return Types.back().get();
   }
 
-  template <typename... ArgsTy>
-  bool tryDefine(const SymTabKey &Key, ArgsTy &&...Args) {
+  bool tryDefine(const SymTabKey &Key, TypeID ID) {
     auto [_, IsEmplaced] =
-        NamesInfo.try_emplace(Key, SymbInfo(std::forward<ArgsTy>(Args)...));
+        NamesInfo.try_emplace(Key, createType(ID));
+    return IsEmplaced;
+  }
+  
+  bool tryDefine(const SymTabKey &Key, PCLType *Ty) {
+    auto [_, IsEmplaced] =
+        NamesInfo.try_emplace(Key, Ty);
     return IsEmplaced;
   }
 
@@ -69,7 +63,7 @@ public:
   friend class driver;
 
 private:
-  llvm::DenseMap<SymTabKey, SymbInfo> NamesInfo;
+  llvm::DenseMap<SymTabKey, PCLType*> NamesInfo;
   llvm::SmallVector<std::unique_ptr<PCLType>> Types;
 };
 
