@@ -129,10 +129,6 @@ private:
 
   SymTable<Type> SymTbl;
   ValueManager<Value> ValManager;
-#if 0
-  DenseMap<StringRef, Value *> NameToValue;
-  DenseMap<Value *, Type *> ValueToType;
-#endif
   codegen::IRCodeGenerator CodeGen;
   ArrayInfo ArrInfo;
   Value *CurrVal;
