@@ -18,16 +18,19 @@ public:
 
 protected:
   InterpreterBase() = default;
-  ValueTypePtr performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs,
-                                       IntegerVal *Rhs, IntegerTy *Type);
-  ValueTypePtr performUnaryOperation(ast::UnOp Op, IntegerVal *Val,
-                                     IntegerTy *Type);
-  ValueTypePtr performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
-                                          IntegerVal *Rhs, IntegerTy *Type,
-                                          yy::location Loc);
 
-  SymTable SymTbl;
-  ValueManager ValManager;
+  ValuePtr performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs,
+                                   IntegerVal *Rhs, IntegerTy *Type);
+  ValuePtr performUnaryOperation(ast::UnOp Op, IntegerVal *Val,
+                                 IntegerTy *Type);
+  ValuePtr performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
+                                      IntegerVal *Rhs, IntegerTy *Type,
+                                      yy::location Loc);
+
+  void acceptStatementBlock(ast::statement_block *StmBlock);
+
+  SymTable<Type> SymTbl;
+  ValueManager<ValueType> ValManager;
 };
 
 class Interpreter : public InterpreterBase {
@@ -49,6 +52,7 @@ public:
   void visit(ast::assignment *Assign) override;
   void visit(ast::read_expression *ReadExpr) override;
   void visit(ast::statement_block *StmBlock) override;
+  void visit(ast::root_statement_block *StmBlock) override;
   void visit(ast::if_operator *If) override;
   void visit(ast::while_operator *While) override;
   void visit(ast::print_function *Print) override;

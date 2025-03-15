@@ -39,8 +39,6 @@ void CodeGenVisitor::visit(ast::statement_block *StmBlock) {
     CurStatement->accept(this);
 }
 
-void CodeGenVisitor::visit(ast::definition *) { /*unused*/ }
-
 void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {
   auto *Lhs = getValueAfterAccept(CalcExpr->left());
   auto *Rhs = getValueAfterAccept(CalcExpr->right());
@@ -130,35 +128,40 @@ void CodeGenVisitor::visit(ast::un_operator *UnOper) {
 
 void CodeGenVisitor::visit(ast::number *Num) {
   auto Val = CodeGen.createConstantInt32(Num->get_value(), true);
-  ValueToType[Val] = CodeGen.getInt32Ty();
   setCurrValue(Val);
 }
 
 void CodeGenVisitor::visit(ast::variable *Var) {
-  auto *Value = getValueForVar(Var->name());
+  auto DeclKey = SymTbl.getDeclKeyFor(Var->entityKey());
+  auto *Value = ValManager.getValueFor(DeclKey);
   assert(Value);
   auto *AllocTy = static_cast<AllocaInst *>(Value)->getAllocatedType();
+  assert(AllocTy);
   auto *Load = Builder().CreateLoad(AllocTy, Value, Var->name());
-  ValueToType[Load] = AllocTy;
   setCurrValue(Load);
 }
 
 void CodeGenVisitor::visit(ast::assignment *Assign) {
   auto *InitVal = getValueAfterAccept(Assign->getIdentExp());
   assert(InitVal);
-  if (!NameToValue.contains(Assign->name())) {
+  auto EntityKey = Assign->entityKey();
+  if (!SymTbl.isDefined(EntityKey)) {
     auto InitValTy = InitVal->getType();
     if (InitValTy->isIntegerTy()) {
+      SymTbl.tryDefine(EntityKey, InitValTy);
       auto *Alloca =
           Builder().CreateAlloca(CodeGen.getInt32Ty(), nullptr, Assign->name());
+
       Builder().CreateStore(InitVal, Alloca);
-      NameToValue[Assign->name()] = Alloca;
+      ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), Alloca);
     } else {
       InitVal->setName(Assign->name());
-      NameToValue[Assign->name()] = InitVal;
+      SymTbl.tryDefine(EntityKey, ValManager.getTypeFor(InitVal));
+      ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), InitVal);
     }
   } else {
-    Builder().CreateStore(InitVal, NameToValue[Assign->name()]);
+    Builder().CreateStore(
+        InitVal, ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey)));
   }
 }
 
@@ -245,7 +248,7 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
     Builder().CreateStore(ArrInfo.Sizes[Index - 1], PtrGEP);
   }
 
-  ValueToType[AllocaStructPtr] = ArrStructTy;
+  ValManager.setValueTypeLink(AllocaStructPtr, ArrStructTy);
   setCurrValue(AllocaStructPtr);
   if (ArrInfo.isConstantSizes()) {
     // Use Alloca instruction because we know the size
@@ -381,9 +384,10 @@ Value *CodeGenVisitor::getArrayAccessPtr(ast::ArrayAccess *ArrAccess) {
     Indexes.push_back(IndexVal);
   });
 
-  auto *ArrStructPtr = getValueForVar(ArrAccess->name());
+  auto DeclKey = SymTbl.getDeclKeyFor(ArrAccess->entityKey());
+  auto *ArrStructPtr = ValManager.getValueFor(DeclKey);
   assert(ArrStructPtr);
-  auto *ArrType = getValueType(ArrStructPtr);
+  auto *ArrType = ValManager.getTypeFor(ArrStructPtr);
   assert(ArrType);
   assert(ArrType->isStructTy());
   Value *AccessIndex = ConstantInt::get(DataTy, 0);
@@ -401,14 +405,6 @@ Value *CodeGenVisitor::getArrayAccessPtr(ast::ArrayAccess *ArrAccess) {
   auto *GEPArrPtr = Builder().CreateStructGEP(ArrType, ArrStructPtr, 0);
   auto *ArrPtr = Builder().CreateLoad(PointerType::get(DataTy, 0), GEPArrPtr);
   return Builder().CreateGEP(DataTy, ArrPtr, AccessIndex);
-}
-
-Value *CodeGenVisitor::getValueForVar(StringRef ValueName) {
-  return NameToValue.contains(ValueName) ? NameToValue[ValueName] : nullptr;
-}
-
-Type *CodeGenVisitor::getValueType(llvm::Value *Val) {
-  return ValueToType.contains(Val) ? ValueToType[Val] : nullptr;
 }
 
 std::pair<BasicBlock *, BasicBlock *>
@@ -441,8 +437,8 @@ Value *CodeGenVisitor::createLogicAnd(ast::logic_expression *LogExp) {
   Lhs = Builder().CreateZExt(Lhs, DataTy);
 
   auto *LhsBlock = Builder().GetInsertBlock();
-  auto *IsLhsNonZero = Builder().CreateICmpNE(
-      Lhs, ConstantInt::get(DataTy, 0), "tobool");
+  auto *IsLhsNonZero =
+      Builder().CreateICmpNE(Lhs, ConstantInt::get(DataTy, 0), "tobool");
   auto *FalseBlock =
       BasicBlock::Create(CodeGen.Context, "and.false", LhsBlock->getParent());
   auto *RhsBlock = BasicBlock::Create(CodeGen.Context, "and.rhs",
@@ -454,8 +450,8 @@ Value *CodeGenVisitor::createLogicAnd(ast::logic_expression *LogExp) {
   Builder().SetInsertPoint(RhsBlock);
   auto *Rhs = getValueAfterAccept(LogExp->right());
   Rhs = Builder().CreateZExt(Rhs, DataTy);
-  auto *IsRhsNonZero = Builder().CreateICmpNE(
-      Rhs, ConstantInt::get(DataTy, 0), "tobool");
+  auto *IsRhsNonZero =
+      Builder().CreateICmpNE(Rhs, ConstantInt::get(DataTy, 0), "tobool");
   Builder().CreateBr(MergeBlock);
 
   Builder().SetInsertPoint(FalseBlock);
@@ -475,8 +471,8 @@ Value *CodeGenVisitor::createLogicOr(ast::logic_expression *LogExp) {
   Lhs = Builder().CreateZExt(Lhs, DataTy);
 
   auto *LhsBlock = Builder().GetInsertBlock();
-  auto *IsLhsNonZero = Builder().CreateICmpNE(
-      Lhs, ConstantInt::get(DataTy, 0), "tobool");
+  auto *IsLhsNonZero =
+      Builder().CreateICmpNE(Lhs, ConstantInt::get(DataTy, 0), "tobool");
   auto *RhsBlock =
       BasicBlock::Create(CodeGen.Context, "or.rhs", LhsBlock->getParent());
   auto *MergeBlock =
@@ -486,8 +482,8 @@ Value *CodeGenVisitor::createLogicOr(ast::logic_expression *LogExp) {
   Builder().SetInsertPoint(RhsBlock);
   auto *Rhs = getValueAfterAccept(LogExp->right());
   Rhs = Builder().CreateZExt(Rhs, DataTy);
-  auto *IsRhsNonZero = Builder().CreateICmpNE(
-      Rhs, ConstantInt::get(DataTy, 0), "tobool");
+  auto *IsRhsNonZero =
+      Builder().CreateICmpNE(Rhs, ConstantInt::get(DataTy, 0), "tobool");
   Builder().CreateBr(MergeBlock);
 
   Builder().SetInsertPoint(MergeBlock);

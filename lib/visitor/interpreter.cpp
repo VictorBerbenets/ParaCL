@@ -9,7 +9,7 @@
 
 namespace paracl {
 
-InterpreterBase::ValueTypePtr
+InterpreterBase::ValuePtr
 InterpreterBase::performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs,
                                          IntegerVal *Rhs, IntegerTy *Type) {
   assert(Lhs);
@@ -44,7 +44,7 @@ InterpreterBase::performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs,
   }
 }
 
-InterpreterBase::ValueTypePtr
+InterpreterBase::ValuePtr
 InterpreterBase::performUnaryOperation(ast::UnOp Op, IntegerVal *Value,
                                        IntegerTy *Type) {
   assert(Value);
@@ -64,7 +64,7 @@ InterpreterBase::performUnaryOperation(ast::UnOp Op, IntegerVal *Value,
   }
 }
 
-InterpreterBase::ValueTypePtr
+InterpreterBase::ValuePtr
 InterpreterBase::performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
                                             IntegerVal *Rhs, IntegerTy *Type,
                                             yy::location Loc) {
@@ -99,10 +99,12 @@ InterpreterBase::performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
   }
 }
 
+void Interpreter::visit(ast::root_statement_block *StmBlock) {
+  visit(static_cast<ast::statement_block *>(StmBlock));
+}
+
 void Interpreter::visit(ast::statement_block *StmBlock) {
-  for (auto &&statement : *StmBlock) {
-    statement->accept(this);
-  }
+  acceptStatementBlock(StmBlock);
   freeResources(StmBlock);
 }
 
@@ -278,6 +280,12 @@ void Interpreter::freeResources(ast::statement_block *StmBlock) {
         static_cast<ArrayBase *>(Val)->destroy();
       }
     });
+}
+
+void InterpreterBase::acceptStatementBlock(ast::statement_block *StmBlock) {
+  for (auto &&statement : *StmBlock) {
+    statement->accept(this);
+  }
 }
 
 void Interpreter::addResourceForFree(PCLValue *ValToFree,

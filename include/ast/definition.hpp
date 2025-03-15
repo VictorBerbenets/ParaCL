@@ -21,8 +21,6 @@ public:
   definition(statement_block *curr_block, std::string &&name, yy::location loc)
       : statement{curr_block, loc}, name_{std::move(name)} {}
 
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
-
   const std::string &name() const noexcept { return name_; }
 
 protected:

@@ -9,7 +9,6 @@
 #include "expression.hpp"
 #include "location.hh"
 #include "statement.hpp"
-#include "visitor.hpp"
 
 namespace paracl {
 
@@ -27,8 +26,6 @@ public:
       : function{loc}, print_expr_{expr} {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   expression *get() const noexcept { return print_expr_; }
 

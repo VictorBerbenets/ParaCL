@@ -76,8 +76,7 @@ class CodeGenVisitor : public VisitorBase {
 public:
   CodeGenVisitor(StringRef ModuleName);
 
-  virtual void visit(ast::root_statement_block *stm);
-  virtual void visit(ast::definition *stm);
+  void visit(ast::root_statement_block *stm) override;
 
   void visit(ast::ArrayHolder *ArrStore) override;
   void visit(ast::ArrayAccessAssignment *Arr) override;
@@ -119,9 +118,6 @@ private:
 
   void setCurrValue(Value *Value) noexcept { CurrVal = Value; }
 
-  Value *getValueForVar(StringRef VarName);
-  Type *getValueType(Value *Val);
-
   void printIRToOstream(raw_ostream &Os) const;
 
   template <DerivedFromLLVMConstant ConstTy = Constant>
@@ -131,8 +127,12 @@ private:
 
   Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 
+  SymTable<Type> SymTbl;
+  ValueManager<Value> ValManager;
+#if 0
   DenseMap<StringRef, Value *> NameToValue;
   DenseMap<Value *, Type *> ValueToType;
+#endif
   codegen::IRCodeGenerator CodeGen;
   ArrayInfo ArrInfo;
   Value *CurrVal;

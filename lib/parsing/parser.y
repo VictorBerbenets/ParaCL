@@ -272,7 +272,8 @@ array_expression: uniform_array { $$ = $1; }
                 | UNDEF { $$ = driver.make_node<number>(DistrInRange(Generator), @$); }
 ;
 
-preset_array: ARRAY OP_BRACK preset_array_access CL_BRACK { $$ = driver.make_node<PresetArray>(blocks.top(), PresetArrElems.begin(), PresetArrElems.end(), @$);
+preset_array: ARRAY OP_BRACK preset_array_access CL_BRACK { $$ = driver.make_node<PresetArray>(blocks.top(), PresetArrElems.begin(),
+                                                                                               PresetArrElems.end(), @$);
                                                             PresetArrElems.clear(); }
 ;
 

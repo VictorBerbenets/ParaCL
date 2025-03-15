@@ -3,7 +3,6 @@
 #include <concepts>
 #include <vector>
 
-#include "codegen_visitor.hpp"
 #include "location.hh"
 #include "visitor.hpp"
 
@@ -23,7 +22,6 @@ public:
   virtual ~statement() = default;
 
   virtual void accept(VisitorBase *Vis) = 0;
-  virtual void accept(CodeGenVisitor *Vis) = 0;
 
   void set_parent(statement_block *parent) noexcept { parent_ = parent; }
 
@@ -62,8 +60,6 @@ public:
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
 
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
-
   void add(statement *stm) {
     stm->set_parent(this);
     statements_.push_back(stm);
@@ -85,8 +81,6 @@ public:
   using statement_block::statement_block;
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };
 
 } // namespace ast

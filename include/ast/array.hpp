@@ -17,7 +17,6 @@ public:
       : IArray(StmBlock, Loc), Elements(Begin, End) {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   auto begin() { return Elements.begin(); }
   auto end() { return Elements.end(); }
@@ -40,7 +39,6 @@ public:
   expression *getSize() noexcept { return Size; }
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
 private:
   expression *InitExpr;
@@ -56,7 +54,6 @@ public:
         RanksId(Begin, End) {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   void setIdentExp(expression *Ident) { IdentExp = Ident; }
 
@@ -80,7 +77,6 @@ public:
       : expression(StmBlock, Loc), ArrAccess(Access), Identifier(Ident) {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   ArrayAccess *getArrayAccess() noexcept { return ArrAccess; }
   expression *getIdentExp() noexcept { return Identifier; }
@@ -102,7 +98,6 @@ public:
       : expression(StmBlock, Loc), Arr(Arr) {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   IArray *get() noexcept { return Arr; }
 

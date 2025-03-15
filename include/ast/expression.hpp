@@ -31,8 +31,6 @@ public:
 
   void accept(VisitorBase *Vis) override;
 
-  void accept(CodeGenVisitor *CodeGenVis) override;
-
 private:
   value_type value_;
 };
@@ -43,8 +41,6 @@ public:
            yy::location l);
 
   void accept(VisitorBase *Vis) override;
-
-  void accept(CodeGenVisitor *CodeGenVis) override;
 
   llvm::StringRef name() const noexcept;
 
@@ -59,8 +55,6 @@ public:
   un_operator(UnOp type, pointer_type arg, yy::location loc);
 
   void accept(VisitorBase *Vis) override;
-
-  void accept(CodeGenVisitor *CodeGenVis) override;
 
   expression *arg() noexcept;
   UnOp type() const noexcept;
@@ -90,7 +84,6 @@ public:
   using bin_operator::bin_operator;
 
   void accept(VisitorBase *Vis) override;
-  void accept(CodeGenVisitor *CodeGenVis) override;
 };
 
 class logic_expression : public bin_operator<LogicOp> {
@@ -98,7 +91,6 @@ public:
   using bin_operator::bin_operator;
 
   void accept(VisitorBase *Vis) override;
-  void accept(CodeGenVisitor *CodeGenVis) override;
 };
 
 class assignment : public expression {
@@ -107,7 +99,6 @@ public:
              yy::location loc);
 
   void accept(VisitorBase *VisitorBase) override;
-  void accept(CodeGenVisitor *CodeGenVis) override;
 
   variable *getLValue() noexcept;
   expression *getIdentExp() noexcept;
@@ -129,7 +120,6 @@ public:
   read_expression(yy::location loc);
 
   void accept(VisitorBase *VisitorBase) override;
-  void accept(CodeGenVisitor *CodeGenVis) override;
 };
 
 } // namespace ast

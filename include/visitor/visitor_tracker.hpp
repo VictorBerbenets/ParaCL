@@ -1,5 +1,6 @@
 #pragma once
 
+#include "semantic_context.hpp"
 #include "statement.hpp"
 #include "values.hpp"
 #include "visitor.hpp"
@@ -8,23 +9,26 @@ namespace paracl {
 
 class VisitorTracker : public VisitorBase {
 public:
-  using ValueTypePtr = PCLValue *;
-  using TypeID = SymTable::TypeID;
+  using Type = PCLType;
+  using TypeID = SymTable<Type>::TypeID;
+
+  using ValueType = PCLValue;
+  using ValuePtr = ValueType *;
 
 protected:
   VisitorTracker() = default;
 
-  ValueTypePtr getValue() const noexcept { return CurrValue; }
+  ValuePtr getValue() const noexcept { return CurrValue; }
 
-  virtual void setValue(ValueTypePtr Val) { CurrValue = Val; }
+  virtual void setValue(ValuePtr Val) { CurrValue = Val; }
 
-  template <DerivedFromPCLValue ValueType = PCLValue>
-  ValueType *getValueAfterAccept(ast::statement *Stm) {
+  template <DerivedFromPCLValue ValueT = PCLValue>
+  ValueT *getValueAfterAccept(ast::statement *Stm) {
     Stm->accept(this);
-    return static_cast<ValueType *>(CurrValue);
+    return static_cast<ValueT *>(CurrValue);
   }
 
-  ValueTypePtr CurrValue = nullptr;
+  ValuePtr CurrValue = nullptr;
 };
 
 } // namespace paracl

@@ -29,8 +29,6 @@ public:
   using ctrl_statement::ctrl_statement;
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 };
 
 class if_operator final : public ctrl_statement {
@@ -42,8 +40,6 @@ public:
       : ctrl_statement{cond, body, loc}, else_block_{else_block} {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
-
-  void accept(CodeGenVisitor *CodeGenVis) override { CodeGenVis->visit(this); }
 
   statement *else_block() noexcept { return else_block_; }
 

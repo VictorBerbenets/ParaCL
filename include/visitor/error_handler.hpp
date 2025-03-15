@@ -20,10 +20,12 @@ class ErrorHandler : public InterpreterBase {
   using TypePtr = PCLType *;
 
 public:
-  void visit(ast::statement_block *stm) override {
-    for (auto &&statement : *stm) {
-      statement->accept(this);
-    }
+  void visit(ast::root_statement_block *StmBlock) override {
+    visit(static_cast<ast::statement_block *>(StmBlock));
+  }
+
+  void visit(ast::statement_block *StmBlock) override {
+    acceptStatementBlock(StmBlock);
   }
 
   void visit(ast::calc_expression *CalcExp) override {
@@ -376,7 +378,7 @@ public:
   auto begin() const noexcept { return Errors.begin(); }
   auto end() const noexcept { return Errors.end(); }
 
-  void setTypeAndValue(TypePtr Ty, ValueTypePtr Val) {
+  void setTypeAndValue(TypePtr Ty, ValuePtr Val) {
     CurrTy = Ty;
     CurrValue = Val;
   }
