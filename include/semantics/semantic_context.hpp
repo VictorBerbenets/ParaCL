@@ -135,7 +135,8 @@ public:
     auto [_, IsInsert] = NameToValue.insert_or_assign(DeclKey, Val);
     return IsInsert;
   }
-  template <typename ValueT = ValueType> ValueT *getValueFor(SymTabKey DeclKey) {
+  template <typename ValueT = ValueType>
+  ValueT *getValueFor(SymTabKey DeclKey) {
     if (!NameToValue.contains(DeclKey))
       return nullptr;
     return static_cast<ValueT *>(NameToValue[DeclKey]);
@@ -161,7 +162,8 @@ public:
   ValueTy *createValueFor(const SymTabKey &DeclKey, ArgTys &&...Args) {
     auto ValuePtr = std::make_unique<ValueTy>(std::forward<ArgTys>(Args)...);
     Values.push_back(std::move(ValuePtr));
-    auto [InsIt, _] = NameToValue.insert_or_assign(DeclKey, Values.back().get());
+    auto [InsIt, _] =
+        NameToValue.insert_or_assign(DeclKey, Values.back().get());
     return static_cast<ValueTy *>(InsIt->second);
   }
 

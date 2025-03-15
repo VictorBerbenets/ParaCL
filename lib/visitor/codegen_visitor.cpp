@@ -117,9 +117,7 @@ void CodeGenVisitor::visit(ast::un_operator *UnOper) {
     setCurrValue(Builder().CreateNeg(Val));
     break;
   case ast::UnOp::NEGATE:
-    setCurrValue(Builder().CreateZExt(
-        Builder().CreateICmpEQ(Val, CodeGen.createConstantInt32(0)),
-        CodeGen.getInt32Ty()));
+    setCurrValue(Builder().CreateICmpEQ(Val, CodeGen.createConstantInt32(0)));
     break;
   default:
     llvm_unreachable("unrecognized type for un_operator");
