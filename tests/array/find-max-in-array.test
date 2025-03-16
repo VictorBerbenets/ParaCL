@@ -1,4 +1,9 @@
-// RUN: echo "10  -325 10 0 43 234 325432 -1233 10000001 0 0"%paracl %s |& FileCheck %s -dump-input=fail
+// RUN: echo "10  -325 10 0 43 234 325432 -1233 10000001 0 0" | %paracl %s |& \
+// RUN: FileCheck %s -dump-input=fail
+
+// RUN: bash %compiler %s -o %t
+// RUN: echo "10  -325 10 0 43 234 325432 -1233 10000001 0 0" | %t |& FileCheck\
+// RUN: %s -dump-input=fail
 
 //---------------------------ParaCL code---------------------------------------
 

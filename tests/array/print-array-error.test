@@ -1,5 +1,7 @@
 // RUN: not %paracl %s |& FileCheck %s -dump-input=fail
 
+// RUN: not %paracl -oper-mode=compiler %s -o %t.ll |& FileCheck %s -dump-input=fail
+
 //-----------------------------ParaCL code-------------------------------------
 
 Arr = repeat(10, 5);
@@ -9,5 +11,5 @@ print Arr; // Not allowed
 
 //-----------------------------------------------------------------------------
 
-// CHECK: 8.1-10: error: invalid argument. The print function requires integer
+// CHECK: 10.1-10: error: invalid argument. The print function requires integer
 // CHECK-SAME: argument, got 'repeat'

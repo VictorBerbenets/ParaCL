@@ -1,8 +1,7 @@
 // RUN: echo "999" | %paracl %s |& FileCheck %s -dump-input=fail
 
-// RUN: %paracl -oper-mode=compiler %s -o %t.ll
-// RUN: clang++ %t.ll %pcllib -o %t2
-// RUN: echo "999" | %t2 |& FileCheck %s -dump-input=fail
+// RUN: bash %compiler %s -o %t
+// RUN: echo "999" | %t |& FileCheck %s -dump-input=fail
 
 //---------------------------ParaCL code---------------------------------------
 

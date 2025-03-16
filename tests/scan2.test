@@ -1,20 +1,17 @@
 // RUN: echo "81 0" | %paracl %s |& FileCheck %s -dump-input=fail
 
-// RUN: %paracl -oper-mode=compiler %s -o %t.ll
-// RUN: clang++ %t.ll %pcllib -o %t2
-// RUN: echo "81 0" | %t2 |& FileCheck %s -dump-input=fail
+// RUN: bash %compiler %s -o %t
+// RUN: echo "81 0" | %t |& FileCheck %s -dump-input=fail
 
 // RUN: echo "0 81" | %paracl %s |& FileCheck %s -check-prefix=CHECK2 -dump-input=fail
 
-// RUN: %paracl -oper-mode=compiler %s -o %t.ll
-// RUN: clang++ %t.ll %pcllib -o %t2
-// RUN: echo "0 81" | %t2 |& FileCheck %s -check-prefix=CHECK2 -dump-input=fail
+// RUN: bash %compiler %s -o %t
+// RUN: echo "0 81" | %t |& FileCheck %s -check-prefix=CHECK2 -dump-input=fail
 
 // RUN: echo "0 0" | %paracl %s |& FileCheck %s -check-prefix=CHECK3 -dump-input=fail
 
-// RUN: %paracl -oper-mode=compiler %s -o %t.ll
-// RUN: clang++ %t.ll %pcllib -o %t2
-// RUN: echo "0 0" | %t2 |& FileCheck %s -check-prefix=CHECK3 -dump-input=fail
+// RUN: bash %compiler %s -o %t
+// RUN: echo "0 0" | %t |& FileCheck %s -check-prefix=CHECK3 -dump-input=fail
 
 //---------------------------ParaCL code---------------------------------------
 

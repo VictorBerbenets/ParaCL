@@ -1,5 +1,7 @@
 // RUN: not %paracl %s |& FileCheck %s -dump-input=fail
 
+// RUN: not %paracl -oper-mode=compiler %s -o %t.ll |& FileCheck %s -dump-input=fail
+
 //-----------------------------ParaCL code-------------------------------------
 
 Arr1 = array(12, array(undef, undef, 100, undef, undef), 21);
@@ -9,6 +11,6 @@ Arr2 = Arr1;
 
 //-----------------------------------------------------------------------------
 
-// CHECK: 8.1-11: error: expression is not assignable: arrays cannot be assigned
-// CHECK: 8.1-11: error: expression is not assignable: couldn't convert 'array'
+// CHECK: 10.1-11: error: expression is not assignable: arrays cannot be assigned
+// CHECK: 10.1-11: error: expression is not assignable: couldn't convert 'array'
 // CHECK-SAME: to 'repeat'

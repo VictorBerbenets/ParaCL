@@ -236,18 +236,24 @@ public:
     for (auto *CurrElem : *PresetArr) {
       auto [Type, _] = getTypeAndValueAfterAccept(CurrElem);
       if (!Type) {
-        InvalidArrArgs.emplace_back(makeValidationErrMessage(
-            "couldn't deduce the type for passed element",
-            CurrElem->location()));
+        InvalidArrArgs.emplace_back(
+            makeValidationMessage("couldn't deduce the type for passed element",
+                                  CurrElem->location()));
       } else if (Type->isArrayTy()) {
         auto *ArrType = static_cast<ArrayTy *>(Type);
         if (auto SizeOpt = ArrType->getSize(); SizeOpt.has_value())
           IncreaseIfNotNullopt(SizeOpt.value());
+        else
+          InvalidArrArgs.emplace_back(
+              makeValidationMessage("array must be "
+                                    "able to output the size before execution, "
+                                    "repeat size is not constant",
+                                    CurrElem->location()));
 
         auto *ContainedType = ArrType->getContainedType();
         assert(ContainedType);
         if (ContainedType->isArrayTy()) {
-          InvalidArrArgs.emplace_back(makeValidationErrMessage(
+          InvalidArrArgs.emplace_back(makeValidationMessage(
               "it is forbidden to pass arrays of more than one dimension",
               CurrElem->location()));
           ArrSz = std::nullopt;
@@ -257,8 +263,8 @@ public:
       }
     }
     if (!InvalidArrArgs.empty()) {
-      StringErrType TopErrorMes("couldn't create preset array:\n\t");
-      Errors.emplace_back(TopErrorMes + llvm::join(InvalidArrArgs, "\n\t"),
+      StringErrType TopErrorMes("couldn't create preset array:\n");
+      Errors.emplace_back(TopErrorMes + llvm::join(InvalidArrArgs, "\n"),
                           PresetArr->location());
     }
     auto *ArrType =
@@ -366,7 +372,8 @@ public:
 
   void print_errors(llvm::raw_ostream &Os, const std::string &FileName) const {
     for (auto &&Err : Errors) {
-      Os << llvm::formatv("{0}:{1}\n", FileName, makeValidationErrMessage(Err));
+      Os << llvm::formatv("{0}:{1}\n", FileName,
+                          makeValidationMessage(Err, "error"));
     }
   }
 
@@ -390,15 +397,18 @@ public:
   }
 
 private:
-  StringErrType makeValidationErrMessage(const std::string &ErrMes,
-                                         yy::location Loc) const {
-    return makeValidationErrMessage({ErrMes, Loc});
+  StringErrType makeValidationMessage(const std::string &ErrMes,
+                                      yy::location Loc) const {
+    return makeValidationMessage({ErrMes, Loc});
   }
 
-  StringErrType makeValidationErrMessage(ErrorType Err) const {
+  StringErrType makeValidationMessage(ErrorType Err,
+                                      llvm::StringRef Diagnostics = "") const {
     std::stringstream ErrPos;
     ErrPos << Err.second;
-    return llvm::formatv("{0}: error: {1}", ErrPos.str(), Err.first);
+    auto DiagnosticStr =
+        (Diagnostics != "" ? std::string(Diagnostics).append(": ") : "");
+    return llvm::formatv("{0}: {2}{1}", ErrPos.str(), Err.first, DiagnosticStr);
   }
 
   unsigned computeArrayDimension(ArrayTy *Arr) {

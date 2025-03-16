@@ -109,7 +109,8 @@ protected:
   // Use optional here because we want to be able to handle simple cases of
   // accessing the boundaries of the array in the ErrorHandler class before
   // executing the program. If the size of the array is known at 'compile time',
-  // we set the size and have the opportunity to report an error.
+  // we set the size and have the opportunity to report an error for example, if
+  // we go beyond the boundaries of the array.
   std::optional<unsigned> NumberOfElements = std::nullopt;
   PCLType *ContainedType = nullptr;
 };

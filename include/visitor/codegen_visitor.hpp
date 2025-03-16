@@ -22,37 +22,7 @@ class CodeGenVisitor : public VisitorBase {
     SmallVector<Value *> Sizes;
     SmallVector<Value *> Data;
 
-    std::optional<SmallVector<Constant *>> tryConvertDataToConstant() {
-      SmallVector<Constant *> ConstData;
-      ConstData.reserve(Data.size());
-      if (!isConstantData())
-        return {};
-
-      llvm::transform(Data, std::back_inserter(ConstData), [](auto *Val) {
-        auto *ConstVal = dyn_cast<Constant>(Val);
-        assert(ConstVal);
-        return ConstVal;
-      });
-      return ConstData;
-    }
-
-    void fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr, Type *DataTy) {
-      for (unsigned Id = 0; Id < Data.size(); ++Id) {
-        auto *GEPPtr =
-            Builder.CreateGEP(DataTy, ArrPtr, ConstantInt::get(DataTy, Id));
-        Builder.CreateStore(Data[Id], GEPPtr);
-      }
-    }
-
-    bool isConstantData() const {
-      return all_of(Data, [](auto *Val) { return isa<ConstantInt>(Val); });
-    }
-
-    bool isConstantSizes() const {
-      return all_of(Sizes, [](auto *Val) { return isa<ConstantInt>(Val); });
-    }
-
-    bool isConstant() const { return isConstantData() && isConstantSizes(); }
+    bool isConstant() const { return isConstantData(Data) && isConstantData(Sizes); }
 
     void pushSize(Value *Sz) { Sizes.push_back(Sz); }
 
@@ -104,6 +74,10 @@ private:
 
   Module &Module() { return *CodeGen.Mod.get(); }
 
+  static ConstantInt *isConstantInt(Value *Val) {
+    return dyn_cast<ConstantInt>(Val);
+  }
+
   Value *getCurrValue() const noexcept { return CurrVal; }
   Value *getValueAfterAccept(ast::statement *Stm);
 
@@ -114,11 +88,40 @@ private:
   Value *createLogicAnd(ast::logic_expression *LogExp);
   Value *createLogicOr(ast::logic_expression *LogExp);
 
+  Value *createArrayWithData(Type* DataTy, ArrayRef<Value *> Elems, unsigned ElemSize);
+
   void printIntegerValue(Value *Val);
 
   void setCurrValue(Value *Value) noexcept { CurrVal = Value; }
 
   void printIRToOstream(raw_ostream &Os) const;
+    
+  static std::optional<SmallVector<Constant *>> tryConvertDataToConstant(ArrayRef<Value *> Data) {
+      SmallVector<Constant *> ConstData;
+      ConstData.reserve(Data.size());
+      if (!isConstantData(Data))
+        return {};
+
+      llvm::transform(Data, std::back_inserter(ConstData), [](auto *Val) {
+        auto *ConstVal = dyn_cast<Constant>(Val);
+        assert(ConstVal);
+        return ConstVal;
+      });
+      return ConstData;
+    }
+
+    static void fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr, Type *DataTy, ArrayRef<Value*> Data) {
+      for (unsigned Id = 0; Id < Data.size(); ++Id) {
+        auto *GEPPtr =
+            Builder.CreateGEP(DataTy, ArrPtr, ConstantInt::get(DataTy, Id));
+        Builder.CreateStore(Data[Id], GEPPtr);
+      }
+    }
+
+    static bool isConstantData(ArrayRef<Value *> Data) {
+      return all_of(Data,
+                    [](auto *Val) { return isConstantInt(Val) != nullptr; });
+    }
 
   template <DerivedFromLLVMConstant ConstTy = Constant>
   ConstTy *isCompileTimeConstant(Value *Val) const {
@@ -127,11 +130,12 @@ private:
 
   Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 
+  Value *CurrVal;
   SymTable<Type> SymTbl;
   ValueManager<Value> ValManager;
   codegen::IRCodeGenerator CodeGen;
   ArrayInfo ArrInfo;
-  Value *CurrVal;
+  llvm::DenseMap<Value *, ArrayInfo> ArrValueInfo;
 };
 
 } // namespace paracl

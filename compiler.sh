@@ -22,9 +22,13 @@ for arg in "$@"; do
     skip_next=true
     continue
   fi
+  filtered_args+=("$arg")
 done
 
-temp_file=$(mktemp).ll
-${PROJECT_DIR}/build/paracl -oper-mode=compiler "${@}" -o ${temp_file}
-clang++ ${temp_file} ${PROJECT_DIR}/lib/std_pcl_lib/pcllib.cpp -o ${exec_name}
-rm ${temp_file}
+temp_file="$(mktemp).ll"
+trap "rm -f '${temp_file}'" EXIT
+
+${PROJECT_DIR}/build/paracl -oper-mode=compiler "${filtered_args[@]}" -o ${temp_file}
+if [ -f "${temp_file}" ]; then
+  clang++ "${temp_file}" "${PROJECT_DIR}/lib/std_pcl_lib/pcllib.cpp" -o "${exec_name}"
+fi

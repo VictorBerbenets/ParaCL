@@ -1,22 +1,17 @@
 // RUN: echo "1 2" | %paracl %s | FileCheck %s -check-prefix=aLTb -dump-input=fail
 
-// RUN: %paracl -oper-mode=compiler %s -o %t.ll
-// RUN: clang++ %t.ll %pcllib -o %t2
-// RUN: echo "1 2" | %t2 |& FileCheck %s -check-prefix=aLTb -dump-input=fail
-
+// RUN: bash %compiler %s -o %t
+// RUN: echo "1 2" | %t |& FileCheck %s -check-prefix=aLTb -dump-input=fail
 
 // RUN: echo "10 0" | %paracl %s | FileCheck %s -check-prefix=aGTb -dump-input=fail
 
-// RUN: %paracl -oper-mode=compiler %s -o %t.ll
-// RUN: clang++ %t.ll %pcllib -o %t2
-// RUN: echo "10 0" | %t2 |& FileCheck %s -check-prefix=aGTb -dump-input=fail
-
+// RUN: bash %compiler %s -o %t
+// RUN: echo "10 0 " | %t |& FileCheck %s -check-prefix=aGTb -dump-input=fail
 
 // RUN: echo "100 100" | %paracl %s | FileCheck %s -check-prefix=aEQb -dump-input=fail
 
-// RUN: %paracl -oper-mode=compiler %s -o %t.ll
-// RUN: clang++ %t.ll %pcllib -o %t2
-// RUN: echo "100 100" | %t2 |& FileCheck %s -check-prefix=aEQb -dump-input=fail
+// RUN: bash %compiler %s -o %t
+// RUN: echo "100 100" | %t |& FileCheck %s -check-prefix=aEQb -dump-input=fail
 
 //---------------------------ParaCL code---------------------------------------
 

@@ -135,8 +135,10 @@ void CodeGenVisitor::visit(ast::variable *Var) {
   assert(Value);
   auto *AllocTy = static_cast<AllocaInst *>(Value)->getAllocatedType();
   assert(AllocTy);
-  auto *Load = Builder().CreateLoad(AllocTy, Value, Var->name());
-  setCurrValue(Load);
+  if (AllocTy->isIntegerTy())
+    setCurrValue(Builder().CreateLoad(AllocTy, Value, Var->name()));
+  else
+    setCurrValue(Value);
 }
 
 void CodeGenVisitor::visit(ast::assignment *Assign) {
@@ -215,9 +217,33 @@ void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
   printIntegerValue(PrintVal);
 }
 
+Value *CodeGenVisitor::createArrayWithData(Type* DataTy, ArrayRef<Value *> Elems, unsigned ElementSize) {
+    auto ArrSize = Elems.size();
+    auto *ArrType = ArrayType::get(DataTy, ArrSize);
+    auto *AllocaArr = Builder().CreateAlloca(ArrType, nullptr, "array");
+
+    if (ArrSize == 0)
+      return AllocaArr;
+
+    if (auto ConstOptRange = tryConvertDataToConstant(Elems);
+        ConstOptRange.has_value()) {
+      auto *TotalBytes = ConstantInt::get(DataTy, ArrSize * ElementSize);
+      auto *ConstantInitializer =
+          ConstantArray::get(ArrType, ConstOptRange.value());
+      auto *GlobalInitPtr =
+          new GlobalVariable(*CodeGen.Mod.get(), ArrType, true,
+                             Function::ExternalLinkage, ConstantInitializer);
+      Builder().CreateMemCpy(AllocaArr, MaybeAlign(ElementSize), GlobalInitPtr,
+                             MaybeAlign(ElementSize), TotalBytes);
+    } else {
+      fillArrayWithData(Builder(), AllocaArr, DataTy, Elems);
+    }
+    return AllocaArr;
+}
+
 void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock(),
-                                 "array_creation_block");
+                                 "array.creat.block");
   auto *Arr = ArrStore->get();
   assert(Arr);
   // Obtain information about the array: initial values and size.
@@ -225,19 +251,18 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   // Create a struct type for the array: a pointer type and types for sizes (if
   // the array is multidimensional).
   auto *DataTy = CodeGen.getInt32Ty();
-  auto *DataPtrTy = PointerType::get(DataTy, 0);
   DataLayout Layout(&Module());
-  unsigned ElementSize = Layout.getTypeAllocSize(CodeGen.getInt32Ty());
+  unsigned ElementSize = Layout.getTypeAllocSize(DataTy);
 
   SmallVector<Type *> Types;
   Types.reserve(ArrInfo.Sizes.size() + 1);
-  Types.push_back(DataPtrTy);
+  Types.push_back(PointerType::get(DataTy, 0));
   llvm::transform(ArrInfo.Sizes, std::back_inserter(Types),
                   [](auto *Sz) { return Sz->getType(); });
 
   auto *ArrStructTy = StructType::get(CodeGen.Context, Types);
   auto *AllocaStructPtr =
-      Builder().CreateAlloca(ArrStructTy, nullptr, "array_struct");
+      Builder().CreateAlloca(ArrStructTy, nullptr, "array.struct");
   auto *ArrPtrGEP = Builder().CreateStructGEP(ArrStructTy, AllocaStructPtr, 0);
   // Fill in the fields of the structure that store the dimension of the array
   for (unsigned Index = 1; Index <= ArrInfo.Sizes.size(); ++Index) {
@@ -248,55 +273,9 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
 
   ValManager.setValueTypeLink(AllocaStructPtr, ArrStructTy);
   setCurrValue(AllocaStructPtr);
-  if (ArrInfo.isConstantSizes()) {
-    // Use Alloca instruction because we know the size
-    unsigned ArrSize = 1;
-    // Calculate array size
-    llvm::for_each(ArrInfo.Sizes, [&ArrSize](auto *Sz) {
-      auto *ConstIntVal = dyn_cast<ConstantInt>(Sz);
-      assert(ConstIntVal);
-      ArrSize *= ConstIntVal->getZExtValue();
-    });
-    auto *ArrType = ArrayType::get(DataTy, ArrSize);
-    auto *AllocaArr = Builder().CreateAlloca(ArrType, nullptr, "array");
+  if (isConstantData(ArrInfo.Sizes)) {
+    auto *AllocaArr = createArrayWithData(DataTy, ArrInfo.Data, ElementSize);
     Builder().CreateStore(AllocaArr, ArrPtrGEP);
-
-    if (ArrSize == 0)
-      return;
-
-    if (ArrInfo.isConstantData()) {
-      SmallVector<Constant *> InitValues;
-      InitValues.reserve(ArrSize);
-      auto *TotalBytes = ConstantInt::get(DataTy, ArrSize * ElementSize);
-      if (ArrInfo.Data.size() != 1) {
-        auto InitData = ArrInfo.tryConvertDataToConstant();
-        assert(InitData.has_value());
-        InitValues = std::move(InitData.value());
-      } else {
-        auto *ConstVal = dyn_cast<ConstantInt>(ArrInfo.Data.front());
-        assert(ConstVal);
-        for (unsigned Id = 0; Id < ArrSize; ++Id) {
-          InitValues.push_back(
-              ConstantInt::get(DataTy, ConstVal->getSExtValue()));
-        }
-      }
-      auto *ConstantInitializer = ConstantArray::get(ArrType, InitValues);
-      auto *GlobalInitPtr =
-          new GlobalVariable(*CodeGen.Mod.get(), ArrType, true,
-                             Function::ExternalLinkage, ConstantInitializer);
-      Builder().CreateMemCpy(AllocaArr, MaybeAlign(ElementSize), GlobalInitPtr,
-                             MaybeAlign(ElementSize), TotalBytes);
-    } else {
-      if (ArrInfo.Data.size() == 1) {
-        auto *InitValue = Builder().CreateLoad(DataTy, ArrInfo.Data.front());
-        for (unsigned Id = 0; Id < ArrSize; ++Id) {
-          auto *ArrayValueAlloc = Builder().CreateAlloca(DataTy);
-          Builder().CreateStore(InitValue, ArrayValueAlloc);
-          ArrInfo.Data.push_back(Builder().CreateLoad(DataTy, ArrayValueAlloc));
-        }
-      }
-      ArrInfo.fillArrayWithData(Builder(), AllocaArr, DataTy);
-    }
   } else {
     // Heap allocation
     Constant *ElemSize = ConstantInt::get(DataTy, ElementSize);
@@ -312,37 +291,137 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
     auto *MallocCall = Builder().CreateMalloc(DataTy, 0, ElemSize, ArraySize);
     Builder().CreateStore(MallocCall, ArrPtrGEP);
     // Prepare data if need
-    if (ArrInfo.Data.size() == 1) {
-      auto *IndexAlloca = Builder().CreateAlloca(DataTy);
-      Builder().CreateStore(ConstantInt::get(DataTy, 0), IndexAlloca);
-      Value *IndexValue = Builder().CreateLoad(DataTy, IndexAlloca);
+    auto *IndexAlloca = Builder().CreateAlloca(DataTy);
+    Builder().CreateStore(ConstantInt::get(DataTy, 0), IndexAlloca);
+    Value *IndexValue = Builder().CreateLoad(DataTy, IndexAlloca);
 
-      auto *Cond = Builder().CreateICmpSLT(IndexValue, ArraySize);
-      auto [BodyWhile, EndWhile] = createStartWhile(Cond);
-      IndexValue = Builder().CreateLoad(DataTy, IndexAlloca);
+    auto *Cond = Builder().CreateICmpSLT(IndexValue, ArraySize);
+    auto [BodyWhile, EndWhile] = createStartWhile(Cond);
+
+    IndexValue = Builder().CreateLoad(DataTy, IndexAlloca);
+    if (ArrInfo.Data.size() == 1) {
       auto *GEPPtr = Builder().CreateGEP(DataTy, MallocCall, IndexValue);
       Builder().CreateStore(ArrInfo.Data.front(), GEPPtr);
-      // Increment the loop index
-      IndexValue = Builder().CreateAdd(IndexValue, ConstantInt::get(DataTy, 1));
-      Builder().CreateStore(IndexValue, IndexAlloca);
-
-      Cond = Builder().CreateICmpSLT(IndexValue, ArraySize);
-      createEndWhile(Cond, BodyWhile, EndWhile);
     } else {
-      ArrInfo.fillArrayWithData(Builder(), MallocCall, DataTy);
+        auto * InitArrSize = ConstantInt::get(DataTy, ArrInfo.Data.size());
+        auto *AllocaArr = createArrayWithData(DataTy, ArrInfo.Data, ElementSize);
+
+        auto *InitArrInd = Builder().CreateSRem(IndexValue, InitArrSize);
+        auto *InitGEPPtr = Builder().CreateGEP(DataTy, AllocaArr, InitArrInd);
+        auto *InitVal = Builder().CreateLoad(DataTy, InitGEPPtr);
+
+        auto *GEPPtr = Builder().CreateGEP(DataTy, MallocCall, IndexValue);
+        Builder().CreateStore(InitVal, GEPPtr);
     }
+    
+    // Increment the loop index
+    IndexValue = Builder().CreateAdd(IndexValue, ConstantInt::get(DataTy, 1));
+    Builder().CreateStore(IndexValue, IndexAlloca);
+    Cond = Builder().CreateICmpSLT(IndexValue, ArraySize);
+    createEndWhile(Cond, BodyWhile, EndWhile);
   }
+
+  [[maybe_unused]] auto [_, IsEmplaced] =
+      ArrValueInfo.try_emplace(AllocaStructPtr, std::move(ArrInfo));
+  assert(IsEmplaced);
 
   ArrInfo.clear();
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock());
 }
 
 void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
+  auto *DataTy = CodeGen.getInt32Ty();
   auto *InitVal = getValueAfterAccept(UnifArr->getInitExpr());
   auto *Size = getValueAfterAccept(UnifArr->getSize());
+  assert(Size);
+  auto *ConstSize = isConstantInt(Size);
+  bool isConstantSize = ConstSize && !ConstSize->isZero();
+  auto Found = ArrValueInfo.find(InitVal);
+  if (Found != ArrValueInfo.end()) {
+    isConstantSize &= isConstantData(Found->second.Sizes);
+  }
 
-  if (InitVal)
-    ArrInfo.pushData(InitVal);
+  if (isConstantSize) {
+    auto ArrSize = ConstSize->getZExtValue();
+    if (InitVal) {
+      ArrInfo.Data.reserve(ArrSize);
+      if (auto *ConstVal = isConstantInt(InitVal); ConstVal) {
+        std::generate_n(std::back_inserter(ArrInfo.Data), ArrSize,
+                        [ConstVal] { return ConstVal; });
+      } else if (InitVal->getType()->isPointerTy()) {
+        assert(Found != ArrValueInfo.end());
+        auto &InitArrInfo = Found->second;
+        Size = ConstantExpr::getMul(
+            ConstSize, ConstantInt::get(DataTy, InitArrInfo.Data.size()));
+        if (isConstantData(InitArrInfo.Data)) {
+          for (unsigned Id = 0; Id < ArrSize; ++Id)
+            llvm::transform(InitArrInfo.Data, std::back_inserter(ArrInfo.Data),
+                            [](auto *CopyVal) { return CopyVal; });
+        } else {
+          for (unsigned Id = 0; Id < ArrSize; ++Id)
+            llvm::transform(InitArrInfo.Data, std::back_inserter(ArrInfo.Data),
+                            [&](auto *CopyVal) {
+                              auto *NewValAlloc =
+                                  Builder().CreateAlloca(DataTy);
+                              Builder().CreateStore(CopyVal, NewValAlloc);
+                              return Builder().CreateLoad(DataTy, NewValAlloc);
+                            });
+        }
+      } else {
+        std::generate_n(std::back_inserter(ArrInfo.Data), ArrSize, [&] {
+          auto *NewValAlloc = Builder().CreateAlloca(DataTy);
+          Builder().CreateStore(InitVal, NewValAlloc);
+          return Builder().CreateLoad(DataTy, NewValAlloc);
+        });
+      }
+    } else {
+      // array as initializer. Need to copy its data.
+      auto DataToFill = ArrInfo.Data;
+      for (unsigned Id = 1; Id < ArrSize; ++Id)
+        llvm::transform(DataToFill, std::back_inserter(ArrInfo.Data),
+                        [&](auto *Val) -> Value * {
+                          if (auto *ConstVal = dyn_cast<ConstantInt>(Val);
+                              ConstVal)
+                            return ConstVal;
+
+                          auto *NewValAlloc = Builder().CreateAlloca(DataTy);
+                          Builder().CreateStore(Val, NewValAlloc);
+                          return Builder().CreateLoad(DataTy, NewValAlloc);
+                        });
+    }
+  } else if (InitVal) {
+    if (Found != ArrValueInfo.end()) {
+      auto &InitArrInfo = Found->second;
+      if (isConstantData(InitArrInfo.Data)) {
+        llvm::transform(InitArrInfo.Data, std::back_inserter(ArrInfo.Data),
+                        [](auto *CopyVal) { return CopyVal; });
+      } else {
+        llvm::transform(InitArrInfo.Data, std::back_inserter(ArrInfo.Data),
+                        [&](auto *CopyVal) {
+                          auto *NewValAlloc = Builder().CreateAlloca(DataTy);
+                          Builder().CreateStore(CopyVal, NewValAlloc);
+                          return Builder().CreateLoad(DataTy, NewValAlloc);
+                        });
+      }
+      SmallVector<Value *> ExtraSizes;
+      if (isConstantData(InitArrInfo.Sizes)) {
+        llvm::transform(InitArrInfo.Sizes, std::back_inserter(ExtraSizes),
+                        [](auto *CopyVal) { return CopyVal; });
+      } else {
+        llvm::transform(InitArrInfo.Sizes, std::back_inserter(ExtraSizes),
+                        [&](auto *CopyVal) {
+                          auto *NewValAlloc = Builder().CreateAlloca(DataTy);
+                          Builder().CreateStore(CopyVal, NewValAlloc);
+                          return Builder().CreateLoad(DataTy, NewValAlloc);
+                        });
+      }
+      ArrInfo.Sizes.insert(ArrInfo.Sizes.begin(), ExtraSizes.begin(),
+                           ExtraSizes.end());
+    } else {
+      ArrInfo.pushData(InitVal);
+    }
+  }
+
   ArrInfo.pushSize(Size);
   setCurrValue(nullptr);
 }

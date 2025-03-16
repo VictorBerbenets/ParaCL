@@ -1,8 +1,7 @@
 // RUN: %paracl %s
 
-// RUN: %paracl -oper-mode=compiler %s -o %t.ll
-// RUN: clang++ %t.ll %pcllib -o %t2
-// RUN: %t2
+// RUN: bash %compiler %s -o %t
+// RUN: %t
 
 //---------------------------ParaCL code---------------------------------------
 

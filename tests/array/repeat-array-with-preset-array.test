@@ -1,5 +1,8 @@
 // RUN: %paracl %s |& FileCheck %s -dump-input=fail
 
+// RUN: bash %compiler %s -o %t
+// RUN: %t |& FileCheck %s -dump-input=fail
+
 //---------------------------ParaCL code---------------------------------------
 
 ArrSz1 = 10;
@@ -8,13 +11,12 @@ Arr = repeat(array(-10, -1, 2, repeat(777, 1), 77 + 23), ArrSz1);
 
 
 a = 0;
-b = 0;
 while(a < ArrSz1) {
+  b = 0;
   while (b < ArrSz2) {
     print Arr[a][b];
     b = b + 1;
   }
-  b = 0;
   a = a + 1;
 }
 
