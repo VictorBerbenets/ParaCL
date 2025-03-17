@@ -148,19 +148,15 @@ void CodeGenVisitor::visit(ast::assignment *Assign) {
   assert(InitVal);
   auto EntityKey = Assign->entityKey();
   if (!SymTbl.isDefined(EntityKey)) {
-    auto InitValTy = InitVal->getType();
-    if (InitValTy->isIntegerTy()) {
-      SymTbl.tryDefine(EntityKey, InitValTy);
+    SymTbl.tryDefine(EntityKey, ValManager.getTypeFor(InitVal));
+    if (InitVal->getType()->isIntegerTy()) {
       auto *Alloca =
-          Builder().CreateAlloca(CodeGen.getInt32Ty(), nullptr, Assign->name());
+          Builder().CreateAlloca(CodeGen.getInt32Ty(), 0, Assign->name());
 
       Builder().CreateStore(InitVal, Alloca);
-      ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), Alloca);
-    } else {
-      InitVal->setName(Assign->name());
-      SymTbl.tryDefine(EntityKey, ValManager.getTypeFor(InitVal));
-      ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), InitVal);
+      InitVal = Alloca;
     }
+    ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), InitVal);
   } else {
     Builder().CreateStore(
         InitVal, ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey)));
