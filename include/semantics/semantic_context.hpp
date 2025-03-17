@@ -39,12 +39,12 @@ public:
     return nullptr;
   }
 
-  // Returns the declaration key of the variable with the name Name that was
-  // defined (first assigned) within the current scope CurrScope
   ast::statement_block *getDeclScopeFor(const SymTabKey &Key) {
     return getDeclScopeFor(Key.Name, Key.CurrScope);
   }
 
+  // Returns the declaration key of the variable with the name Name that was
+  // defined (first assigned) within the current scope CurrScope
   SymTabKey getDeclKeyFor(const SymbNameType &Name,
                           ast::statement_block *CurrScope) {
     auto *DeclScope = getDeclScopeFor(Name, CurrScope);

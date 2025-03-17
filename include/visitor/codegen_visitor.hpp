@@ -22,7 +22,9 @@ class CodeGenVisitor : public VisitorBase {
     SmallVector<Value *> Sizes;
     SmallVector<Value *> Data;
 
-    bool isConstant() const { return isConstantData(Data) && isConstantData(Sizes); }
+    bool isConstant() const {
+      return isConstantData(Data) && isConstantData(Sizes);
+    }
 
     void pushSize(Value *Sz) { Sizes.push_back(Sz); }
 
@@ -74,12 +76,13 @@ private:
 
   Module &Module() { return *CodeGen.Mod.get(); }
 
-  static ConstantInt *isConstantInt(Value *Val) {
-    return dyn_cast<ConstantInt>(Val);
-  }
+  void setCurrValue(Value *Value) noexcept { CurrVal = Value; }
 
   Value *getCurrValue() const noexcept { return CurrVal; }
   Value *getValueAfterAccept(ast::statement *Stm);
+
+  std::pair<BasicBlock *, BasicBlock *> createStartIf();
+  void createEndIf(BasicBlock *EndBlock);
 
   std::pair<BasicBlock *, BasicBlock *> createStartWhile(Value *Condition);
   void createEndWhile(Value *Condition, BasicBlock *BodyBlock,
@@ -88,54 +91,41 @@ private:
   Value *createLogicAnd(ast::logic_expression *LogExp);
   Value *createLogicOr(ast::logic_expression *LogExp);
 
-  Value *createArrayWithData(Type* DataTy, ArrayRef<Value *> Elems, unsigned ElemSize);
+  AllocaInst *createArrayWithData(Type *DataTy, ArrayRef<Value *> Elems,
+                                  unsigned ElemSize);
+
+  Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
+
+  LoadInst *createLocalVariable(Type *DataTy, Value *ToStore);
 
   void printIntegerValue(Value *Val);
 
-  void setCurrValue(Value *Value) noexcept { CurrVal = Value; }
-
   void printIRToOstream(raw_ostream &Os) const;
-    
-  static std::optional<SmallVector<Constant *>> tryConvertDataToConstant(ArrayRef<Value *> Data) {
-      SmallVector<Constant *> ConstData;
-      ConstData.reserve(Data.size());
-      if (!isConstantData(Data))
-        return {};
 
-      llvm::transform(Data, std::back_inserter(ConstData), [](auto *Val) {
-        auto *ConstVal = dyn_cast<Constant>(Val);
-        assert(ConstVal);
-        return ConstVal;
-      });
-      return ConstData;
-    }
+  void freeResources(ast::statement_block *StmBlock);
 
-    static void fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr, Type *DataTy, ArrayRef<Value*> Data) {
-      for (unsigned Id = 0; Id < Data.size(); ++Id) {
-        auto *GEPPtr =
-            Builder.CreateGEP(DataTy, ArrPtr, ConstantInt::get(DataTy, Id));
-        Builder.CreateStore(Data[Id], GEPPtr);
-      }
-    }
+  static std::optional<SmallVector<Constant *>>
+  tryConvertDataToConstant(ArrayRef<Value *> Data);
 
-    static bool isConstantData(ArrayRef<Value *> Data) {
-      return all_of(Data,
-                    [](auto *Val) { return isConstantInt(Val) != nullptr; });
-    }
+  static void fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr,
+                                Type *DataTy, ArrayRef<Value *> Data);
+
+  static bool isConstantData(ArrayRef<Value *> Data);
+
+  static ConstantInt *isConstantInt(Value *Val);
 
   template <DerivedFromLLVMConstant ConstTy = Constant>
-  ConstTy *isCompileTimeConstant(Value *Val) const {
+  static ConstTy *isCompileTimeConstant(Value *Val) {
     return dyn_cast<ConstTy>(Val);
   }
-
-  Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 
   Value *CurrVal;
   SymTable<Type> SymTbl;
   ValueManager<Value> ValManager;
   codegen::IRCodeGenerator CodeGen;
   ArrayInfo ArrInfo;
-  llvm::DenseMap<Value *, ArrayInfo> ArrValueInfo;
+  DenseMap<Value *, ArrayInfo> ArrInfoMap;
+  DenseMap<ast::statement_block *, SmallVector<Value *>> ResourcesToFree;
 };
 
 } // namespace paracl

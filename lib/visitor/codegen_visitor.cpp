@@ -27,6 +27,7 @@ void CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
   // Generating LLVM IR for main objects
   for (auto &&CurStatement : *RootBlock)
     CurStatement->accept(this);
+  freeResources(RootBlock);
 
   // Create exit block to end instruction insertion
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock(), "pcl_exit");
@@ -37,6 +38,7 @@ void CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
 void CodeGenVisitor::visit(ast::statement_block *StmBlock) {
   for (auto &&CurStatement : *StmBlock)
     CurStatement->accept(this);
+  freeResources(StmBlock);
 }
 
 void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {
@@ -171,18 +173,14 @@ void CodeGenVisitor::visit(ast::if_operator *If) {
       CodeGen.createCondValueIfNeed(getValueAfterAccept(If->condition()));
 
   auto *CurrBlock = Builder().GetInsertBlock();
-  auto *IfBodyBlock =
-      BasicBlock::Create(CodeGen.Context, "if-body", CurrBlock->getParent());
-  auto *IfEndBlock =
-      BasicBlock::Create(CodeGen.Context, "if-end", CurrBlock->getParent());
-  Builder().SetInsertPoint(IfBodyBlock);
+  auto [IfBodyBlock, IfEndBlock] = createStartIf();
   If->body()->accept(this);
   Builder().CreateBr(IfEndBlock);
 
   Builder().SetInsertPoint(CurrBlock);
   if (If->else_block()) {
     auto *IfElseBlock =
-        BasicBlock::Create(CodeGen.Context, "if-else", CurrBlock->getParent());
+        BasicBlock::Create(CodeGen.Context, "if.else", CurrBlock->getParent());
     Builder().CreateCondBr(CondValue, IfBodyBlock, IfElseBlock);
 
     Builder().SetInsertPoint(IfElseBlock);
@@ -191,7 +189,7 @@ void CodeGenVisitor::visit(ast::if_operator *If) {
   } else {
     Builder().CreateCondBr(CondValue, IfBodyBlock, IfEndBlock);
   }
-  Builder().SetInsertPoint(IfEndBlock);
+  createEndIf(IfEndBlock);
 }
 
 void CodeGenVisitor::visit(ast::while_operator *While) {
@@ -217,30 +215,6 @@ void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
   printIntegerValue(PrintVal);
 }
 
-Value *CodeGenVisitor::createArrayWithData(Type* DataTy, ArrayRef<Value *> Elems, unsigned ElementSize) {
-    auto ArrSize = Elems.size();
-    auto *ArrType = ArrayType::get(DataTy, ArrSize);
-    auto *AllocaArr = Builder().CreateAlloca(ArrType, nullptr, "array");
-
-    if (ArrSize == 0)
-      return AllocaArr;
-
-    if (auto ConstOptRange = tryConvertDataToConstant(Elems);
-        ConstOptRange.has_value()) {
-      auto *TotalBytes = ConstantInt::get(DataTy, ArrSize * ElementSize);
-      auto *ConstantInitializer =
-          ConstantArray::get(ArrType, ConstOptRange.value());
-      auto *GlobalInitPtr =
-          new GlobalVariable(*CodeGen.Mod.get(), ArrType, true,
-                             Function::ExternalLinkage, ConstantInitializer);
-      Builder().CreateMemCpy(AllocaArr, MaybeAlign(ElementSize), GlobalInitPtr,
-                             MaybeAlign(ElementSize), TotalBytes);
-    } else {
-      fillArrayWithData(Builder(), AllocaArr, DataTy, Elems);
-    }
-    return AllocaArr;
-}
-
 void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock(),
                                  "array.creat.block");
@@ -248,12 +222,13 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   assert(Arr);
   // Obtain information about the array: initial values and size.
   Arr->accept(this);
-  // Create a struct type for the array: a pointer type and types for sizes (if
-  // the array is multidimensional).
+
   auto *DataTy = CodeGen.getInt32Ty();
   DataLayout Layout(&Module());
   unsigned ElementSize = Layout.getTypeAllocSize(DataTy);
 
+  // Create a struct type for the array: a pointer type and types for sizes (if
+  // the array is multidimensional).
   SmallVector<Type *> Types;
   Types.reserve(ArrInfo.Sizes.size() + 1);
   Types.push_back(PointerType::get(DataTy, 0));
@@ -264,7 +239,7 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   auto *AllocaStructPtr =
       Builder().CreateAlloca(ArrStructTy, nullptr, "array.struct");
   auto *ArrPtrGEP = Builder().CreateStructGEP(ArrStructTy, AllocaStructPtr, 0);
-  // Fill in the fields of the structure that store the dimension of the array
+  // Fill in the size fields of the structure that store the dimension of the array
   for (unsigned Index = 1; Index <= ArrInfo.Sizes.size(); ++Index) {
     auto *PtrGEP =
         Builder().CreateStructGEP(ArrStructTy, AllocaStructPtr, Index);
@@ -274,6 +249,7 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   ValManager.setValueTypeLink(AllocaStructPtr, ArrStructTy);
   setCurrValue(AllocaStructPtr);
   if (isConstantData(ArrInfo.Sizes)) {
+    // Stack allocation
     auto *AllocaArr = createArrayWithData(DataTy, ArrInfo.Data, ElementSize);
     Builder().CreateStore(AllocaArr, ArrPtrGEP);
   } else {
@@ -285,44 +261,44 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
     llvm::for_each(ArrInfo.Sizes, [&](auto *Sz) {
       ArrSize = Builder().CreateMul(ArrSize, Sz);
     });
-    auto *ArraySizeAlloca = Builder().CreateAlloca(DataTy);
-    Builder().CreateStore(ArrSize, ArraySizeAlloca);
-    auto *ArraySize = Builder().CreateLoad(DataTy, ArraySizeAlloca);
+    auto *ArraySize = createLocalVariable(DataTy, ArrSize);
     auto *MallocCall = Builder().CreateMalloc(DataTy, 0, ElemSize, ArraySize);
     Builder().CreateStore(MallocCall, ArrPtrGEP);
     // Prepare data if need
-    auto *IndexAlloca = Builder().CreateAlloca(DataTy);
-    Builder().CreateStore(ConstantInt::get(DataTy, 0), IndexAlloca);
-    Value *IndexValue = Builder().CreateLoad(DataTy, IndexAlloca);
+    Value *IndexValue =
+        createLocalVariable(DataTy, ConstantInt::get(DataTy, 0));
+    auto *AllocaIndex = dyn_cast<LoadInst>(IndexValue)->getPointerOperand();
 
     auto *Cond = Builder().CreateICmpSLT(IndexValue, ArraySize);
     auto [BodyWhile, EndWhile] = createStartWhile(Cond);
 
-    IndexValue = Builder().CreateLoad(DataTy, IndexAlloca);
+    IndexValue = Builder().CreateLoad(DataTy, AllocaIndex);
     if (ArrInfo.Data.size() == 1) {
       auto *GEPPtr = Builder().CreateGEP(DataTy, MallocCall, IndexValue);
       Builder().CreateStore(ArrInfo.Data.front(), GEPPtr);
     } else {
-        auto * InitArrSize = ConstantInt::get(DataTy, ArrInfo.Data.size());
-        auto *AllocaArr = createArrayWithData(DataTy, ArrInfo.Data, ElementSize);
+      auto *InitArrSize = ConstantInt::get(DataTy, ArrInfo.Data.size());
+      auto *AllocaArr = createArrayWithData(DataTy, ArrInfo.Data, ElementSize);
 
-        auto *InitArrInd = Builder().CreateSRem(IndexValue, InitArrSize);
-        auto *InitGEPPtr = Builder().CreateGEP(DataTy, AllocaArr, InitArrInd);
-        auto *InitVal = Builder().CreateLoad(DataTy, InitGEPPtr);
+      auto *InitArrInd = Builder().CreateSRem(IndexValue, InitArrSize);
+      auto *InitArrPtr = Builder().CreateGEP(DataTy, AllocaArr, InitArrInd);
+      auto *InitVal = Builder().CreateLoad(DataTy, InitArrPtr);
 
-        auto *GEPPtr = Builder().CreateGEP(DataTy, MallocCall, IndexValue);
-        Builder().CreateStore(InitVal, GEPPtr);
+      auto *MallocPtr = Builder().CreateGEP(DataTy, MallocCall, IndexValue);
+      Builder().CreateStore(InitVal, MallocPtr);
     }
-    
+
     // Increment the loop index
     IndexValue = Builder().CreateAdd(IndexValue, ConstantInt::get(DataTy, 1));
-    Builder().CreateStore(IndexValue, IndexAlloca);
+    Builder().CreateStore(IndexValue, AllocaIndex);
     Cond = Builder().CreateICmpSLT(IndexValue, ArraySize);
     createEndWhile(Cond, BodyWhile, EndWhile);
+
+    ResourcesToFree[ArrStore->scope()].push_back(MallocCall);
   }
 
   [[maybe_unused]] auto [_, IsEmplaced] =
-      ArrValueInfo.try_emplace(AllocaStructPtr, std::move(ArrInfo));
+      ArrInfoMap.try_emplace(AllocaStructPtr, std::move(ArrInfo));
   assert(IsEmplaced);
 
   ArrInfo.clear();
@@ -336,10 +312,15 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   assert(Size);
   auto *ConstSize = isConstantInt(Size);
   bool isConstantSize = ConstSize && !ConstSize->isZero();
-  auto Found = ArrValueInfo.find(InitVal);
-  if (Found != ArrValueInfo.end()) {
+  auto Found = ArrInfoMap.find(InitVal);
+  if (Found != ArrInfoMap.end())
     isConstantSize &= isConstantData(Found->second.Sizes);
-  }
+
+  auto TransformWithAlloca = [&](ArrayRef<Value *> From, auto &To) {
+    llvm::transform(From, std::back_inserter(To), [&](auto *CopyVal) {
+      return createLocalVariable(DataTy, CopyVal);
+    });
+  };
 
   if (isConstantSize) {
     auto ArrSize = ConstSize->getZExtValue();
@@ -349,33 +330,23 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
         std::generate_n(std::back_inserter(ArrInfo.Data), ArrSize,
                         [ConstVal] { return ConstVal; });
       } else if (InitVal->getType()->isPointerTy()) {
-        assert(Found != ArrValueInfo.end());
+        assert(Found != ArrInfoMap.end());
         auto &InitArrInfo = Found->second;
         Size = ConstantExpr::getMul(
             ConstSize, ConstantInt::get(DataTy, InitArrInfo.Data.size()));
-        if (isConstantData(InitArrInfo.Data)) {
+        if (isConstantData(InitArrInfo.Data))
           for (unsigned Id = 0; Id < ArrSize; ++Id)
             llvm::transform(InitArrInfo.Data, std::back_inserter(ArrInfo.Data),
                             [](auto *CopyVal) { return CopyVal; });
-        } else {
+        else
           for (unsigned Id = 0; Id < ArrSize; ++Id)
-            llvm::transform(InitArrInfo.Data, std::back_inserter(ArrInfo.Data),
-                            [&](auto *CopyVal) {
-                              auto *NewValAlloc =
-                                  Builder().CreateAlloca(DataTy);
-                              Builder().CreateStore(CopyVal, NewValAlloc);
-                              return Builder().CreateLoad(DataTy, NewValAlloc);
-                            });
-        }
+            TransformWithAlloca(InitArrInfo.Data, ArrInfo.Data);
       } else {
-        std::generate_n(std::back_inserter(ArrInfo.Data), ArrSize, [&] {
-          auto *NewValAlloc = Builder().CreateAlloca(DataTy);
-          Builder().CreateStore(InitVal, NewValAlloc);
-          return Builder().CreateLoad(DataTy, NewValAlloc);
-        });
+        std::generate_n(std::back_inserter(ArrInfo.Data), ArrSize,
+                        [&] { return createLocalVariable(DataTy, InitVal); });
       }
     } else {
-      // array as initializer. Need to copy its data.
+      // If array is an initializer. Need to copy its data.
       auto DataToFill = ArrInfo.Data;
       for (unsigned Id = 1; Id < ArrSize; ++Id)
         llvm::transform(DataToFill, std::back_inserter(ArrInfo.Data),
@@ -383,38 +354,25 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
                           if (auto *ConstVal = dyn_cast<ConstantInt>(Val);
                               ConstVal)
                             return ConstVal;
-
-                          auto *NewValAlloc = Builder().CreateAlloca(DataTy);
-                          Builder().CreateStore(Val, NewValAlloc);
-                          return Builder().CreateLoad(DataTy, NewValAlloc);
+                          return createLocalVariable(DataTy, Val);
                         });
     }
   } else if (InitVal) {
-    if (Found != ArrValueInfo.end()) {
+    if (Found != ArrInfoMap.end()) {
       auto &InitArrInfo = Found->second;
-      if (isConstantData(InitArrInfo.Data)) {
+      if (isConstantData(InitArrInfo.Data))
         llvm::transform(InitArrInfo.Data, std::back_inserter(ArrInfo.Data),
                         [](auto *CopyVal) { return CopyVal; });
-      } else {
-        llvm::transform(InitArrInfo.Data, std::back_inserter(ArrInfo.Data),
-                        [&](auto *CopyVal) {
-                          auto *NewValAlloc = Builder().CreateAlloca(DataTy);
-                          Builder().CreateStore(CopyVal, NewValAlloc);
-                          return Builder().CreateLoad(DataTy, NewValAlloc);
-                        });
-      }
+      else
+        TransformWithAlloca(InitArrInfo.Data, ArrInfo.Data);
+
       SmallVector<Value *> ExtraSizes;
-      if (isConstantData(InitArrInfo.Sizes)) {
+      if (isConstantData(InitArrInfo.Sizes))
         llvm::transform(InitArrInfo.Sizes, std::back_inserter(ExtraSizes),
                         [](auto *CopyVal) { return CopyVal; });
-      } else {
-        llvm::transform(InitArrInfo.Sizes, std::back_inserter(ExtraSizes),
-                        [&](auto *CopyVal) {
-                          auto *NewValAlloc = Builder().CreateAlloca(DataTy);
-                          Builder().CreateStore(CopyVal, NewValAlloc);
-                          return Builder().CreateLoad(DataTy, NewValAlloc);
-                        });
-      }
+      else
+        TransformWithAlloca(InitArrInfo.Sizes, ExtraSizes);
+
       ArrInfo.Sizes.insert(ArrInfo.Sizes.begin(), ExtraSizes.begin(),
                            ExtraSizes.end());
     } else {
@@ -484,17 +442,32 @@ Value *CodeGenVisitor::getArrayAccessPtr(ast::ArrayAccess *ArrAccess) {
   return Builder().CreateGEP(DataTy, ArrPtr, AccessIndex);
 }
 
+std::pair<BasicBlock *, BasicBlock *> CodeGenVisitor::createStartIf() {
+  auto *CurrBlock = Builder().GetInsertBlock();
+  auto *IfBodyBlock =
+      BasicBlock::Create(CodeGen.Context, "if.body", CurrBlock->getParent());
+  auto *IfEndBlock =
+      BasicBlock::Create(CodeGen.Context, "if.end", CurrBlock->getParent());
+  Builder().SetInsertPoint(IfBodyBlock);
+
+  return {IfBodyBlock, IfEndBlock};
+}
+
+void CodeGenVisitor::createEndIf(BasicBlock *EndBlock) {
+  Builder().SetInsertPoint(EndBlock);
+}
+
 std::pair<BasicBlock *, BasicBlock *>
 CodeGenVisitor::createStartWhile(Value *Condition) {
   auto *CurrBlock =
-      CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock(), "while-cond");
+      CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock(), "while.cond");
   // Condition codegen
   auto *EntryCondValue = CodeGen.createCondValueIfNeed(Condition);
 
   auto *WhileBodyBlock =
-      BasicBlock::Create(CodeGen.Context, "while-body", CurrBlock->getParent());
+      BasicBlock::Create(CodeGen.Context, "while.body", CurrBlock->getParent());
   auto *WhileEndBlock =
-      BasicBlock::Create(CodeGen.Context, "while-end", CurrBlock->getParent());
+      BasicBlock::Create(CodeGen.Context, "while.end", CurrBlock->getParent());
   Builder().CreateCondBr(EntryCondValue, WhileBodyBlock, WhileEndBlock);
 
   Builder().SetInsertPoint(WhileBodyBlock);
@@ -569,6 +542,76 @@ Value *CodeGenVisitor::createLogicOr(ast::logic_expression *LogExp) {
   Phi->addIncoming(IsRhsNonZero, RhsBlock);
 
   return Phi;
+}
+
+AllocaInst *CodeGenVisitor::createArrayWithData(Type *DataTy,
+                                                ArrayRef<Value *> Elems,
+                                                unsigned ElementSize) {
+  auto ArrSize = Elems.size();
+  auto *ArrType = ArrayType::get(DataTy, ArrSize);
+  auto *AllocaArr = Builder().CreateAlloca(ArrType, nullptr, "array");
+
+  if (ArrSize == 0)
+    return AllocaArr;
+
+  if (auto ConstOptRange = tryConvertDataToConstant(Elems);
+      ConstOptRange.has_value()) {
+    auto *TotalBytes = ConstantInt::get(DataTy, ArrSize * ElementSize);
+    auto *ConstantInitializer =
+        ConstantArray::get(ArrType, ConstOptRange.value());
+    auto *GlobalInitPtr =
+        new GlobalVariable(*CodeGen.Mod.get(), ArrType, true,
+                           Function::ExternalLinkage, ConstantInitializer);
+    Builder().CreateMemCpy(AllocaArr, MaybeAlign(ElementSize), GlobalInitPtr,
+                           MaybeAlign(ElementSize), TotalBytes);
+  } else {
+    fillArrayWithData(Builder(), AllocaArr, DataTy, Elems);
+  }
+  return AllocaArr;
+}
+
+LoadInst *CodeGenVisitor::createLocalVariable(Type *DataTy, Value *ToStore) {
+  auto *Alloca = Builder().CreateAlloca(DataTy);
+  Builder().CreateStore(ToStore, Alloca);
+  return Builder().CreateLoad(DataTy, Alloca);
+}
+
+std::optional<SmallVector<Constant *>>
+CodeGenVisitor::tryConvertDataToConstant(ArrayRef<Value *> Data) {
+  SmallVector<Constant *> ConstData;
+  ConstData.reserve(Data.size());
+  if (!isConstantData(Data))
+    return {};
+
+  llvm::transform(Data, std::back_inserter(ConstData), [](auto *Val) {
+    auto *ConstVal = dyn_cast<Constant>(Val);
+    assert(ConstVal);
+    return ConstVal;
+  });
+  return ConstData;
+}
+
+void CodeGenVisitor::fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr,
+                                       Type *DataTy, ArrayRef<Value *> Data) {
+  for (unsigned Id = 0; Id < Data.size(); ++Id) {
+    auto *GEPPtr =
+        Builder.CreateGEP(DataTy, ArrPtr, ConstantInt::get(DataTy, Id));
+    Builder.CreateStore(Data[Id], GEPPtr);
+  }
+}
+
+void CodeGenVisitor::freeResources(ast::statement_block *StmBlock) {
+  if (ResourcesToFree.contains(StmBlock))
+    llvm::for_each(ResourcesToFree[StmBlock],
+                   [&](auto *ValToFree) { Builder().CreateFree(ValToFree); });
+}
+
+bool CodeGenVisitor::isConstantData(ArrayRef<Value *> Data) {
+  return all_of(Data, [](auto *Val) { return isConstantInt(Val) != nullptr; });
+}
+
+ConstantInt *CodeGenVisitor::isConstantInt(Value *Val) {
+  return dyn_cast<ConstantInt>(Val);
 }
 
 void CodeGenVisitor::printIntegerValue(Value *Val) {
