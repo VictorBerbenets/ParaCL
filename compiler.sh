@@ -30,5 +30,5 @@ trap "rm -f '${temp_file}'" EXIT
 
 ${PROJECT_DIR}/build/paracl -oper-mode=compiler "${filtered_args[@]}" -o ${temp_file}
 if [ -f "${temp_file}" ]; then
-  clang++ "${temp_file}" "${PROJECT_DIR}/lib/std_pcl_lib/pcllib.cpp" -o "${exec_name}"
+  clang++ -O1 "${temp_file}" "${PROJECT_DIR}/lib/std_pcl_lib/pcllib.cpp" -o "${exec_name}"
 fi

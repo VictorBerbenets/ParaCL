@@ -239,7 +239,8 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   auto *AllocaStructPtr =
       Builder().CreateAlloca(ArrStructTy, nullptr, "array.struct");
   auto *ArrPtrGEP = Builder().CreateStructGEP(ArrStructTy, AllocaStructPtr, 0);
-  // Fill in the size fields of the structure that store the dimension of the array
+  // Fill in the size fields of the structure that store the dimension of the
+  // array
   for (unsigned Index = 1; Index <= ArrInfo.Sizes.size(); ++Index) {
     auto *PtrGEP =
         Builder().CreateStructGEP(ArrStructTy, AllocaStructPtr, Index);
@@ -250,7 +251,34 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   setCurrValue(AllocaStructPtr);
   if (isConstantData(ArrInfo.Sizes)) {
     // Stack allocation
-    auto *AllocaArr = createArrayWithData(DataTy, ArrInfo.Data, ElementSize);
+    auto IsAllTheSame = [](ArrayRef<ConstantInt *> ConstData) {
+      if (ConstData.empty())
+        return false;
+
+      return llvm::all_of(ConstData, [&Front = ConstData.front()](auto *Val) {
+        return Val == Front;
+      });
+    };
+    // Calculate array size
+    auto *ArrSize = ConstantInt::get(DataTy, 1);
+    llvm::for_each(ArrInfo.Sizes, [&ArrSize](auto *Sz) {
+      ArrSize = dyn_cast<ConstantInt>(
+          ConstantExpr::getMul(ArrSize, dyn_cast<ConstantInt>(Sz)));
+      assert(ArrSize);
+    });
+
+    AllocaInst *AllocaArr = nullptr;
+    if (auto ConstData = tryConvertDataToConstant<ConstantInt>(ArrInfo.Data);
+        ConstData.has_value() && IsAllTheSame(ConstData.value()) &&
+        fitsIn8Bits(ConstData.value().front())) {
+      auto *ConstInitVal = ConstData.value().front();
+      AllocaArr = createArrayWithData(DataTy, ConstInitVal,
+                                      ArrSize->getZExtValue(), ElementSize);
+    } else {
+      AllocaArr = createArrayWithData(DataTy, ArrInfo.Data,
+                                      ArrSize->getZExtValue(), ElementSize);
+    }
+    assert(AllocaArr);
     Builder().CreateStore(AllocaArr, ArrPtrGEP);
   } else {
     // Heap allocation
@@ -278,7 +306,8 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
       Builder().CreateStore(ArrInfo.Data.front(), GEPPtr);
     } else {
       auto *InitArrSize = ConstantInt::get(DataTy, ArrInfo.Data.size());
-      auto *AllocaArr = createArrayWithData(DataTy, ArrInfo.Data, ElementSize);
+      auto *AllocaArr = createArrayWithData(
+          DataTy, ArrInfo.Data, InitArrSize->getZExtValue(), ElementSize);
 
       auto *InitArrInd = Builder().CreateSRem(IndexValue, InitArrSize);
       auto *InitArrPtr = Builder().CreateGEP(DataTy, AllocaArr, InitArrInd);
@@ -311,10 +340,10 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   auto *Size = getValueAfterAccept(UnifArr->getSize());
   assert(Size);
   auto *ConstSize = isConstantInt(Size);
-  bool isConstantSize = ConstSize && !ConstSize->isZero();
+  bool isConstantNZeroSize = ConstSize && !ConstSize->isZero();
   auto Found = ArrInfoMap.find(InitVal);
   if (Found != ArrInfoMap.end())
-    isConstantSize &= isConstantData(Found->second.Sizes);
+    isConstantNZeroSize &= isConstantData(Found->second.Sizes);
 
   auto TransformWithAlloca = [&](ArrayRef<Value *> From, auto &To) {
     llvm::transform(From, std::back_inserter(To), [&](auto *CopyVal) {
@@ -322,7 +351,7 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
     });
   };
 
-  if (isConstantSize) {
+  if (isConstantNZeroSize) {
     auto ArrSize = ConstSize->getZExtValue();
     if (InitVal) {
       ArrInfo.Data.reserve(ArrSize);
@@ -379,7 +408,6 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
       ArrInfo.pushData(InitVal);
     }
   }
-
   ArrInfo.pushSize(Size);
   setCurrValue(nullptr);
 }
@@ -546,14 +574,15 @@ Value *CodeGenVisitor::createLogicOr(ast::logic_expression *LogExp) {
 
 AllocaInst *CodeGenVisitor::createArrayWithData(Type *DataTy,
                                                 ArrayRef<Value *> Elems,
+                                                unsigned ArrSize,
                                                 unsigned ElementSize) {
-  auto ArrSize = Elems.size();
   auto *ArrType = ArrayType::get(DataTy, ArrSize);
   auto *AllocaArr = Builder().CreateAlloca(ArrType, nullptr, "array");
 
   if (ArrSize == 0)
     return AllocaArr;
 
+  assert(ArrSize == Elems.size());
   if (auto ConstOptRange = tryConvertDataToConstant(Elems);
       ConstOptRange.has_value()) {
     auto *TotalBytes = ConstantInt::get(DataTy, ArrSize * ElementSize);
@@ -570,25 +599,42 @@ AllocaInst *CodeGenVisitor::createArrayWithData(Type *DataTy,
   return AllocaArr;
 }
 
+AllocaInst *CodeGenVisitor::createArrayWithData(Type *DataTy,
+                                                ConstantInt *InitValue,
+                                                unsigned ArrSize,
+                                                unsigned ElementSize) {
+  if (!fitsIn8Bits(InitValue))
+    return nullptr;
+
+  auto *ArrType = ArrayType::get(DataTy, ArrSize);
+  auto *AllocaArr = Builder().CreateAlloca(ArrType, nullptr, "array");
+
+  if (ArrSize == 0)
+    return AllocaArr;
+
+  Builder().CreateMemSet(AllocaArr, InitValue, ArrSize * ElementSize,
+                         MaybeAlign(ElementSize));
+  return AllocaArr;
+}
+
 LoadInst *CodeGenVisitor::createLocalVariable(Type *DataTy, Value *ToStore) {
   auto *Alloca = Builder().CreateAlloca(DataTy);
   Builder().CreateStore(ToStore, Alloca);
   return Builder().CreateLoad(DataTy, Alloca);
 }
 
-std::optional<SmallVector<Constant *>>
-CodeGenVisitor::tryConvertDataToConstant(ArrayRef<Value *> Data) {
-  SmallVector<Constant *> ConstData;
-  ConstData.reserve(Data.size());
-  if (!isConstantData(Data))
-    return {};
+bool CodeGenVisitor::fitsIn8Bits(Value *IntValue) const {
+  assert(IntValue);
+  auto *ConstVal = dyn_cast<ConstantInt>(IntValue);
+  auto *IntType = dyn_cast<IntegerType>(IntValue->getType());
+  if (!IntType || !ConstVal)
+    return false;
 
-  llvm::transform(Data, std::back_inserter(ConstData), [](auto *Val) {
-    auto *ConstVal = dyn_cast<Constant>(Val);
-    assert(ConstVal);
-    return ConstVal;
-  });
-  return ConstData;
+  APInt ApVal = ConstVal->getValue();
+  // Check if its signed value
+  if (ApVal.isNegative())
+    return ApVal.isSignedIntN(8);
+  return ApVal.isIntN(8);
 }
 
 void CodeGenVisitor::fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr,

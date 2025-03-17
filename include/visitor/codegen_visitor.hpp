@@ -92,7 +92,9 @@ private:
   Value *createLogicOr(ast::logic_expression *LogExp);
 
   AllocaInst *createArrayWithData(Type *DataTy, ArrayRef<Value *> Elems,
-                                  unsigned ElemSize);
+                                  unsigned ArrSize, unsigned ElemSize);
+  AllocaInst *createArrayWithData(Type *DataTy, ConstantInt *InitValue,
+                                  unsigned ArrSize, unsigned ElementSize);
 
   Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 
@@ -104,8 +106,23 @@ private:
 
   void freeResources(ast::statement_block *StmBlock);
 
-  static std::optional<SmallVector<Constant *>>
-  tryConvertDataToConstant(ArrayRef<Value *> Data);
+  bool fitsIn8Bits(Value *IntValue) const;
+
+  template <DerivedFromLLVMConstant ConstType = Constant>
+  std::optional<SmallVector<ConstType *>>
+  tryConvertDataToConstant(ArrayRef<Value *> Data) {
+    SmallVector<ConstType *> ConstData;
+    ConstData.reserve(Data.size());
+    if (!isConstantData(Data))
+      return {};
+
+    llvm::transform(Data, std::back_inserter(ConstData), [](auto *Val) {
+      auto *ConstVal = dyn_cast<ConstType>(Val);
+      assert(ConstVal);
+      return ConstVal;
+    });
+    return ConstData;
+  }
 
   static void fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr,
                                 Type *DataTy, ArrayRef<Value *> Data);
