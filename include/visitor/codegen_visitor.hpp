@@ -17,7 +17,8 @@ template <typename ConstTy>
 concept DerivedFromLLVMConstant = std::derived_from<ConstTy, Constant>;
 
 class CodeGenVisitor : public VisitorBase {
-
+  // An auxiliary structure for recursively collecting data from an entire array
+  // and preparing for its creation
   struct ArrayInfo final {
     SmallVector<Value *> Sizes;
     SmallVector<Value *> Data;
