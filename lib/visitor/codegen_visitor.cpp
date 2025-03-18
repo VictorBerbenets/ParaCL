@@ -250,15 +250,6 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
     auto &ConstSizes = ConstSizesOpt.value();
     // Calculate array size
     auto *ArrSize = ArrayInfo::calculateSize(DataTy, ConstSizes);
-    // -- If the array is initialized with a mix of constants and patterns
-    // (e.g., array(1, 2, repeat(1, 10), undef, array(-1, 1))), we use memcpy
-    // to copy a precomputed array of constants into the allocated memory
-    // region.
-    // -- If the initialization values are not compile-time computable, we
-    // fall back to a standard loop to fill the array element by element.
-    // These scenarios use implementations based on memcpy or a loop,
-    // depending on the case.
-    // Note: zero-sized arrays (size 0) also produce an empty array.
     auto *AllocaArr = createArrayWithData(DataTy, CurrArrInfo.Data,
                                           ArrSize->getZExtValue(), ElementSize);
     assert(AllocaArr);
@@ -629,10 +620,20 @@ AllocaInst *CodeGenVisitor::createArrayWithData(Type *DataTy,
                                                 ArrayRef<Value *> Elems,
                                                 unsigned ArrSize,
                                                 unsigned ElementSize) {
+  // -- If the array is initialized with a mix of constants and patterns
+  // (e.g., array(1, 2, repeat(1, 10), undef, array(-1, 1))), we use memcpy
+  // to copy a precomputed array of constants into the allocated memory
+  // region.
+  // -- If the initialization values are not compile-time computable, we
+  // fall back to a standard loop to fill the array element by element.
+  // These scenarios use implementations based on memcpy or a loop,
+  // depending on the case.
+  // Note: zero-sized arrays (size 0) also produce an empty array.
   auto *ArrType = ArrayType::get(DataTy, ArrSize);
   auto *AllocaArr = Builder().CreateAlloca(ArrType, nullptr, "array");
 
   if (ArrSize == 0)
+    // Don't initialize
     return AllocaArr;
 
   assert(ArrSize == Elems.size());
