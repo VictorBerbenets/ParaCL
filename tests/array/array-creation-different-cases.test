@@ -1,0 +1,226 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: bash %compiler %s -o %t
+// RUN: %t |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+// 1) constant array
+ConstArr = array(10, undef, repeat(42, 20), array(repeat(-14, 5), 1));
+// 2) non constant array
+a = -42;
+Arr2 = array(a, undef, repeat(42, 20), array(repeat(a, 5), 1));
+// 3) constant data and size repeat
+ConstArr3 = repeat(-123, 5);
+// 4) constant size repeat
+b = 1;
+ConstArr4 = repeat(b - 10, 1000);
+// 5) constant data repeat
+ConstArr5 = repeat(-100001, b + 999);
+// 6) constant size repeat initialized with a constant array
+ConstArr6 = repeat(ConstArr, 1);
+// 7) non constant size repeat initialized with a constant array
+ConstArr7 = repeat(ConstArr, b);
+// 8) non constant size repeat initialized with a non constant array
+Arr8 = repeat(Arr2, b + 2);
+// 9) constant size repeat initialized with a constant repeat
+ConstArr9 = repeat(ConstArr3, 500);
+// 10) non constant size repeat initialized with a constant repeat
+ConstArr10 = repeat(ConstArr3, b * 125);
+// 11) non constant repeat
+Arr11 = repeat(a, b * 4999 + 1);
+// 12) constant size repeat initialized with a non constant repeat
+ConstArr12 = repeat(Arr11, 2);
+// 13) non constant size repeat initialized with a non constant repeat
+Arr13 = repeat(Arr11, b * 6 - 1);
+
+// check ConstArr
+a = 0;
+while (a < 28) {
+  print ConstArr[a];
+  a = a + 1;
+}
+
+// check Arr2
+a = 0;
+while (a < 28) {
+  print Arr2[a];
+  a = a + 1;
+}
+
+// check ConstArr3
+a = 0;
+while (a < 5) {
+  print ConstArr3[a];
+  a = a + 1;
+}
+
+// check ConstArr4
+a = 0;
+while (a < 1000) {
+  print ConstArr4[a];
+  a = a + 1;
+}
+
+// check ConstArr5
+a = 0;
+while (a < 1000) {
+  print ConstArr5[a];
+  a = a + 1;
+}
+
+// check ConstArr6
+a = 0;
+while (a < 1) {
+  b = 0; 
+  while (b < 28) {
+    print ConstArr6[a][b];
+    b = b + 1;
+  }
+  a = a + 1;
+}
+
+// check ConstArr7
+a = 0;
+while (a < 1) {
+  b = 0; 
+  while (b < 28) {
+    print ConstArr7[a][b];
+    b = b + 1;
+  }
+  a = a + 1;
+}
+
+// check Arr8
+a = 0;
+while (a < 3) {
+  b = 0; 
+  while (b < 28) {
+    print Arr8[a][b];
+    b = b + 1;
+  }
+  a = a + 1;
+}
+
+// check ConstArr9
+a = 0;
+while (a < 500) {
+  b = 0; 
+  while (b < 5) {
+    print ConstArr9[a][b];
+    b = b + 1;
+  }
+  a = a + 1;
+}
+
+// check ConstArr10
+a = 0;
+while (a < 125) {
+  b = 0; 
+  while (b < 5) {
+    print ConstArr10[a][b];
+    b = b + 1;
+  }
+  a = a + 1;
+}
+
+// check Arr11
+a = 0;
+while (a < 5000) {
+  print Arr11[a];
+  a = a + 1;
+}
+
+// check ConstArr12
+a = 0;
+while (a < 2) {
+  b = 0; 
+  while (b < 5000) {
+    print ConstArr12[a][b];
+    b = b + 1;
+  }
+  a = a + 1;
+}
+
+// check Arr13
+a = 0;
+while (a < 5) {
+  b = 0; 
+  while (b < 5000) {
+    print Arr13[a][b];
+    b = b + 1;
+  }
+  a = a + 1;
+}
+
+//-----------------------------------------------------------------------------
+
+// COM: check ConstArr
+// CHECK: 10
+// CHECK-NEXT: [[Undef1:-?[[:digit:]]+]]
+// CHECK-COUNT-20: 42
+// CHECK-COUNT-5: -14
+// CHECK-NEXT: 1
+
+// COM: check Arr2
+// CHECK: -42
+// CHECK-NEXT: [[Undef2:-?[[:digit:]]+]]
+// CHECK-COUNT-20: 42
+// CHECK-COUNT-5: -42
+// CHECK-NEXT: 1
+
+// COM: check ConstArr3
+// CHECK-COUNT-5: -123
+
+// COM: check ConstArr4
+// CHECK-COUNT-1000: -9
+
+// COM: check ConstArr5
+// CHECK-COUNT-1000: -100001 
+
+
+// COM: check ConstArr6
+// CHECK: 10
+// CHECK-NEXT: [[Undef1:-?[[:digit:]]+]]
+// CHECK-COUNT-20: 42
+// CHECK-COUNT-5: -14
+// CHECK-NEXT: 1
+
+// COM: check ConstArr7
+// CHECK: 10
+// CHECK-NEXT: [[Undef1:-?[[:digit:]]+]]
+// CHECK-COUNT-20: 42
+// CHECK-COUNT-5: -14
+// CHECK-NEXT: 1
+
+// COM: check Arr8
+// CHECK: -42
+// CHECK-NEXT: [[Undef2]]
+// CHECK-COUNT-20: 42
+// CHECK-COUNT-5: -42
+// CHECK-NEXT: 1
+// CHECK: -42
+// CHECK-NEXT: [[Undef2]]
+// CHECK-COUNT-20: 42
+// CHECK-COUNT-5: -42
+// CHECK-NEXT: 1
+// CHECK: -42
+// CHECK-NEXT: [[Undef2]]
+// CHECK-COUNT-20: 42
+// CHECK-COUNT-5: -42
+// CHECK-NEXT: 1
+
+// COM: check ConstArr9
+// CHECK-COUNT-2500: -123
+
+// COM: check ConstArr10
+// CHECK-COUNT-625: -123
+
+// COM: check Arr11
+// CHECK-COUNT-5000: -42
+
+// COM: check ConstArr12
+// CHECK-COUNT-10000: -42
+
+// COM: check Arr13
+// CHECK-COUNT-25000: -42

@@ -44,6 +44,16 @@ class CodeGenVisitor : public VisitorBase {
       clearSize();
       clearData();
     }
+
+    static ConstantInt *calculateSize(IntegerType *DataTy,
+                                      ArrayRef<ConstantInt *> Data) {
+      auto *ArrSize = ConstantInt::get(DataTy, 1);
+      llvm::for_each(Data, [&ArrSize](auto *Sz) {
+        ArrSize = dyn_cast<ConstantInt>(ConstantExpr::getMul(ArrSize, Sz));
+        assert(ArrSize);
+      });
+      return ArrSize;
+    }
   };
 
 public:
@@ -94,8 +104,6 @@ private:
 
   AllocaInst *createArrayWithData(Type *DataTy, ArrayRef<Value *> Elems,
                                   unsigned ArrSize, unsigned ElemSize);
-  AllocaInst *createArrayWithData(Type *DataTy, ConstantInt *InitValue,
-                                  unsigned ArrSize, unsigned ElementSize);
 
   Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 
@@ -106,8 +114,6 @@ private:
   void printIRToOstream(raw_ostream &Os) const;
 
   void freeResources(ast::statement_block *StmBlock);
-
-  bool fitsIn8Bits(Value *IntValue) const;
 
   template <DerivedFromLLVMConstant ConstType = Constant>
   std::optional<SmallVector<ConstType *>>
@@ -141,7 +147,8 @@ private:
   SymTable<Type> SymTbl;
   ValueManager<Value> ValManager;
   codegen::IRCodeGenerator CodeGen;
-  ArrayInfo ArrInfo;
+
+  ArrayInfo CurrArrInfo;
   DenseMap<Value *, ArrayInfo> ArrInfoMap;
   DenseMap<ast::statement_block *, SmallVector<Value *>> ResourcesToFree;
 };

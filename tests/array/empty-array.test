@@ -1,15 +1,34 @@
-// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+// RUN: %paracl %s | FileCheck %s -dump-input=fail --check-prefix=INTERPRETER
 
-// RUN: bash %compiler %s -o %t
-// RUN: %t |& FileCheck %s -dump-input=fail
+// RUN: %paracl -oper-mode=compiler %s -o %t.ll
+// RUN: cat %t.ll | FileCheck %s -dump-input=fail --check-prefix=CODEGEN
 
 //---------------------------ParaCL code---------------------------------------
 
 EmptyArr1 = array();
 EmptyArr2 = repeat(100, 0);
+EmptyArr3 = array(EmptyArr1, EmptyArr2, array());
+
+Sz4 = 0;
+EmptyArr4 = repeat(1, Sz4);
 
 print 0;
 
 //-----------------------------------------------------------------------------
 
-// CHECK: 0
+// INTERPRETER: 0
+
+// CODEGEN: %array = alloca [0 x i32], align 4
+// CODEGEN: %array{{[[:digit:]]+}} = alloca [0 x i32], align 4
+// CODEGEN: %array{{[[:digit:]]+}} = alloca [0 x i32], align 4
+
+// CODEGEN: %Sz4 = alloca i32, align 4
+// CODEGEN-NEXT: store i32 0, ptr %Sz4, align 4
+// CODEGEN: %Sz48 = load i32, ptr %Sz4, align 4
+// CODEGEN: %11 = mul i32 1, %Sz48
+// CODEGEN: %12 = alloca i32, align 4
+// CODEGEN: store i32 %11, ptr %12, align 4
+// CODEGEN: %13 = load i32, ptr %12, align 4
+// CODEGEN: %mallocsize = mul i32 %13, 4
+// CODEGEN: %14 = tail call ptr @malloc(i32 %mallocsize)
+// CODEGEN: tail call void @free(ptr %14)
