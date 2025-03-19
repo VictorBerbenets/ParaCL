@@ -4,12 +4,11 @@
 
 #include <FlexLexer.h>
 
-#include <fstream>
-#include <string>
-
 #include "codegen.hpp"
 #include "driver.hpp"
 #include "option_category.hpp"
+#include <fstream>
+#include <string>
 
 namespace {
 
@@ -63,7 +62,7 @@ int main(int argc, char **argv) try {
   }
 
   if (OperatingMode == Compiler) {
-    if (!OutputFileName.getValue().empty()) {
+    if (OutputFileName.getNumOccurrences() > 0) {
       std::error_code ErrCode;
       llvm::raw_fd_ostream FileOs(OutputFileName, ErrCode);
       if (ErrCode) {

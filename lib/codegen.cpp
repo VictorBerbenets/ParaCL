@@ -71,5 +71,7 @@ BasicBlock *IRCodeGenerator::createBlockAndLinkWith(BasicBlock *CurrBlock,
   return NewBlock;
 }
 
+const Module &IRCodeGenerator::getModule() const { return *Mod.get(); }
+
 } // namespace codegen
 } // namespace paracl

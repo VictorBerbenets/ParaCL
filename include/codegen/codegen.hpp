@@ -61,6 +61,8 @@ public:
 
   friend class paracl::CodeGenVisitor;
 
+  const Module &getModule() const;
+
 private:
   // Create print and scan function decls
   void createParaCLStdLibFuncsDecls();

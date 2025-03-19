@@ -7,6 +7,7 @@
 
 #include "codegen.hpp"
 #include "semantic_context.hpp"
+#include "utils.hpp"
 #include "visitor.hpp"
 
 namespace paracl {
@@ -81,6 +82,9 @@ public:
 
   // Generate LLVM IR and write it to Os
   void generateIRCode(ast::root_statement_block *RootBlock, raw_ostream &Os);
+  void dumpInDotFormat(StringRef CFGName) const {
+    codegen::dumpInDotFormat(*CodeGen.Mod.get(), CFGName);
+  }
 
 private:
   IRBuilder<> &Builder() { return *CodeGen.Builder.get(); }

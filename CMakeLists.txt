@@ -60,6 +60,8 @@ add_compile_options(-Wall -Wextra)
 set(SOURCES
     ./lib/codegen.cpp
     ./lib/option_category.cpp
+    ./lib/utils.cpp
+    ./lib/parsing/driver.cpp
     ${AST_SOURCES}
     ${VISITOR_SOURCES}
     ${SEMANTICS_SOURCES}

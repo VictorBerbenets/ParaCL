@@ -1,14 +1,11 @@
 #pragma once
 
-#include <concepts>
 #include <optional>
 #include <string>
 #include <utility>
 
 #include "ast.hpp"
-#include "codegen_visitor.hpp"
 #include "error_handler.hpp"
-#include "interpreter.hpp"
 #include "paracl_grammar.tab.hh"
 #include "scanner.hpp"
 
@@ -18,7 +15,7 @@ class driver final {
 public:
   driver() : scanner_{}, parser_(scanner_, *this) {}
 
-  void parse() { parser_.parse(); }
+  void parse();
 
   void switch_input_stream(std::istream *Is) {
     scanner_.switch_streams(Is, nullptr);
@@ -30,43 +27,24 @@ public:
     return node;
   }
 
-  statement_block *make_block() { return ast_.make_block(); }
+  statement_block *make_block();
 
-  root_statement_block *make_root_block() { return ast_.make_root_block(); }
+  root_statement_block *make_root_block();
 
-  void set_ast_root(root_statement_block *root) & noexcept {
-    ast_.set_root(root);
-  }
+  void set_ast_root(root_statement_block *root) & noexcept;
 
-  root_statement_block *get_root() const { return ast_.root_ptr(); }
+  root_statement_block *get_root() const;
 
-  void change_scope(statement_block *new_block) noexcept {
-    ast_.set_curr_block(new_block);
-  }
+  void change_scope(statement_block *new_block) noexcept;
 
-  statement_block *get_current_block() noexcept {
-    return ast_.get_curr_block();
-  }
+  statement_block *get_current_block() noexcept;
 
-  std::optional<paracl::ErrorHandler> validate() const {
-    paracl::ErrorHandler Handler;
-    Handler.run_program(ast_.root_ptr());
-    if (Handler.empty()) {
-      return {};
-    }
-    return {std::move(Handler)};
-  }
+  std::optional<paracl::ErrorHandler> validate() const;
 
   void evaluate(std::ostream &output = std::cout,
-                std::istream &input = std::cin) {
-    paracl::Interpreter runner(input, output);
-    runner.run_program(ast_.root_ptr());
-  }
+                std::istream &input = std::cin);
 
-  void compile(llvm::StringRef ModuleName, llvm::raw_ostream &Os) {
-    paracl::CodeGenVisitor CodeGenVis(ModuleName);
-    CodeGenVis.generateIRCode(ast_.root_ptr(), Os);
-  }
+  void compile(llvm::StringRef ModuleName, llvm::raw_ostream &Os);
 
 private:
   scanner scanner_;

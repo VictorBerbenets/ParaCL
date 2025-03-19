@@ -10,6 +10,7 @@ stdenv.mkDerivation {
     lit
     filecheck
     gersemi
+    graphviz  
   ];
   buildInputs = [pkgs.llvm_19];
   checkInputs = with pkgs; [ gtest ];
