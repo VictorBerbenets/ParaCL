@@ -141,4 +141,5 @@ while (i < ArrSize) {
 }
 ```
 ### dump-cfg option (useful for debug):  
-/home/viktor/Desktop/ParaCL/output.png
+![output](https://github.com/user-attachments/assets/2a4a7097-2bc3-41bd-814e-df9bb929d959)
+
