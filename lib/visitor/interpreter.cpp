@@ -88,7 +88,7 @@ InterpreterBase::performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
     if (int check = *Rhs; check) {
       return ValManager.createValue<IntegerVal>(*Lhs / check, Type);
     } else {
-      std::stringstream Str;
+      std::ostringstream Str;
       Str << Loc;
       throw std::runtime_error{
           llvm::formatv("{0}, trying to divide by 0", Str.str())};
@@ -172,9 +172,16 @@ void Interpreter::visit(ast::while_operator *While) {
   }
 }
 
-void Interpreter::visit(ast::read_expression * /* unused */) {
+void Interpreter::visit(ast::read_expression *ReadExp) {
   int Tmp = 0;
   input_stream_ >> Tmp;
+  if (input_stream_.fail()) {
+    std::ostringstream LocationStr;
+    LocationStr << ReadExp->location();
+    throw std::runtime_error(llvm::formatv(
+        "{0}: Non-integer data was transmitted", LocationStr.str()));
+  }
+
   setValue(ValManager.createValue<IntegerVal>(
       Tmp, SymTbl.createType(TypeID::Int32)));
 }
