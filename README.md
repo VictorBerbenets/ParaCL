@@ -80,7 +80,7 @@ The syntax for while is similar to the C language:
 ```bash
 git clone git@github.com:VictorBerbenets/ParaCL.git
 cd ParaCL
-nix develop .
+nix --extra-experimental-features "nix-command flakes" develop .
 
 cmake -S ./ -B build/
 cmake --build build
