@@ -109,7 +109,7 @@ void ErrorHandler::visit(ast::variable *Var) {
   auto EntityKey = Var->entityKey();
   if (!SymTbl.isDefined(EntityKey)) {
     Errors.push_back(
-        {llvm::formatv("{0} was not declared in this scope", Var->name()),
+        {llvm::formatv("'{0}' was not declared in this scope", Var->name()),
          Var->location()});
     setTypeAndValue(nullptr, nullptr);
   } else {
@@ -126,7 +126,7 @@ void ErrorHandler::visit(ast::assignment *Assign) {
   auto [IdentType, IdentVal] =
       getTypeAndValueAfterAccept(Assign->getIdentExp());
   auto EntityKey = Assign->entityKey();
-  if (!SymTbl.isDefined(EntityKey)) {
+  if (!SymTbl.isDefined(EntityKey) && IdentType) {
     assert(IdentType);
     if (SymTbl.containsKeyWithType(IdentType) && IdentType->isArrayTy()) {
       Errors.emplace_back(
@@ -144,10 +144,11 @@ void ErrorHandler::visit(ast::assignment *Assign) {
 
   auto [LValueType, LVal] = getTypeAndValueAfterAccept(Assign->getLValue());
   if (!IdentType || !LValueType)
-    Errors.emplace_back(llvm::formatv("{0}: couldn't deduce the "
-                                      "types for initializing the {1} variable",
-                                      ErrDesc, Assign->name()),
-                        Assign->location());
+    Errors.emplace_back(
+        llvm::formatv("{0}: couldn't deduce the "
+                      "types for initializing the '{1}' variable",
+                      ErrDesc, Assign->name()),
+        Assign->location());
   else if (IdentType && LValueType && *IdentType != *LValueType)
     Errors.push_back(
         {llvm::formatv("{0}: couldn't convert '{1}' to '{2}'", ErrDesc,
@@ -166,7 +167,7 @@ void ErrorHandler::visit(ast::if_operator *If) {
   else if (!Type->isInt32Ty())
     Errors.emplace_back(
         llvm::formatv("couldn't calculate the conditional expression of the "
-                      "{0} type for the if statement. Only integer types are "
+                      "'{0}' type for the if statement. Only integer types are "
                       "expected in conditional expressions.",
                       Type->getName()),
         If->location());
@@ -183,7 +184,7 @@ void ErrorHandler::visit(ast::while_operator *While) {
   else if (!Type->isInt32Ty())
     Errors.emplace_back(
         llvm::formatv("couldn't calculate the conditional expression of the "
-                      "{0} type for the while statement. Only integer types "
+                      "'{0}' type for the while statement. Only integer types "
                       "are expected in conditional expressions.",
                       Type->getName()),
         While->location());
@@ -267,9 +268,10 @@ void ErrorHandler::visit(ast::UniformArray *UnifArr) {
       static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray));
   if (SizeType) {
     if (!SizeType->isInt32Ty())
-      Errors.emplace_back(llvm::formatv("couldn't convert '{0} to integer type",
-                                        SizeType->getName()),
-                          UnifArr->location());
+      Errors.emplace_back(
+          llvm::formatv("couldn't convert '{0}' to integer type",
+                        SizeType->getName()),
+          UnifArr->location());
     else if (SizeVal)
       ArrType->setSize(static_cast<IntegerVal *>(SizeVal)->getValue());
   }
@@ -309,7 +311,7 @@ void ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
         auto *IntRankVal = static_cast<IntegerVal *>(RankVal);
         auto Index = IntRankVal->getValue();
         if (Index < 0)
-          Errors.emplace_back(llvm::formatv("array index {0} is before the "
+          Errors.emplace_back(llvm::formatv("array index '{0}' is before the "
                                             "beginning of the array '{1}'",
                                             Index, Name),
                               ArrAccess->location());
@@ -317,8 +319,8 @@ void ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
                  ArrSzOpt.has_value() &&
                  ArrSzOpt.value() <= static_cast<unsigned>(Index))
           Errors.emplace_back(
-              llvm::formatv("array index {0} is past the end of the array "
-                            "(that has size {1})",
+              llvm::formatv("array index '{0}' is past the end of the array "
+                            "(that has size '{1}')",
                             Index, ArrSzOpt.value()),
               ArrAccess->location());
       }

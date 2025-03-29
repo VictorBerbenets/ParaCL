@@ -16,8 +16,8 @@ Arr2[-1][0] = 432;
 
 //-----------------------------------------------------------------------------
 
-// CHECK: 11.1-10: error: array index 5 is past the end of the array (that has size 5)
-// CHECK-NEXT: 11.1-10: error: array index 3 is past the end of the array (that has size 3)
-// CHECK-NEXT: 13.1-16: error: array index 1000 is past the end of the array (that has size 5)
-// CHECK-NEXT: 13.1-16: error: array index 1000 is past the end of the array (that has size 3)
-// CHECK-NEXT: 15.1-11: error: array index -1 is before the beginning of the array 'Arr2'
+// CHECK: 11.1-10: error: array index '5' is past the end of the array (that has size '5')
+// CHECK-NEXT: 11.1-10: error: array index '3' is past the end of the array (that has size '3')
+// CHECK-NEXT: 13.1-16: error: array index '1000' is past the end of the array (that has size '5')
+// CHECK-NEXT: 13.1-16: error: array index '1000' is past the end of the array (that has size '3')
+// CHECK-NEXT: 15.1-11: error: array index '-1' is before the beginning of the array 'Arr2'

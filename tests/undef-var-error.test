@@ -8,7 +8,13 @@ aa;
 
 print a;
 
+x = aa = bb;
+
 //-----------------------------------------------------------------------------
 
-// CHECK: 7.1-2: error: aa was not declared in this scope
+// CHECK: 7.1-2: error: 'aa' was not declared in this scope
+// CHECK: 11.5-6: error: 'aa' was not declared in this scope
+// CHECK: 11.5-11: error: expression is not assignable: couldn't deduce the types for initializing the 'aa' variable
+// CHECK: 11.1: error: 'x' was not declared in this scope
+// CHECK: 11.1-11: error: expression is not assignable: couldn't deduce the types for initializing the 'x' variable
 

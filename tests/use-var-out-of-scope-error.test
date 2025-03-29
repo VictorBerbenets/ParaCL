@@ -9,4 +9,4 @@ print aa;
 
 //-----------------------------------------------------------------------------
 
-// CHECK: 8.7-8: error: aa was not declared in this scope
+// CHECK: 8.7-8: error: 'aa' was not declared in this scope
