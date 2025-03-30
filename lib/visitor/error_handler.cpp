@@ -199,11 +199,11 @@ void ErrorHandler::visit(ast::read_expression * /*unused*/) {
 
 void ErrorHandler::visit(ast::print_function *Print) {
   auto [Type, _] = getTypeAndValueAfterAccept(Print->get());
-  if (Type && !Type->isInt32Ty())
-    Errors.emplace_back(llvm::formatv("invalid argument. The print function "
-                                      "requires integer argument, got '{0}'",
-                                      Type->getName()),
-                        Print->location());
+  if (Type && !isPrintableType(*Type))
+    Errors.emplace_back(
+        llvm::formatv("invalid operand type to print expression: '{0}'",
+                      Type->getName()),
+        Print->location());
 }
 
 void ErrorHandler::visit(ast::ArrayHolder *ArrStore) {
@@ -389,6 +389,10 @@ ErrorHandler::StringErrType
 ErrorHandler::makeValidationMessage(const std::string &ErrMes,
                                     yy::location Loc) const {
   return makeValidationMessage({ErrMes, Loc});
+}
+
+bool ErrorHandler::isPrintableType(const PCLType &Type) const noexcept {
+  return Type.isInt32Ty() || Type.isArrayTy();
 }
 
 ErrorHandler::StringErrType

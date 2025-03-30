@@ -208,7 +208,36 @@ void CodeGenVisitor::visit(ast::read_expression * /*unused*/) {
 
 void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
   auto *PrintVal = getValueAfterAccept(PrintFuncNode->get());
-  printIntegerValue(PrintVal);
+  assert(PrintVal);
+  auto *PrintType = PrintVal->getType();
+  assert(PrintType);
+
+  if (PrintType->isPointerTy()) {
+    assert(ArrInfoMap.contains(PrintVal));
+    auto *ArrType = ValManager.getTypeFor(PrintVal);
+    assert(ArrType);
+    auto *DataTy = CodeGen.getInt32Ty();
+    auto *ArrPtr = Builder().CreateStructGEP(ArrType, PrintVal, 0);
+    ArrPtr = Builder().CreateLoad(PointerType::get(DataTy, 0), ArrPtr);
+    auto *ArrSize = ArrayInfo::calculateSize(Builder(), CodeGen.getInt32Ty(),
+                                             ArrInfoMap[PrintVal].Sizes);
+    // Print array in loop
+    std::function<void(Value *)> LoopBody = [&](Value *LoopCounter) {
+      auto *ElemPtr = Builder().CreateGEP(DataTy, ArrPtr, LoopCounter);
+      printIntegerValue(Builder().CreateLoad(DataTy, ElemPtr));
+    };
+    createUpCountLoop(ArrSize, LoopBody);
+  } else if (PrintType->isIntegerTy())
+    printIntegerValue(PrintVal);
+  else {
+    std::string S;
+    llvm::raw_string_ostream OS(S);
+    PrintType->print(OS);
+    OS.flush();
+    llvm_unreachable(
+        llvm::formatv("incorrect print type: '{0}'", S).str().c_str());
+  }
+  setCurrValue(PrintVal);
 }
 
 void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
@@ -222,7 +251,6 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   auto *DataTy = CodeGen.getInt32Ty();
   DataLayout Layout(&Module());
   unsigned ElementSize = Layout.getTypeAllocSize(DataTy);
-
   // Create a struct type for the array: a pointer type and types for sizes (if
   // the array is multidimensional).
   SmallVector<Type *> Types;
@@ -247,9 +275,8 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   if (auto ConstSizesOpt =
           tryConvertDataToConstant<ConstantInt>(CurrArrInfo.Sizes);
       ConstSizesOpt.has_value()) {
-    auto &ConstSizes = ConstSizesOpt.value();
-    // Calculate array size
-    auto *ArrSize = ArrayInfo::calculateSize(DataTy, ConstSizes);
+    // Stack allocation
+    auto *ArrSize = ArrayInfo::calculateSize(DataTy, ConstSizesOpt.value());
     auto *AllocaArr = createArrayWithData(DataTy, CurrArrInfo.Data,
                                           ArrSize->getZExtValue(), ElementSize);
     assert(AllocaArr);
@@ -257,54 +284,38 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   } else {
     // Heap allocation
     Constant *ElemSize = ConstantInt::get(DataTy, ElementSize);
-
     // Calculate the array size to allocate memory.
-    Value *ArrSize = ConstantInt::get(DataTy, 1);
-    llvm::for_each(CurrArrInfo.Sizes, [&](auto *Sz) {
-      ArrSize = Builder().CreateMul(ArrSize, Sz);
-    });
-    auto *ArraySize = createLocalVariable(DataTy, ArrSize);
+    auto *ArraySize =
+        ArrayInfo::calculateSize(Builder(), DataTy, CurrArrInfo.Sizes);
     auto *MallocCall = Builder().CreateMalloc(DataTy, 0, ElemSize, ArraySize);
     Builder().CreateStore(MallocCall, ArrPtrGEP);
-    // Create a loop and a counter to initialize the array.
-    Value *IndexValue =
-        createLocalVariable(DataTy, ConstantInt::get(DataTy, 0));
-    auto *AllocaIndex = dyn_cast<LoadInst>(IndexValue)->getPointerOperand();
+    // Create support array with init data
+    auto *InitArrSize = ConstantInt::get(DataTy, CurrArrInfo.Data.size());
+    auto *SupportArr = createArrayWithData(
+        DataTy, CurrArrInfo.Data, InitArrSize->getZExtValue(), ElementSize);
 
-    auto *Cond = Builder().CreateICmpSLT(IndexValue, ArraySize);
-    auto [BodyWhile, EndWhile] = createStartWhile(Cond);
+    std::function<void(Value *)> LoopBody = [&](Value *LoopCounter) {
+      // Copy support array elements into the malloc-allocated array within the
+      // loop.
+      Value *InitVal;
+      if (InitArrSize->equalsInt(1)) {
+        InitVal = CurrArrInfo.Data.front();
+      } else {
+        // Access the indices of the support array by taking the remainder of
+        // the main loop counter divided by the size of the support array. This
+        // allows the malloc-allocated array to be filled in batches of values
+        // from the support array.
+        auto *InitArrInd = Builder().CreateSRem(LoopCounter, InitArrSize);
+        auto *InitArrPtr = Builder().CreateGEP(DataTy, SupportArr, InitArrInd);
+        InitVal = Builder().CreateLoad(DataTy, InitArrPtr);
+      }
 
-    IndexValue = Builder().CreateLoad(DataTy, AllocaIndex);
-    if (CurrArrInfo.Data.size() == 1) {
-      // The array is initialized with a single value (e.g., a repeat array).
-      // In this case, insert instructions in the loop body to access and write
-      // the value into the array element.
-      auto *GEPPtr = Builder().CreateGEP(DataTy, MallocCall, IndexValue);
-      Builder().CreateStore(CurrArrInfo.Data.front(), GEPPtr);
-    } else {
-      // The array is initialized with a set of values. Here, create a support
-      // array containing these values and copy its elements into the
-      // malloc-allocated array within the loop. Access the indices of the
-      // support array by taking the remainder of the main loop counter divided
-      // by the size of the support array. This allows the malloc-allocated
-      // array to be filled in batches of values from the support array.
-      auto *InitArrSize = ConstantInt::get(DataTy, CurrArrInfo.Data.size());
-      auto *AllocaArr = createArrayWithData(
-          DataTy, CurrArrInfo.Data, InitArrSize->getZExtValue(), ElementSize);
+      auto *GEPtr = Builder().CreateGEP(DataTy, MallocCall, LoopCounter);
+      Builder().CreateStore(InitVal, GEPtr);
+    };
+    // Initialize the malloc array in loop
+    createUpCountLoop(ArraySize, LoopBody);
 
-      auto *InitArrInd = Builder().CreateSRem(IndexValue, InitArrSize);
-      auto *InitArrPtr = Builder().CreateGEP(DataTy, AllocaArr, InitArrInd);
-      auto *InitVal = Builder().CreateLoad(DataTy, InitArrPtr);
-
-      auto *MallocPtr = Builder().CreateGEP(DataTy, MallocCall, IndexValue);
-      Builder().CreateStore(InitVal, MallocPtr);
-    }
-
-    // Increment the loop index
-    IndexValue = Builder().CreateAdd(IndexValue, ConstantInt::get(DataTy, 1));
-    Builder().CreateStore(IndexValue, AllocaIndex);
-    Cond = Builder().CreateICmpSLT(IndexValue, ArraySize);
-    createEndWhile(Cond, BodyWhile, EndWhile);
     // Dont't forget to free the pointer
     ResourcesToFree[ArrStore->scope()].push_back(MallocCall);
   }
@@ -320,22 +331,23 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock());
 }
 
-// In the next two functions, we recursively construct the array, which will
-// ultimately be returned to the visit method of the ArrayHolder class. The core
-// idea is to gradually populate the ArrayInfo structure by traversing repeat
-// (uniform) and array (preset) arrays. At the end of each traversal, we set the
-// returned Value to nullptr (this signals that the next array’s initializer
-// will be another array).
+// In the next two functions, we recursively collecting information about an
+// array: its size and the values of the elements. The array will be created in
+// the visit ArrayHolder method of the class. The core idea is to gradually
+// populate the ArrayInfo structure by traversing repeat (uniform) and array
+// (preset) arrays. At the end of each traversal, we set the returned Value to
+// nullptr (this signals that the next array’s initializer will be another
+// array).
 void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   auto *DataTy = CodeGen.getInt32Ty();
   auto *InitVal = getValueAfterAccept(UnifArr->getInitExpr());
   auto *Size = getValueAfterAccept(UnifArr->getSize());
   assert(Size);
   auto *ConstSize = isConstantInt(Size);
-  bool isConstantNZeroSize = ConstSize && !ConstSize->isZero();
+  bool isConstantNotZeroSize = ConstSize && !ConstSize->isZero();
   auto Found = ArrInfoMap.find(InitVal);
   if (Found != ArrInfoMap.end())
-    isConstantNZeroSize &= isConstantData(Found->second.Sizes);
+    isConstantNotZeroSize &= isConstantData(Found->second.Sizes);
 
   auto TransformWithAlloca = [&](ArrayRef<Value *> From, auto &To) {
     llvm::transform(From, std::back_inserter(To), [&](auto *CopyVal) {
@@ -343,7 +355,7 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
     });
   };
 
-  if (isConstantNZeroSize) {
+  if (isConstantNotZeroSize) {
     auto ArrSize = ConstSize->getZExtValue();
     if (InitVal) {
       CurrArrInfo.Data.reserve(ArrSize);

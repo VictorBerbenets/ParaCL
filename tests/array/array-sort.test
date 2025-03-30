@@ -23,11 +23,7 @@ while (a < ArrSize) {
   a = a + 1;
 }
 
-a = 0;
-while (a < ArrSize) {
-  print Arr[a];
-  a = a + 1;
-}
+print Arr;
 
 Arr2 = array(-11, 100, 0, 150, 1488, 8814, 32, 1777, 1945, 32, 1, 1, 2, 2, -1777, 3);
 // Insertion sort
@@ -43,11 +39,7 @@ while(i < ArrSize) {
   i = i + 1;
 }
 
-a = 0;
-while (a < ArrSize) {
-  print Arr2[a];
-  a = a + 1;
-}
+print Arr2;
 
 //-----------------------------------------------------------------------------
 

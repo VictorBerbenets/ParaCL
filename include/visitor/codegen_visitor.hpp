@@ -4,6 +4,7 @@
 #include <llvm/Support/Casting.h>
 
 #include <concepts>
+#include <functional>
 
 #include "codegen.hpp"
 #include "semantic_context.hpp"
@@ -44,6 +45,18 @@ class CodeGenVisitor : public VisitorBase {
     void clear() {
       clearSize();
       clearData();
+    }
+
+    static Value *calculateSize(IRBuilder<> &Builder, IntegerType *DataTy,
+                                ArrayRef<Value *> Data) {
+      if (auto OptData = tryConvertDataToConstant<ConstantInt>(Data);
+          OptData.has_value())
+        return calculateSize(DataTy, OptData.value());
+
+      Value *ArrSize = ConstantInt::get(DataTy, 1);
+      llvm::for_each(
+          Data, [&](auto *Sz) { ArrSize = Builder.CreateMul(ArrSize, Sz); });
+      return ArrSize;
     }
 
     static ConstantInt *calculateSize(IntegerType *DataTy,
@@ -103,6 +116,34 @@ private:
   void createEndWhile(Value *Condition, BasicBlock *BodyBlock,
                       BasicBlock *EndBlock);
 
+  // Generates an LLVM IR loop that increments a counter (LoopCounter) from 0 to
+  // LoopLimit, invoking the provided CallLoopBody function in each iteration.
+  // The loop counter is automatically created, managed, and passed as the first
+  // argument to CallLoopBody, followed by any additional user-defined arguments
+  // (Args). LoopCounter is passed to the CallLoopBody func because we often use
+  // it in the body of the loop.
+  template <typename... ArgsTy>
+  void
+  createUpCountLoop(Value *LoopLimit,
+                    const std::function<void(Value *, ArgsTy...)> &CallLoopBody,
+                    ArgsTy &&...Args) {
+    auto *DataTy = CodeGen.getInt32Ty();
+    Value *LoopCounter =
+        createLocalVariable(DataTy, ConstantInt::get(DataTy, 0));
+    auto *AllocaCounter = dyn_cast<LoadInst>(LoopCounter)->getPointerOperand();
+
+    auto *Cond = Builder().CreateICmpSLT(LoopCounter, LoopLimit);
+    auto [BodyWhile, EndWhile] = createStartWhile(Cond);
+    LoopCounter = Builder().CreateLoad(DataTy, AllocaCounter);
+    // Codegen the loop body
+    CallLoopBody(LoopCounter, std::forward<ArgsTy>(Args)...);
+    // Increment loop counter
+    LoopCounter = Builder().CreateAdd(LoopCounter, ConstantInt::get(DataTy, 1));
+    Builder().CreateStore(LoopCounter, AllocaCounter);
+    Cond = Builder().CreateICmpSLT(LoopCounter, LoopLimit);
+    createEndWhile(Cond, BodyWhile, EndWhile);
+  }
+
   Value *createLogicAnd(ast::logic_expression *LogExp);
   Value *createLogicOr(ast::logic_expression *LogExp);
 
@@ -120,7 +161,7 @@ private:
   void freeResources(ast::statement_block *StmBlock);
 
   template <DerivedFromLLVMConstant ConstType = Constant>
-  std::optional<SmallVector<ConstType *>>
+  static std::optional<SmallVector<ConstType *>>
   tryConvertDataToConstant(ArrayRef<Value *> Data) {
     SmallVector<ConstType *> ConstData;
     ConstData.reserve(Data.size());

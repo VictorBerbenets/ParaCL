@@ -1,6 +1,7 @@
 #pragma once
 
 #include <llvm/ADT/STLExtras.h>
+#include <llvm/Support/raw_ostream.h>
 
 #include <concepts>
 #include <iterator>
@@ -31,6 +32,8 @@ public:
 
   virtual PCLValue *clone() const = 0;
 
+  virtual void print(llvm::raw_ostream &Os) const = 0;
+
 protected:
   PCLValue(PCLType *Ty) : Ty(Ty) {}
 
@@ -41,9 +44,9 @@ class IntegerVal : public PCLValue {
 public:
   IntegerVal(int Val, PCLType *Ty) : PCLValue(Ty), Val(Val) {}
 
-  virtual IntegerTy *getType() const override {
-    return static_cast<IntegerTy *>(Ty);
-  }
+  IntegerTy *getType() const override { return static_cast<IntegerTy *>(Ty); }
+
+  void print(llvm::raw_ostream &Os) const override { Os << Val << '\n'; }
 
   int getValue() const noexcept { return Val; }
   void setValue(IntegerVal *NewValue) noexcept {
@@ -90,6 +93,13 @@ protected:
   }
 
   ArrayTy *getType() const override { return static_cast<ArrayTy *>(Ty); }
+
+  void print(llvm::raw_ostream &Os) const override {
+    for (unsigned Id = 0; Id < Size; ++Id) {
+      assert(Data[Id]);
+      Data[Id]->print(Os);
+    }
+  }
 
   bool resizeIfNoData(unsigned NewSize) {
     auto HasData = std::any_of(
@@ -173,6 +183,9 @@ public:
   };
 
 private:
+  // One of the initialization values of the Preset array may be another array.
+  // In this case, we need to calculate the size of the resulting array in
+  // advance.
   template <PCLValuePointerIter Iter>
   void resizeForConcatIfNeed(Iter Begin, Iter End) {
     unsigned NewSize = 0;

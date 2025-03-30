@@ -10,16 +10,7 @@ Arr1 = repeat(10, ArrSz1);
 ArrSz2 = 5;
 Arr2 = repeat(Arr1, ArrSz2);
 
-a = 0;
-b = 0;
-while(a < ArrSz2) {
-  while (b < ArrSz1) {
-    print Arr2[a][b];
-    b = b + 1;
-  }
-  b = 0;
-  a = a + 1;
-}
+print Arr2;
 
 a = b = 0;
 while(a < ArrSz2) {
@@ -31,28 +22,12 @@ while(a < ArrSz2) {
   a = a + 1;
 }
 
-a = b = 0;
-while(a < ArrSz2) {
-  while (b < ArrSz1) {
-    print Arr2[a][b];
-    b = b + 1;
-  }
-  b = 0;
-  a = a + 1;
-}
+print Arr2;
 
 InitValue = 123456789;
 Arr2[0][0] = Arr2[1][1] = Arr2[2][2] = Arr2[3][3] = Arr2[4][4] = 123456789;
 
-a = b = 0;
-while(a < ArrSz2) {
-  while (b < ArrSz1) {
-    print Arr2[a][b];
-    b = b + 1;
-  }
-  b = 0;
-  a = a + 1;
-}
+print Arr2;
 
 //-----------------------------------------------------------------------------
 

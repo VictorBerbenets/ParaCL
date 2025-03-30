@@ -72,6 +72,8 @@ private:
   StringErrType makeValidationMessage(ErrorType Err,
                                       llvm::StringRef Diagnostics = "") const;
 
+  bool isPrintableType(const PCLType &Type) const noexcept;
+
   unsigned computeArrayDimension(ArrayTy *Arr);
 
   std::vector<ErrorType> Errors;

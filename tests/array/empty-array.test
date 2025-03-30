@@ -25,10 +25,10 @@ print 0;
 // CODEGEN: %Sz4 = alloca i32, align 4
 // CODEGEN-NEXT: store i32 0, ptr %Sz4, align 4
 // CODEGEN: %Sz48 = load i32, ptr %Sz4, align 4
+// CODEGEN: %array.struct9 = alloca { ptr, i32 }, align 8
+// CODEGEN: %9 = getelementptr inbounds { ptr, i32 }, ptr %array.struct9, i32 0, i32 0
+// CODEGEN: %10 = getelementptr inbounds { ptr, i32 }, ptr %array.struct9, i32 0, i32 1
+// CODEGEN: store i32 %Sz48, ptr %10, align 4
 // CODEGEN: %11 = mul i32 1, %Sz48
-// CODEGEN: %12 = alloca i32, align 4
-// CODEGEN: store i32 %11, ptr %12, align 4
-// CODEGEN: %13 = load i32, ptr %12, align 4
-// CODEGEN: %mallocsize = mul i32 %13, 4
-// CODEGEN: %14 = tail call ptr @malloc(i32 %mallocsize)
-// CODEGEN: tail call void @free(ptr %14)
+// CODEGEN: %mallocsize = mul i32 %11, 4
+// CODEGEN: %12 = tail call ptr @malloc(i32 %mallocsize)

@@ -188,7 +188,9 @@ void Interpreter::visit(ast::read_expression *ReadExp) {
 
 void Interpreter::visit(ast::print_function *Print) {
   auto *Val = getValueAfterAccept(Print->get());
-  output_stream_ << static_cast<IntegerVal *>(Val)->getValue() << std::endl;
+  assert(Val);
+  Val->print(llvm::outs());
+  setValue(Val);
 }
 
 void Interpreter::visit(ast::assignment *Assign) {

@@ -8,11 +8,7 @@
 ArrSize = 10;
 Arr = repeat(17, ArrSize);
 
-a = 0;
-while(a < ArrSize) {
-  print Arr[a];
-  a = a + 1;
-}
+print Arr;
 
 a = 0;
 while(a < ArrSize) {
@@ -22,12 +18,8 @@ while(a < ArrSize) {
 }
 
 Arr[0] = Arr[1] = Arr[2] = Arr[3] = Arr[4] = 1000;
-a = 0;
-while(a < ArrSize) {
-  print Arr[a];
-  a = a + 1;
-}
 
+print Arr;
 
 //-----------------------------------------------------------------------------
 

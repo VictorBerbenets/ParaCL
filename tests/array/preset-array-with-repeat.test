@@ -7,12 +7,7 @@
 
 Arr = array(repeat(1, 10), 2, repeat(3, 50), 4, repeat(5, 100));
 
-a = 0;
-ArrSize = 162;
-while (a < ArrSize) {
-  print Arr[a];
-  a = a + 1;
-}
+print Arr;
 
 //-----------------------------------------------------------------------------
 

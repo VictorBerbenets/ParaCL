@@ -35,112 +35,41 @@ ConstArr12 = repeat(Arr11, 2);
 Arr13 = repeat(Arr11, b * 6 - 1);
 
 // check ConstArr
-a = 0;
-while (a < 28) {
-  print ConstArr[a];
-  a = a + 1;
-}
+print ConstArr;
+
 
 // check Arr2
-a = 0;
-while (a < 28) {
-  print Arr2[a];
-  a = a + 1;
-}
+print Arr2;
 
 // check ConstArr3
-a = 0;
-while (a < 5) {
-  print ConstArr3[a];
-  a = a + 1;
-}
+print ConstArr3;
 
 // check ConstArr4
-a = 0;
-while (a < 1000) {
-  print ConstArr4[a];
-  a = a + 1;
-}
+print ConstArr4;
 
 // check ConstArr5
-a = 0;
-while (a < 1000) {
-  print ConstArr5[a];
-  a = a + 1;
-}
+print ConstArr5;
 
 // check ConstArr6
-a = 0;
-while (a < 1) {
-  b = 0; 
-  while (b < 28) {
-    print ConstArr6[a][b];
-    b = b + 1;
-  }
-  a = a + 1;
-}
+print ConstArr6;
 
 // check ConstArr7
-a = 0;
-while (a < 1) {
-  b = 0; 
-  while (b < 28) {
-    print ConstArr7[a][b];
-    b = b + 1;
-  }
-  a = a + 1;
-}
+print ConstArr7;
 
 // check Arr8
-a = 0;
-while (a < 3) {
-  b = 0; 
-  while (b < 28) {
-    print Arr8[a][b];
-    b = b + 1;
-  }
-  a = a + 1;
-}
+print Arr8;
 
 // check ConstArr9
-a = 0;
-while (a < 500) {
-  b = 0; 
-  while (b < 5) {
-    print ConstArr9[a][b];
-    b = b + 1;
-  }
-  a = a + 1;
-}
+print ConstArr9;
 
 // check ConstArr10
-a = 0;
-while (a < 125) {
-  b = 0; 
-  while (b < 5) {
-    print ConstArr10[a][b];
-    b = b + 1;
-  }
-  a = a + 1;
-}
+print ConstArr10;
 
 // check Arr11
-a = 0;
-while (a < 5000) {
-  print Arr11[a];
-  a = a + 1;
-}
+print Arr11;
 
 // check ConstArr12
-a = 0;
-while (a < 2) {
-  b = 0; 
-  while (b < 5000) {
-    print ConstArr12[a][b];
-    b = b + 1;
-  }
-  a = a + 1;
-}
+print ConstArr12;
 
 // check Arr13
 a = 0;

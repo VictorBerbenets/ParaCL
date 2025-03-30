@@ -1,0 +1,70 @@
+// RUN: echo "-12345" | %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: bash %compiler %s -o %t
+// RUN: echo "-12345" | %t |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+arr1_input = array(1, 2, 3, ?, 5);
+print arr1_input;
+
+arr_elem_print = array(print 1, print 2);
+print arr_elem_print;
+print arr_elem_print[0];
+print arr_elem_print;
+print arr_elem_print[0];
+print arr_elem_print;
+print arr_elem_print[0];
+
+x = 777;
+arr_elem_x = array(x, x, x);
+print arr_elem_x;
+x = 888;
+print arr_elem_x;
+print arr_elem_x[0];
+
+arr_elem_print2 = array(print 3, print 4);
+print arr_elem_print2;
+
+a = 5;
+print repeat(arr_elem_print, a);
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 1
+// CHECK: 2
+// CHECK: 3
+// CHECK: -12345
+// CHECK: 5
+// CHECK: 1
+// CHECK: 2
+// CHECK: 1
+// CHECK: 2
+// CHECK: 1
+// CHECK: 1
+// CHECK: 2
+// CHECK: 1
+// CHECK: 1
+// CHECK: 2
+// CHECK: 1
+// CHECK: 777
+// CHECK: 777
+// CHECK: 777
+// CHECK: 777
+// CHECK: 777
+// CHECK: 777
+// CHECK: 777
+// CHECK: 3
+// CHECK: 4
+// CHECK: 3
+// CHECK: 4
+// CHECK: 1
+// CHECK: 2
+// CHECK: 1
+// CHECK: 2
+// CHECK: 1
+// CHECK: 2
+// CHECK: 1
+// CHECK: 2
+// CHECK: 1
+// CHECK: 2

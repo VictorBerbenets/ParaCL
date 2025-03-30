@@ -11,19 +11,12 @@
 #include "statement.hpp"
 
 namespace paracl {
-
 namespace ast {
 
-class function : public statement {
-protected:
-  using statement::statement;
-  /* place for next levels */
-};
-
-class print_function : public function {
+class print_function : public expression {
 public:
   print_function(expression *expr, yy::location loc)
-      : function{loc}, print_expr_{expr} {}
+      : expression{loc}, print_expr_{expr} {}
 
   void accept(VisitorBase *Vis) override { Vis->visit(this); }
 
@@ -34,5 +27,4 @@ private:
 };
 
 } // namespace ast
-
 } // namespace paracl
