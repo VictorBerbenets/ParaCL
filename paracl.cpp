@@ -1,20 +1,21 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ErrorHandling.h>
+#include <llvm/Support/FormatVariadic.h>
 #include <llvm/Support/raw_ostream.h>
 
 #include <FlexLexer.h>
-
-#include "codegen.hpp"
-#include "driver.hpp"
-#include "option_category.hpp"
 #include <fstream>
 #include <string>
+
+#include "driver.hpp"
+#include "option_category.hpp"
+#include "utils.hpp"
 
 namespace {
 
 namespace cl = llvm::cl;
 
-enum Error { ParseErr = 0xbad2bad, FStreamErr = 0xcafe10b0ba };
+enum Error { SyntaxErr = 0xbad2bad };
 enum OperatingMode { Compiler, Interpreter };
 
 cl::opt<std::string> InputFileName(cl::Positional, cl::desc("<input file>"),
@@ -52,30 +53,31 @@ int main(int argc, char **argv) try {
                               " This program has two modes: compiler in llvm "
                               "IR and interpreter (set on default).\n");
   std::ifstream InputFileStream(InputFileName);
-  yy::driver ParseDriver;
+  if (InputFileStream.fail())
+    paracl::fatal(llvm::formatv("no such file: '{0}'\n", InputFileName));
 
-  ParseDriver.switch_input_stream(&InputFileStream);
-  ParseDriver.parse();
-  if (auto errors = ParseDriver.validate(); errors) {
+  yy::driver Driver;
+  Driver.switch_input_stream(&InputFileStream);
+  Driver.parse();
+  if (auto errors = Driver.validate(); errors) {
     errors.value().print_errors(llvm::errs(), InputFileName);
-    return ParseErr;
+    return SyntaxErr;
   }
 
   if (OperatingMode == Compiler) {
     if (OutputFileName.getNumOccurrences() > 0) {
       std::error_code ErrCode;
       llvm::raw_fd_ostream FileOs(OutputFileName, ErrCode);
-      if (ErrCode) {
-        llvm::errs() << ErrCode.message().c_str() << "\n";
-        return ParseErr;
-      }
-      ParseDriver.compile(ModuleName, FileOs);
+      if (ErrCode)
+        paracl::fatal(ErrCode.message().c_str());
+
+      Driver.compile(ModuleName, FileOs);
       FileOs.close();
     } else {
-      ParseDriver.compile(ModuleName, llvm::outs());
+      Driver.compile(ModuleName, llvm::outs());
     }
   } else if (OperatingMode == Interpreter) {
-    ParseDriver.evaluate();
+    Driver.evaluate();
   } else {
     llvm_unreachable("Unknown operating mode for paraCL");
   }

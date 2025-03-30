@@ -35,9 +35,12 @@ struct DOTGraphTraits<const Function *> : public DefaultDOTGraphTraits {
 } // namespace llvm
 
 namespace paracl {
+
+using namespace llvm;
+
 namespace codegen {
 
-void dumpInDotFormat(const llvm::Module &Mod, llvm::StringRef FileNameToDump) {
+void dumpInDotFormat(const Module &Mod, StringRef FileNameToDump) {
   const auto *StartFunc = Mod.getFunction(IRCodeGenerator::ParaCLStartFuncName);
   std::string NameStor;
   if (FileNameToDump.empty())
@@ -48,14 +51,24 @@ void dumpInDotFormat(const llvm::Module &Mod, llvm::StringRef FileNameToDump) {
   }
 
   std::error_code EC;
-  llvm::raw_fd_ostream Os(FileNameToDump, EC);
+  raw_fd_ostream Os(FileNameToDump, EC);
   if (EC) {
     Os.close();
-    throw std::runtime_error(llvm::formatv("error: {0}", EC.message()));
+    paracl::fatal(llvm::formatv("error: {0}", EC.message()));
   }
 
-  llvm::WriteGraph(Os, StartFunc, false, "Paracl CFG");
+  WriteGraph(Os, StartFunc, false, "Paracl CFG");
 }
 
 } // namespace codegen
+
+[[noreturn]] void fatal(Twine ErrMes) {
+  LLVMContext Ctx;
+  ParaCLDiagnosticInfo Diag(llvm::DS_Error, ErrMes);
+  Ctx.diagnose(Diag);
+  llvm_unreachable("paracl::fatal should never return");
+}
+
+const int ParaCLDiagnosticInfo::KindID = getNextAvailablePluginDiagnosticKind();
+
 } // namespace paracl

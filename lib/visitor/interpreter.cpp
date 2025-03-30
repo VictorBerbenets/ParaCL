@@ -6,6 +6,7 @@
 #include "ast_includes.hpp"
 #include "identifiers.hpp"
 #include "interpreter.hpp"
+#include "utils.hpp"
 
 namespace paracl {
 
@@ -90,8 +91,7 @@ InterpreterBase::performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
     } else {
       std::ostringstream Str;
       Str << Loc;
-      throw std::runtime_error{
-          llvm::formatv("{0}, trying to divide by 0", Str.str())};
+      paracl::fatal(llvm::formatv("{0}, trying to divide by 0", Str.str()));
     }
     break;
   default:
@@ -178,8 +178,8 @@ void Interpreter::visit(ast::read_expression *ReadExp) {
   if (input_stream_.fail()) {
     std::ostringstream LocationStr;
     LocationStr << ReadExp->location();
-    throw std::runtime_error(llvm::formatv(
-        "{0}: Non-integer data was transmitted", LocationStr.str()));
+    paracl::fatal(llvm::formatv("{0}: Non-integer data was transmitted",
+                                LocationStr.str()));
   }
 
   setValue(ValManager.createValue<IntegerVal>(
@@ -189,7 +189,7 @@ void Interpreter::visit(ast::read_expression *ReadExp) {
 void Interpreter::visit(ast::print_function *Print) {
   auto *Val = getValueAfterAccept(Print->get());
   assert(Val);
-  Val->print(llvm::outs());
+  Val->print(output_stream_);
   setValue(Val);
 }
 

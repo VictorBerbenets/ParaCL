@@ -1,5 +1,4 @@
-// RUN: echo "xxx" | %paracl %s |& FileCheck %s -dump-input=fail
-
+// RUN: echo "xxx" | not %paracl %s |& FileCheck %s -dump-input=fail
 
 //---------------------------ParaCL code---------------------------------------
 
@@ -7,4 +6,4 @@ a = ?;
 
 //-----------------------------------------------------------------------------
 
-// CHECK: Exception catched: 6.5: Non-integer data was transmitted
+// CHECK: error: 5.5: Non-integer data was transmitted

@@ -1,0 +1,4 @@
+// RUN: not %paracl IamNonExistingFile |& FileCheck %s -dump-input=fail
+
+
+// CHECK: error: no such file: 'IamNonExistingFile'

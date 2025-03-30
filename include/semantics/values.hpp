@@ -1,9 +1,9 @@
 #pragma once
 
 #include <llvm/ADT/STLExtras.h>
-#include <llvm/Support/raw_ostream.h>
 
 #include <concepts>
+#include <iostream>
 #include <iterator>
 #include <type_traits>
 #include <utility>
@@ -32,7 +32,7 @@ public:
 
   virtual PCLValue *clone() const = 0;
 
-  virtual void print(llvm::raw_ostream &Os) const = 0;
+  virtual void print(std::ostream &Os) const = 0;
 
 protected:
   PCLValue(PCLType *Ty) : Ty(Ty) {}
@@ -46,7 +46,7 @@ public:
 
   IntegerTy *getType() const override { return static_cast<IntegerTy *>(Ty); }
 
-  void print(llvm::raw_ostream &Os) const override { Os << Val << '\n'; }
+  void print(std::ostream &Os) const override { Os << Val << '\n'; }
 
   int getValue() const noexcept { return Val; }
   void setValue(IntegerVal *NewValue) noexcept {
@@ -94,7 +94,7 @@ protected:
 
   ArrayTy *getType() const override { return static_cast<ArrayTy *>(Ty); }
 
-  void print(llvm::raw_ostream &Os) const override {
+  void print(std::ostream &Os) const override {
     for (unsigned Id = 0; Id < Size; ++Id) {
       assert(Data[Id]);
       Data[Id]->print(Os);
