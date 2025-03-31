@@ -15,6 +15,13 @@ namespace paracl {
 
 using namespace llvm;
 
+// Wrapper class for LLVM Values
+class LLVMValueWrapper : public ValueWrapper,
+                         public ValueWrapperInterface<Value> {
+public:
+  using WrapperInterfaceTy::WrapperInterfaceTy;
+};
+
 template <typename ConstTy>
 concept DerivedFromLLVMConstant = std::derived_from<ConstTy, Constant>;
 
@@ -71,27 +78,28 @@ class CodeGenVisitor : public VisitorBase {
   };
 
 public:
+  using CodeGenValue = LLVMValueWrapper;
+  using ResultTy = CodeGenValue &;
+
   CodeGenVisitor(StringRef ModuleName);
 
-  void visit(ast::root_statement_block *stm) override;
-
-  void visit(ast::ArrayHolder *ArrStore) override;
-  void visit(ast::ArrayAccessAssignment *Arr) override;
-  void visit(ast::PresetArray *PresetArr) override;
-  void visit(ast::ArrayAccess *ArrAccess) override;
-  void visit(ast::UniformArray *UnifArr) override;
-
-  void visit(ast::calc_expression *stm) override;
-  void visit(ast::un_operator *stm) override;
-  void visit(ast::logic_expression *stm) override;
-  void visit(ast::number *stm) override;
-  void visit(ast::variable *stm) override;
-  void visit(ast::assignment *stm) override;
-  void visit(ast::read_expression *stm) override;
-  void visit(ast::statement_block *stm) override;
-  void visit(ast::if_operator *stm) override;
-  void visit(ast::while_operator *stm) override;
-  void visit(ast::print_function *stm) override;
+  ResultTy visit(ast::root_statement_block *stm) override;
+  ResultTy visit(ast::ArrayHolder *ArrStore) override;
+  ResultTy visit(ast::ArrayAccessAssignment *Arr) override;
+  ResultTy visit(ast::PresetArray *PresetArr) override;
+  ResultTy visit(ast::ArrayAccess *ArrAccess) override;
+  ResultTy visit(ast::UniformArray *UnifArr) override;
+  ResultTy visit(ast::calc_expression *stm) override;
+  ResultTy visit(ast::un_operator *stm) override;
+  ResultTy visit(ast::logic_expression *stm) override;
+  ResultTy visit(ast::number *stm) override;
+  ResultTy visit(ast::variable *stm) override;
+  ResultTy visit(ast::assignment *stm) override;
+  ResultTy visit(ast::read_expression *stm) override;
+  ResultTy visit(ast::statement_block *stm) override;
+  ResultTy visit(ast::if_operator *stm) override;
+  ResultTy visit(ast::while_operator *stm) override;
+  ResultTy visit(ast::print_function *stm) override;
 
   // Generate LLVM IR and write it to Os
   void generateIRCode(ast::root_statement_block *RootBlock, raw_ostream &Os);
@@ -104,10 +112,13 @@ private:
 
   Module &Module() { return *CodeGen.Mod.get(); }
 
-  void setCurrValue(Value *Value) noexcept { CurrVal = Value; }
+  ResultTy acceptASTNode(ast::statement *Stm) override {
+    return static_cast<ResultTy>(Stm->accept(this));
+  }
 
-  Value *getCurrValue() const noexcept { return CurrVal; }
-  Value *getValueAfterAccept(ast::statement *Stm);
+  ResultTy createWrapperRef(Value *Val = nullptr) {
+    return VisitorBase::createWrapperRef<CodeGenValue>(Val);
+  }
 
   std::pair<BasicBlock *, BasicBlock *> createStartIf();
   void createEndIf(BasicBlock *EndBlock);
@@ -188,11 +199,9 @@ private:
     return dyn_cast<ConstTy>(Val);
   }
 
-  Value *CurrVal;
   SymTable<Type> SymTbl;
   ValueManager<Value> ValManager;
   codegen::IRCodeGenerator CodeGen;
-
   ArrayInfo CurrArrInfo;
   DenseMap<Value *, ArrayInfo> ArrInfoMap;
   DenseMap<ast::statement_block *, SmallVector<Value *>> ResourcesToFree;

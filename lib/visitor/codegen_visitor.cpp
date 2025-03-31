@@ -10,12 +10,14 @@
 
 namespace paracl {
 
+using ResultTy = CodeGenVisitor::ResultTy;
+
 CodeGenVisitor::CodeGenVisitor(StringRef ModuleName) : CodeGen(ModuleName) {}
 
 // This visit method for root basic block represents the main module of the
 // program (global scope). The main function that launches the program is
 // created here (__pcl_start)
-void CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
+ResultTy CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
   auto *PCLStartFunc = CodeGen.createFunction(
       CodeGen.getVoidTy(), Function::ExternalLinkage,
       codegen::IRCodeGenerator::ParaCLStartFuncName, false);
@@ -33,73 +35,77 @@ void CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock(), "pcl_exit");
   // Return void for __pcl_start
   Builder().CreateRetVoid();
+  return createWrapperRef();
 }
 
-void CodeGenVisitor::visit(ast::statement_block *StmBlock) {
+ResultTy CodeGenVisitor::visit(ast::statement_block *StmBlock) {
   for (auto &&CurStatement : *StmBlock)
     CurStatement->accept(this);
   freeResources(StmBlock);
+  return createWrapperRef();
 }
 
-void CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {
-  auto *Lhs = getValueAfterAccept(CalcExpr->left());
-  auto *Rhs = getValueAfterAccept(CalcExpr->right());
+ResultTy CodeGenVisitor::visit(ast::calc_expression *CalcExpr) {
+  auto &Lhs = acceptASTNode(CalcExpr->left());
+  auto &Rhs = acceptASTNode(CalcExpr->right());
+  assert(Lhs && Rhs);
   Lhs = Builder().CreateZExtOrTrunc(Lhs, CodeGen.getInt32Ty());
   Rhs = Builder().CreateZExtOrTrunc(Rhs, CodeGen.getInt32Ty());
 
   switch (CalcExpr->type()) {
   case ast::CalcOp::ADD:
-    setCurrValue(Builder().CreateAdd(Lhs, Rhs));
+    return createWrapperRef(Builder().CreateAdd(Lhs, Rhs));
     break;
   case ast::CalcOp::SUB:
-    setCurrValue(Builder().CreateSub(Lhs, Rhs));
+    return createWrapperRef(Builder().CreateSub(Lhs, Rhs));
     break;
   case ast::CalcOp::MUL:
-    setCurrValue(Builder().CreateMul(Lhs, Rhs));
+    return createWrapperRef(Builder().CreateMul(Lhs, Rhs));
     break;
   case ast::CalcOp::PERCENT:
-    setCurrValue(Builder().CreateSRem(Lhs, Rhs));
+    return createWrapperRef(Builder().CreateSRem(Lhs, Rhs));
     break;
   case ast::CalcOp::DIV:
-    setCurrValue(Builder().CreateSDiv(Lhs, Rhs));
+    return createWrapperRef(Builder().CreateSDiv(Lhs, Rhs));
     break;
   default:
     llvm_unreachable("unrecognized type for calc_expression");
   }
 }
 
-void CodeGenVisitor::visit(ast::logic_expression *LogicExp) {
+ResultTy CodeGenVisitor::visit(ast::logic_expression *LogicExp) {
   auto LogTy = LogicExp->type();
   switch (LogTy) {
   case ast::LogicOp::AND:
-    setCurrValue(createLogicAnd(LogicExp));
+    return createWrapperRef(createLogicAnd(LogicExp));
     break;
   case ast::LogicOp::OR:
-    setCurrValue(createLogicOr(LogicExp));
+    return createWrapperRef(createLogicOr(LogicExp));
     break;
   default:
-    auto *Lhs = getValueAfterAccept(LogicExp->left());
-    auto *Rhs = getValueAfterAccept(LogicExp->right());
+    auto &Lhs = acceptASTNode(LogicExp->left());
+    auto &Rhs = acceptASTNode(LogicExp->right());
+    assert(Lhs && Rhs);
     Lhs = Builder().CreateZExtOrTrunc(Lhs, CodeGen.getInt32Ty());
     Rhs = Builder().CreateZExtOrTrunc(Rhs, CodeGen.getInt32Ty());
     switch (LogTy) {
     case ast::LogicOp::LESS:
-      setCurrValue(Builder().CreateICmpSLT(Lhs, Rhs));
+      return createWrapperRef(Builder().CreateICmpSLT(Lhs, Rhs));
       break;
     case ast::LogicOp::LESS_EQ:
-      setCurrValue(Builder().CreateICmpSLE(Lhs, Rhs));
+      return createWrapperRef(Builder().CreateICmpSLE(Lhs, Rhs));
       break;
     case ast::LogicOp::GREATER:
-      setCurrValue(Builder().CreateICmpSGT(Lhs, Rhs));
+      return createWrapperRef(Builder().CreateICmpSGT(Lhs, Rhs));
       break;
     case ast::LogicOp::GREATER_EQ:
-      setCurrValue(Builder().CreateICmpSGE(Lhs, Rhs));
+      return createWrapperRef(Builder().CreateICmpSGE(Lhs, Rhs));
       break;
     case ast::LogicOp::EQ:
-      setCurrValue(Builder().CreateICmpEQ(Lhs, Rhs));
+      return createWrapperRef(Builder().CreateICmpEQ(Lhs, Rhs));
       break;
     case ast::LogicOp::NEQ:
-      setCurrValue(Builder().CreateICmpNE(Lhs, Rhs));
+      return createWrapperRef(Builder().CreateICmpNE(Lhs, Rhs));
       break;
     default:
       llvm_unreachable("unrecognized type for logic expression");
@@ -107,66 +113,69 @@ void CodeGenVisitor::visit(ast::logic_expression *LogicExp) {
   }
 }
 
-void CodeGenVisitor::visit(ast::un_operator *UnOper) {
-  auto *Val = getValueAfterAccept(UnOper->arg());
-
+ResultTy CodeGenVisitor::visit(ast::un_operator *UnOper) {
+  auto &Val = acceptASTNode(UnOper->arg());
+  assert(Val);
   switch (UnOper->type()) {
   case ast::UnOp::PLUS:
     // Do nothing with the value
-    setCurrValue(Val);
+    return Val;
     break;
   case ast::UnOp::MINUS:
-    setCurrValue(Builder().CreateNeg(Val));
+    return createWrapperRef(Builder().CreateNeg(Val));
     break;
   case ast::UnOp::NEGATE:
-    setCurrValue(Builder().CreateICmpEQ(Val, CodeGen.createConstantInt32(0)));
+    return createWrapperRef(
+        Builder().CreateICmpEQ(Val, CodeGen.createConstantInt32(0)));
     break;
   default:
     llvm_unreachable("unrecognized type for un_operator");
   }
 }
 
-void CodeGenVisitor::visit(ast::number *Num) {
+ResultTy CodeGenVisitor::visit(ast::number *Num) {
   auto Val = CodeGen.createConstantInt32(Num->get_value(), true);
-  setCurrValue(Val);
+  return createWrapperRef(Val);
 }
 
-void CodeGenVisitor::visit(ast::variable *Var) {
+ResultTy CodeGenVisitor::visit(ast::variable *Var) {
   auto DeclKey = SymTbl.getDeclKeyFor(Var->entityKey());
-  auto *Value = ValManager.getValueFor(DeclKey);
-  assert(Value);
-  auto *AllocTy = static_cast<AllocaInst *>(Value)->getAllocatedType();
+  auto *Val = ValManager.getValueFor(DeclKey);
+  assert(Val);
+  auto *AllocTy = static_cast<AllocaInst *>(Val)->getAllocatedType();
   assert(AllocTy);
   if (AllocTy->isIntegerTy())
-    setCurrValue(Builder().CreateLoad(AllocTy, Value, Var->name()));
-  else
-    setCurrValue(Value);
+    return createWrapperRef(Builder().CreateLoad(AllocTy, Val, Var->name()));
+  return createWrapperRef(Val);
 }
 
-void CodeGenVisitor::visit(ast::assignment *Assign) {
-  auto *InitVal = getValueAfterAccept(Assign->getIdentExp());
-  assert(InitVal);
+ResultTy CodeGenVisitor::visit(ast::assignment *Assign) {
+  auto &AcceptIdentVal = acceptASTNode(Assign->getIdentExp());
+  assert(AcceptIdentVal);
   auto EntityKey = Assign->entityKey();
+  Value *InitValue = AcceptIdentVal;
   if (!SymTbl.isDefined(EntityKey)) {
-    SymTbl.tryDefine(EntityKey, ValManager.getTypeFor(InitVal));
-    if (InitVal->getType()->isIntegerTy()) {
+    SymTbl.tryDefine(EntityKey, ValManager.getTypeFor(AcceptIdentVal));
+    if (InitValue->getType()->isIntegerTy()) {
       auto *Alloca =
           Builder().CreateAlloca(CodeGen.getInt32Ty(), 0, Assign->name());
 
-      Builder().CreateStore(InitVal, Alloca);
-      InitVal = Alloca;
+      Builder().CreateStore(InitValue, Alloca);
+      AcceptIdentVal = Alloca;
     }
-    ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), InitVal);
+    ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey),
+                                 AcceptIdentVal);
   } else {
     Builder().CreateStore(
-        InitVal, ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey)));
+        InitValue, ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey)));
   }
+  return createWrapperRef(InitValue);
 }
 
-void CodeGenVisitor::visit(ast::if_operator *If) {
+ResultTy CodeGenVisitor::visit(ast::if_operator *If) {
   // Evaluate condition
   auto *CondValue =
-      CodeGen.createCondValueIfNeed(getValueAfterAccept(If->condition()));
+      CodeGen.createCondValueIfNeed(acceptASTNode(If->condition()));
 
   auto *CurrBlock = Builder().GetInsertBlock();
   auto [IfBodyBlock, IfEndBlock] = createStartIf();
@@ -186,29 +195,30 @@ void CodeGenVisitor::visit(ast::if_operator *If) {
     Builder().CreateCondBr(CondValue, IfBodyBlock, IfEndBlock);
   }
   createEndIf(IfEndBlock);
+  return createWrapperRef();
 }
 
-void CodeGenVisitor::visit(ast::while_operator *While) {
+ResultTy CodeGenVisitor::visit(ast::while_operator *While) {
   auto [WhileBodyBlock, WhileEndBlock] =
-      createStartWhile(getValueAfterAccept(While->condition()));
+      createStartWhile(acceptASTNode(While->condition()));
   // While body codegen
   While->body()->accept(this);
 
-  createEndWhile(getValueAfterAccept(While->condition()), WhileBodyBlock,
+  createEndWhile(acceptASTNode(While->condition()), WhileBodyBlock,
                  WhileEndBlock);
+  return createWrapperRef();
 }
 
-void CodeGenVisitor::visit(ast::read_expression * /*unused*/) {
+ResultTy CodeGenVisitor::visit(ast::read_expression * /*unused*/) {
   auto *ScanType = FunctionType::get(CodeGen.getInt32Ty(), false);
   auto *ScanFunc =
       CodeGen.Mod->getFunction(codegen::IRCodeGenerator::ParaCLScanFuncName);
   auto *ScanRetVal = Builder().CreateCall(ScanType, ScanFunc);
-  setCurrValue(ScanRetVal);
+  return createWrapperRef(ScanRetVal);
 }
 
-void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
-  auto *PrintVal = getValueAfterAccept(PrintFuncNode->get());
-  assert(PrintVal);
+ResultTy CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
+  auto &PrintVal = acceptASTNode(PrintFuncNode->get());
   auto *PrintType = PrintVal->getType();
   assert(PrintType);
 
@@ -237,10 +247,10 @@ void CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
     llvm_unreachable(
         llvm::formatv("incorrect print type: '{0}'", S).str().c_str());
   }
-  setCurrValue(PrintVal);
+  return PrintVal;
 }
 
-void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
+ResultTy CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock(),
                                  "array.creat.block");
   auto *Arr = ArrStore->get();
@@ -270,8 +280,6 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
     Builder().CreateStore(CurrArrInfo.Sizes[Index - 1], PtrGEP);
   }
 
-  ValManager.setValueTypeLink(AllocaStructPtr, ArrStructTy);
-  setCurrValue(AllocaStructPtr);
   if (auto ConstSizesOpt =
           tryConvertDataToConstant<ConstantInt>(CurrArrInfo.Sizes);
       ConstSizesOpt.has_value()) {
@@ -329,6 +337,9 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   // Clear the current array tracker.
   CurrArrInfo.clear();
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock());
+
+  ValManager.setValueTypeLink(AllocaStructPtr, ArrStructTy);
+  return createWrapperRef(AllocaStructPtr);
 }
 
 // In the next two functions, we recursively collecting information about an
@@ -338,10 +349,10 @@ void CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
 // (preset) arrays. At the end of each traversal, we set the returned Value to
 // nullptr (this signals that the next array’s initializer will be another
 // array).
-void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
+ResultTy CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   auto *DataTy = CodeGen.getInt32Ty();
-  auto *InitVal = getValueAfterAccept(UnifArr->getInitExpr());
-  auto *Size = getValueAfterAccept(UnifArr->getSize());
+  auto &InitVal = acceptASTNode(UnifArr->getInitExpr());
+  auto &Size = acceptASTNode(UnifArr->getSize());
   assert(Size);
   auto *ConstSize = isConstantInt(Size);
   bool isConstantNotZeroSize = ConstSize && !ConstSize->isZero();
@@ -431,13 +442,13 @@ void CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
     }
   }
   CurrArrInfo.pushSize(Size);
-  setCurrValue(nullptr);
+  return createWrapperRef(nullptr);
 }
 
-void CodeGenVisitor::visit(ast::PresetArray *PresetArr) {
+ResultTy CodeGenVisitor::visit(ast::PresetArray *PresetArr) {
   auto *DataTy = CodeGen.getInt32Ty();
   llvm::for_each(*PresetArr, [&](auto *Exp) {
-    auto *Val = getValueAfterAccept(Exp);
+    auto &Val = acceptASTNode(Exp);
     if (Val) {
       if (auto Found = ArrInfoMap.find(Val); Found != ArrInfoMap.end()) {
         // We have a previously created array as an initializer, e.g
@@ -467,19 +478,20 @@ void CodeGenVisitor::visit(ast::PresetArray *PresetArr) {
 
   CurrArrInfo.clearSize();
   CurrArrInfo.pushSize(CodeGen.createConstantInt32(CurrArrInfo.Data.size()));
-  setCurrValue(nullptr);
+  return createWrapperRef(nullptr);
 }
 
-void CodeGenVisitor::visit(ast::ArrayAccess *ArrAccess) {
+ResultTy CodeGenVisitor::visit(ast::ArrayAccess *ArrAccess) {
   auto ElemPtr = getArrayAccessPtr(ArrAccess);
   auto *Load = Builder().CreateLoad(CodeGen.getInt32Ty(), ElemPtr);
-  setCurrValue(Load);
+  return createWrapperRef(Load);
 }
 
-void CodeGenVisitor::visit(ast::ArrayAccessAssignment *Assign) {
+ResultTy CodeGenVisitor::visit(ast::ArrayAccessAssignment *Assign) {
   auto *AccessPtr = getArrayAccessPtr(Assign->getArrayAccess());
-  auto *IdentValue = getValueAfterAccept(Assign->getIdentExp());
+  auto &IdentValue = acceptASTNode(Assign->getIdentExp());
   Builder().CreateStore(IdentValue, AccessPtr);
+  return createWrapperRef(IdentValue);
 }
 
 Value *CodeGenVisitor::getArrayAccessPtr(ast::ArrayAccess *ArrAccess) {
@@ -488,7 +500,7 @@ Value *CodeGenVisitor::getArrayAccessPtr(ast::ArrayAccess *ArrAccess) {
   Indexes.reserve(ArrAccess->getSize() + 1);
   // Get access indexes for an array
   llvm::for_each(*ArrAccess, [&](auto *Exp) {
-    auto *IndexVal = getValueAfterAccept(Exp);
+    Value *IndexVal = acceptASTNode(Exp);
     assert(IndexVal->getType()->isIntegerTy());
     Indexes.push_back(IndexVal);
   });
@@ -567,7 +579,8 @@ void CodeGenVisitor::createEndWhile(Value *Condition, BasicBlock *BodyBlock,
 
 Value *CodeGenVisitor::createLogicAnd(ast::logic_expression *LogExp) {
   auto *DataTy = CodeGen.getInt32Ty();
-  auto *Lhs = getValueAfterAccept(LogExp->left());
+  auto &Lhs = acceptASTNode(LogExp->left());
+  assert(Lhs);
   Lhs = Builder().CreateZExt(Lhs, DataTy);
 
   auto *LhsBlock = Builder().GetInsertBlock();
@@ -582,7 +595,8 @@ Value *CodeGenVisitor::createLogicAnd(ast::logic_expression *LogExp) {
   Builder().CreateCondBr(IsLhsNonZero, RhsBlock, FalseBlock);
 
   Builder().SetInsertPoint(RhsBlock);
-  auto *Rhs = getValueAfterAccept(LogExp->right());
+  auto &Rhs = acceptASTNode(LogExp->right());
+  assert(Rhs);
   Rhs = Builder().CreateZExt(Rhs, DataTy);
   auto *IsRhsNonZero =
       Builder().CreateICmpNE(Rhs, ConstantInt::get(DataTy, 0), "tobool");
@@ -601,7 +615,8 @@ Value *CodeGenVisitor::createLogicAnd(ast::logic_expression *LogExp) {
 
 Value *CodeGenVisitor::createLogicOr(ast::logic_expression *LogExp) {
   auto *DataTy = CodeGen.getInt32Ty();
-  auto *Lhs = getValueAfterAccept(LogExp->left());
+  auto &Lhs = acceptASTNode(LogExp->left());
+  assert(Lhs);
   Lhs = Builder().CreateZExt(Lhs, DataTy);
 
   auto *LhsBlock = Builder().GetInsertBlock();
@@ -614,7 +629,8 @@ Value *CodeGenVisitor::createLogicOr(ast::logic_expression *LogExp) {
   Builder().CreateCondBr(IsLhsNonZero, MergeBlock, RhsBlock);
 
   Builder().SetInsertPoint(RhsBlock);
-  auto *Rhs = getValueAfterAccept(LogExp->right());
+  auto &Rhs = acceptASTNode(LogExp->right());
+  assert(Rhs);
   Rhs = Builder().CreateZExt(Rhs, DataTy);
   auto *IsRhsNonZero =
       Builder().CreateICmpNE(Rhs, ConstantInt::get(DataTy, 0), "tobool");
@@ -713,12 +729,6 @@ void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock,
 
 void CodeGenVisitor::printIRToOstream(raw_ostream &Os) const {
   CodeGen.Mod->print(Os, nullptr);
-}
-
-llvm::Value *CodeGenVisitor::getValueAfterAccept(ast::statement *Stm) {
-  assert(Stm);
-  Stm->accept(this);
-  return CurrVal;
 }
 
 } // namespace paracl

@@ -8,45 +8,45 @@
 
 namespace paracl {
 
+// When we perform syntactic analysis, it is useful to get the type and value as
+// the result of the operation.
+struct HandlerWrapper : public ValueWrapper {
+  using Type = PCLType;
+  using Value = PCLValue;
+  using TypePtr = Type *;
+  using ValuePtr = Value *;
+
+  HandlerWrapper(TypePtr Ty, ValuePtr Val) : Ty(Ty), Val(Val) {}
+
+  TypePtr Ty;
+  ValuePtr Val;
+};
+
 class ErrorHandler : public InterpreterBase {
   using StringErrType = std::string;
   using ErrorType = std::pair<StringErrType, yy::location>;
-  using TypePtr = PCLType *;
 
 public:
-  void visit(ast::root_statement_block *StmBlock) override;
+  using WrapperTy = HandlerWrapper;
+  using ResultTy = WrapperTy &;
 
-  void visit(ast::statement_block *StmBlock) override;
-
-  void visit(ast::calc_expression *CalcExp) override;
-
-  void visit(ast::logic_expression *LogExp) override;
-
-  void visit(ast::un_operator *UnOp) override;
-
-  void visit(ast::number *Num) override;
-
-  void visit(ast::assignment *Assign) override;
-
-  void visit(ast::variable *Assign) override;
-
-  void visit(ast::if_operator *If) override;
-
-  void visit(ast::while_operator *While) override;
-
-  void visit(ast::read_expression * /*unused*/) override;
-
-  void visit(ast::print_function * /*unused*/) override;
-
-  void visit(ast::ArrayHolder *ArrStore) override;
-
-  void visit(ast::PresetArray *PresetArr) override;
-
-  void visit(ast::UniformArray *UnifArr) override;
-
-  void visit(ast::ArrayAccess *ArrAccess) override;
-
-  void visit(ast::ArrayAccessAssignment *ArrAssign) override;
+  ResultTy visit(ast::root_statement_block *StmBlock) override;
+  ResultTy visit(ast::statement_block *StmBlock) override;
+  ResultTy visit(ast::calc_expression *CalcExp) override;
+  ResultTy visit(ast::logic_expression *LogExp) override;
+  ResultTy visit(ast::un_operator *UnOp) override;
+  ResultTy visit(ast::number *Num) override;
+  ResultTy visit(ast::assignment *Assign) override;
+  ResultTy visit(ast::variable *Assign) override;
+  ResultTy visit(ast::if_operator *If) override;
+  ResultTy visit(ast::while_operator *While) override;
+  ResultTy visit(ast::read_expression *ReadExp) override;
+  ResultTy visit(ast::print_function *PrintFunc) override;
+  ResultTy visit(ast::ArrayHolder *ArrStore) override;
+  ResultTy visit(ast::PresetArray *PresetArr) override;
+  ResultTy visit(ast::UniformArray *UnifArr) override;
+  ResultTy visit(ast::ArrayAccess *ArrAccess) override;
+  ResultTy visit(ast::ArrayAccessAssignment *ArrAssign) override;
 
   void run(ast::statement_block *root);
 
@@ -60,12 +60,16 @@ public:
   auto begin() const noexcept;
   auto end() const noexcept;
 
-  void setTypeAndValue(TypePtr Ty, ValuePtr Val);
-
-  std::pair<PCLType *, PCLValue *>
-  getTypeAndValueAfterAccept(ast::statement *Stm);
-
 private:
+  ResultTy acceptASTNode(ast::statement *Stm) override {
+    return static_cast<ResultTy>(Stm->accept(this));
+  }
+
+  ResultTy createWrapperRef(HandlerWrapper::TypePtr Ty = nullptr,
+                            HandlerWrapper::ValuePtr Val = nullptr) {
+    return VisitorBase::createWrapperRef<WrapperTy>(Ty, Val);
+  }
+
   StringErrType makeValidationMessage(const std::string &ErrMes,
                                       yy::location Loc) const;
 
@@ -77,7 +81,6 @@ private:
   unsigned computeArrayDimension(ArrayTy *Arr);
 
   std::vector<ErrorType> Errors;
-  TypePtr CurrTy;
 };
 
 } // namespace paracl

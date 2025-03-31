@@ -10,84 +10,100 @@
 
 namespace paracl {
 
-InterpreterBase::ValuePtr
-InterpreterBase::performLogicalOperation(ast::LogicOp Op, IntegerVal *Lhs,
-                                         IntegerVal *Rhs, IntegerTy *Type) {
+using ResultTy = InterpreterBase::ResultTy;
+
+ResultTy InterpreterBase::performLogicalOperation(ast::LogicOp Op,
+                                                  IntegerVal *Lhs,
+                                                  IntegerVal *Rhs,
+                                                  IntegerTy *Type) {
   assert(Lhs);
   assert(Rhs);
   assert(Type);
   switch (Op) {
   case ast::LogicOp::LESS:
-    return ValManager.createValue<IntegerVal>(*Lhs < *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs < *Rhs, Type));
   case ast::LogicOp::LESS_EQ:
-    return ValManager.createValue<IntegerVal>(*Lhs <= *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs <= *Rhs, Type));
     break;
   case ast::LogicOp::AND:
-    return ValManager.createValue<IntegerVal>(*Lhs && *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs && *Rhs, Type));
     break;
   case ast::LogicOp::OR:
-    return ValManager.createValue<IntegerVal>(*Lhs || *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs || *Rhs, Type));
     break;
   case ast::LogicOp::GREATER:
-    return ValManager.createValue<IntegerVal>(*Lhs > *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs > *Rhs, Type));
     break;
   case ast::LogicOp::GREATER_EQ:
-    return ValManager.createValue<IntegerVal>(*Lhs >= *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs >= *Rhs, Type));
     break;
   case ast::LogicOp::EQ:
-    return ValManager.createValue<IntegerVal>(*Lhs == *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs == *Rhs, Type));
     break;
   case ast::LogicOp::NEQ:
-    return ValManager.createValue<IntegerVal>(*Lhs != *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs != *Rhs, Type));
     break;
   default:
     llvm_unreachable("Unsupported logic operator");
   }
 }
 
-InterpreterBase::ValuePtr
-InterpreterBase::performUnaryOperation(ast::UnOp Op, IntegerVal *Value,
-                                       IntegerTy *Type) {
+ResultTy InterpreterBase::performUnaryOperation(ast::UnOp Op, IntegerVal *Value,
+                                                IntegerTy *Type) {
   assert(Value);
   assert(Type);
   switch (Op) {
   case ast::UnOp::PLUS:
-    return Value;
+    return createWrapperRef(Value);
     break;
   case ast::UnOp::MINUS:
-    return ValManager.createValue<IntegerVal>(-*Value, Type);
+    return createWrapperRef(ValManager.createValue<IntegerVal>(-*Value, Type));
     break;
   case ast::UnOp::NEGATE:
-    return ValManager.createValue<IntegerVal>(!*Value, Type);
+    return createWrapperRef(ValManager.createValue<IntegerVal>(!*Value, Type));
     break;
   default:
     llvm_unreachable("Unsupported unary operator");
   }
 }
 
-InterpreterBase::ValuePtr
-InterpreterBase::performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
-                                            IntegerVal *Rhs, IntegerTy *Type,
-                                            yy::location Loc) {
+ResultTy InterpreterBase::performArithmeticOperation(ast::CalcOp Op,
+                                                     IntegerVal *Lhs,
+                                                     IntegerVal *Rhs,
+                                                     IntegerTy *Type,
+                                                     yy::location Loc) {
   assert(Lhs);
   assert(Rhs);
   assert(Type);
   switch (Op) {
   case ast::CalcOp::ADD:
-    return ValManager.createValue<IntegerVal>(*Lhs + *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs + *Rhs, Type));
     break;
   case ast::CalcOp::SUB:
-    return ValManager.createValue<IntegerVal>(*Lhs - *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs - *Rhs, Type));
     break;
   case ast::CalcOp::MUL:
-    return ValManager.createValue<IntegerVal>(*Lhs * *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs * *Rhs, Type));
     break;
   case ast::CalcOp::PERCENT:
-    return ValManager.createValue<IntegerVal>(*Lhs % *Rhs, Type);
+    return createWrapperRef(
+        ValManager.createValue<IntegerVal>(*Lhs % *Rhs, Type));
     break;
   case ast::CalcOp::DIV:
     if (int check = *Rhs; check) {
-      return ValManager.createValue<IntegerVal>(*Lhs / check, Type);
+      return createWrapperRef(
+          ValManager.createValue<IntegerVal>(*Lhs / check, Type));
     } else {
       std::ostringstream Str;
       Str << Loc;
@@ -99,80 +115,80 @@ InterpreterBase::performArithmeticOperation(ast::CalcOp Op, IntegerVal *Lhs,
   }
 }
 
-void Interpreter::visit(ast::root_statement_block *StmBlock) {
-  visit(static_cast<ast::statement_block *>(StmBlock));
+ResultTy Interpreter::visit(ast::root_statement_block *StmBlock) {
+  return visit(static_cast<ast::statement_block *>(StmBlock));
 }
 
-void Interpreter::visit(ast::statement_block *StmBlock) {
-  acceptStatementBlock(StmBlock);
+ResultTy Interpreter::visit(ast::statement_block *StmBlock) {
+  auto &StmAccept = acceptStatementBlock(StmBlock);
   freeResources(StmBlock);
+  return StmAccept;
 }
 
-void Interpreter::visit(ast::calc_expression *CalcExp) {
-  auto *Lhs = getValueAfterAccept<IntegerVal>(CalcExp->left());
-  auto *Rhs = getValueAfterAccept<IntegerVal>(CalcExp->right());
+ResultTy Interpreter::visit(ast::calc_expression *CalcExp) {
+  auto *Lhs = acceptASTNode(CalcExp->left()).getAs<IntegerVal>();
+  auto *Rhs = acceptASTNode(CalcExp->right()).getAs<IntegerVal>();
   auto *Type = Lhs->getType();
   assert(Type->isInt32Ty());
 
-  setValue(performArithmeticOperation(CalcExp->type(), Lhs, Rhs, Type,
-                                      CalcExp->location()));
+  return performArithmeticOperation(CalcExp->type(), Lhs, Rhs, Type,
+                                    CalcExp->location());
 }
 
-void Interpreter::visit(ast::un_operator *UnOp) {
-  auto *Value = getValueAfterAccept<IntegerVal>(UnOp->arg());
+ResultTy Interpreter::visit(ast::un_operator *UnOp) {
+  auto *Value = acceptASTNode(UnOp->arg()).getAs<IntegerVal>();
   auto *Type = Value->getType();
   assert(Type->isInt32Ty());
 
-  setValue(performUnaryOperation(UnOp->type(), Value, Type));
+  return performUnaryOperation(UnOp->type(), Value, Type);
 }
 
-void Interpreter::visit(ast::logic_expression *LogExp) {
-  auto *Lhs = getValueAfterAccept<IntegerVal>(LogExp->left());
+ResultTy Interpreter::visit(ast::logic_expression *LogExp) {
+  auto *Lhs = acceptASTNode(LogExp->left()).getAs<IntegerVal>();
   auto *Type = Lhs->getType();
   assert(Type->isInt32Ty());
   assert(Lhs);
-  if (LogExp->type() == ast::LogicOp::AND && !*Lhs) {
-    setValue(ValManager.createValue<IntegerVal>(0, Type));
-  } else if (LogExp->type() == ast::LogicOp::OR && *Lhs) {
-    setValue(ValManager.createValue<IntegerVal>(1, Type));
-  } else {
-    auto *Rhs = getValueAfterAccept<IntegerVal>(LogExp->right());
-    setValue(performLogicalOperation(LogExp->type(), Lhs, Rhs, Type));
-  }
+  if (LogExp->type() == ast::LogicOp::AND && !*Lhs)
+    return createWrapperRef(ValManager.createValue<IntegerVal>(0, Type));
+  if (LogExp->type() == ast::LogicOp::OR && *Lhs)
+    return createWrapperRef(ValManager.createValue<IntegerVal>(1, Type));
+  auto *Rhs = acceptASTNode(LogExp->right()).getAs<IntegerVal>();
+  return performLogicalOperation(LogExp->type(), Lhs, Rhs, Type);
 }
 
-void Interpreter::visit(ast::number *Num) {
-  setValue(ValManager.createValue<IntegerVal>(
+ResultTy Interpreter::visit(ast::number *Num) {
+  return createWrapperRef(ValManager.createValue<IntegerVal>(
       Num->get_value(), SymTbl.createType(TypeID::Int32)));
 }
 
-void Interpreter::visit(ast::variable *Var) {
+ResultTy Interpreter::visit(ast::variable *Var) {
   auto EntityKey = Var->entityKey();
   [[maybe_unused]] auto *Ty = SymTbl.getTypeFor(EntityKey);
   assert(Ty);
-  auto *Value = ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey));
-  setValue(Value);
+  return createWrapperRef(
+      ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey)));
 }
 
-void Interpreter::visit(ast::if_operator *If) {
-  auto *CondVal = getValueAfterAccept<IntegerVal>(If->condition());
-  if (CondVal->getValue()) {
-    If->body()->accept(this);
-  } else if (If->else_block()) {
-    If->else_block()->accept(this);
-  }
+ResultTy Interpreter::visit(ast::if_operator *If) {
+  auto *CondVal = acceptASTNode(If->condition()).getAs<IntegerVal>();
+  if (CondVal->getValue())
+    return acceptASTNode(If->body());
+  if (If->else_block())
+    return acceptASTNode(If->else_block());
+  return createWrapperRef();
 }
 
-void Interpreter::visit(ast::while_operator *While) {
-  auto *CondVal = getValueAfterAccept<IntegerVal>(While->condition());
+ResultTy Interpreter::visit(ast::while_operator *While) {
+  auto *CondVal = acceptASTNode(While->condition()).getAs<IntegerVal>();
   assert(CondVal);
   while (CondVal->getValue()) {
-    While->body()->accept(this);
-    CondVal = getValueAfterAccept<IntegerVal>(While->condition());
+    acceptASTNode(While->body());
+    CondVal = acceptASTNode(While->condition()).getAs<IntegerVal>();
   }
+  return createWrapperRef();
 }
 
-void Interpreter::visit(ast::read_expression *ReadExp) {
+ResultTy Interpreter::visit(ast::read_expression *ReadExp) {
   int Tmp = 0;
   input_stream_ >> Tmp;
   if (input_stream_.fail()) {
@@ -182,19 +198,19 @@ void Interpreter::visit(ast::read_expression *ReadExp) {
                                 LocationStr.str()));
   }
 
-  setValue(ValManager.createValue<IntegerVal>(
+  return createWrapperRef(ValManager.createValue<IntegerVal>(
       Tmp, SymTbl.createType(TypeID::Int32)));
 }
 
-void Interpreter::visit(ast::print_function *Print) {
-  auto *Val = getValueAfterAccept(Print->get());
+ResultTy Interpreter::visit(ast::print_function *Print) {
+  auto *Val = acceptASTNode(Print->get()).get();
   assert(Val);
   Val->print(output_stream_);
-  setValue(Val);
+  return createWrapperRef(Val);
 }
 
-void Interpreter::visit(ast::assignment *Assign) {
-  auto *IdentExp = getValueAfterAccept(Assign->getIdentExp());
+ResultTy Interpreter::visit(ast::assignment *Assign) {
+  auto *IdentExp = acceptASTNode(Assign->getIdentExp()).get();
   assert(IdentExp);
   auto *IdentType = IdentExp->getType();
   auto EntityKey = Assign->entityKey();
@@ -207,47 +223,49 @@ void Interpreter::visit(ast::assignment *Assign) {
       // Since the array is assigned only during its creation, no copies are
       // made; instead, the created array is immediately bound to the name
       ValManager.linkValueWithName(DeclKey, IdentExp);
-    } else if (IdentType->isInt32Ty()) {
-      ValManager.createValueFor<IntegerVal>(
-          DeclKey, static_cast<IntegerVal *>(IdentExp)->getValue(),
-          SymTbl.createType(TypeID::Int32));
+      return createWrapperRef(IdentExp);
     }
-  } else {
-    auto *Value =
-        ValManager.getValueFor<IntegerVal>(SymTbl.getDeclKeyFor(EntityKey));
-    assert(Value);
-    Value->setValue(static_cast<IntegerVal *>(IdentExp));
+    if (IdentType->isInt32Ty())
+      return createWrapperRef(ValManager.createValueFor<IntegerVal>(
+          DeclKey, static_cast<IntegerVal *>(IdentExp)->getValue(),
+          SymTbl.createType(TypeID::Int32)));
+    return createWrapperRef();
   }
+  auto *Value =
+      ValManager.getValueFor<IntegerVal>(SymTbl.getDeclKeyFor(EntityKey));
+  assert(Value);
+  Value->setValue(static_cast<IntegerVal *>(IdentExp));
+  return createWrapperRef(IdentExp);
 }
 
-void Interpreter::visit(ast::ArrayHolder *ArrStore) {
+ResultTy Interpreter::visit(ast::ArrayHolder *ArrStore) {
   auto *Arr = ArrStore->get();
   assert(Arr);
-  Arr->accept(this);
+  return acceptASTNode(Arr);
 }
 
-void Interpreter::visit(ast::PresetArray *PresetArr) {
+ResultTy Interpreter::visit(ast::PresetArray *PresetArr) {
   llvm::SmallVector<PCLValue *> PresetValues;
   PresetValues.reserve(PresetArr->size());
   for (auto *CurrExp : *PresetArr) {
-    PresetValues.push_back(getValueAfterAccept(CurrExp));
+    PresetValues.push_back(acceptASTNode(CurrExp).get());
   }
 
   auto *ArrVal = ValManager.createValue<PresetArrayVal>(
       PresetValues.begin(), PresetValues.end(),
       static_cast<ArrayTy *>(SymTbl.createType(TypeID::PresetArray)));
   addResourceForFree(ArrVal, PresetArr->scope());
-  setValue(ArrVal);
+  return createWrapperRef(ArrVal);
 }
 
-void Interpreter::visit(ast::ArrayAccess *ArrAccess) {
+ResultTy Interpreter::visit(ast::ArrayAccess *ArrAccess) {
   auto AccessSize = ArrAccess->getSize();
   auto *CurrArr = ValManager.getValueFor<ArrayBase>(
       SymTbl.getDeclKeyFor(ArrAccess->entityKey()));
   assert(CurrArr);
   int CurrID = 0;
   for (unsigned ArrID = 1; auto RankID : *ArrAccess) {
-    auto *RankVal = getValueAfterAccept<IntegerVal>(RankID);
+    auto *RankVal = acceptASTNode(RankID).getAs<IntegerVal>();
     assert(RankVal);
     CurrID = RankVal->getValue();
     if (ArrID != AccessSize)
@@ -255,27 +273,28 @@ void Interpreter::visit(ast::ArrayAccess *ArrAccess) {
     ArrID++;
   }
   assert(CurrArr);
-  setValue((*CurrArr)[CurrID]);
+  return createWrapperRef((*CurrArr)[CurrID]);
 }
 
-void Interpreter::visit(ast::UniformArray *UnifArr) {
-  auto *InitExpr = getValueAfterAccept(UnifArr->getInitExpr());
-  auto *Size = getValueAfterAccept<IntegerVal>(UnifArr->getSize());
+ResultTy Interpreter::visit(ast::UniformArray *UnifArr) {
+  auto *InitExpr = acceptASTNode(UnifArr->getInitExpr()).get();
+  auto *Size = acceptASTNode(UnifArr->getSize()).getAs<IntegerVal>();
 
   assert(InitExpr && Size);
   auto *ArrVal = ValManager.createValue<UniformArrayVal>(
       InitExpr, *Size,
       static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray)));
   addResourceForFree(ArrVal, UnifArr->scope());
-  setValue(ArrVal);
+  return createWrapperRef(ArrVal);
 }
 
-void Interpreter::visit(ast::ArrayAccessAssignment *Arr) {
-  auto *LValue = getValueAfterAccept<IntegerVal>(Arr->getArrayAccess());
-  auto *IdentExp = getValueAfterAccept<IntegerVal>(Arr->getIdentExp());
+ResultTy Interpreter::visit(ast::ArrayAccessAssignment *Arr) {
+  auto *LValue = acceptASTNode(Arr->getArrayAccess()).getAs<IntegerVal>();
+  auto *IdentExp = acceptASTNode(Arr->getIdentExp()).getAs<IntegerVal>();
 
   assert(LValue && IdentExp);
   LValue->setValue(IdentExp);
+  return createWrapperRef(IdentExp);
 }
 
 void Interpreter::freeResources(ast::statement_block *StmBlock) {
@@ -291,10 +310,11 @@ void Interpreter::freeResources(ast::statement_block *StmBlock) {
     });
 }
 
-void InterpreterBase::acceptStatementBlock(ast::statement_block *StmBlock) {
+ResultTy InterpreterBase::acceptStatementBlock(ast::statement_block *StmBlock) {
   for (auto &&statement : *StmBlock) {
     statement->accept(this);
   }
+  return createWrapperRef();
 }
 
 void Interpreter::addResourceForFree(PCLValue *ValToFree,

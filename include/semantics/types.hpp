@@ -81,6 +81,8 @@ public:
     }
   }
 
+  void print(std::ostream &Os) { Os << getName().str() << '\n'; }
+
 protected:
   TypeID ID;
 };

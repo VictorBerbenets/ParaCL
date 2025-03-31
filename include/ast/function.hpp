@@ -18,7 +18,7 @@ public:
   print_function(expression *expr, yy::location loc)
       : expression{loc}, print_expr_{expr} {}
 
-  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  ResultValue accept(VisitorBasePtr Vis) override { return Vis->visit(this); }
 
   expression *get() const noexcept { return print_expr_; }
 

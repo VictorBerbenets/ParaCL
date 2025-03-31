@@ -28,7 +28,7 @@ class while_operator : public ctrl_statement {
 public:
   using ctrl_statement::ctrl_statement;
 
-  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  ResultValue accept(VisitorBasePtr Vis) override { return Vis->visit(this); }
 };
 
 class if_operator final : public ctrl_statement {
@@ -39,7 +39,7 @@ public:
               yy::location loc)
       : ctrl_statement{cond, body, loc}, else_block_{else_block} {}
 
-  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  ResultValue accept(VisitorBasePtr Vis) override { return Vis->visit(this); }
 
   statement *else_block() noexcept { return else_block_; }
 

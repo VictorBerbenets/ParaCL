@@ -1,6 +1,7 @@
 #pragma once
 
 #include <llvm/ADT/STLExtras.h>
+#include <llvm/IR/Value.h>
 
 #include <concepts>
 #include <iostream>
@@ -12,7 +13,11 @@
 
 namespace paracl {
 
+class ValueWrapper;
 class PCLValue;
+
+template <typename T>
+concept DerivedFromValueWrapper = std::derived_from<T, ValueWrapper>;
 
 template <typename T>
 concept DerivedFromPCLValue = std::derived_from<T, PCLValue>;
@@ -23,6 +28,46 @@ concept PCLValuePointerIter =
     std::is_pointer_v<typename std::iterator_traits<Iter>::value_type> &&
     DerivedFromPCLValue<
         std::remove_pointer_t<typename std::iterator_traits<Iter>::value_type>>;
+
+template <typename T>
+concept IsPureType = std::is_same_v<std::decay_t<T>, T>;
+
+class ValueWrapper {
+protected:
+  ValueWrapper() = default;
+
+public:
+  virtual ~ValueWrapper() = default;
+};
+
+// We usually only need wrapper for one value class. Wrapper for visitor return
+// type inherits from this class to get a useful interface
+template <IsPureType T> class ValueWrapperInterface {
+protected:
+  using WrapperInterfaceTy = ValueWrapperInterface<T>;
+
+public:
+  using ValueType = T *;
+
+  ValueWrapperInterface(ValueType Val) : Val(Val) {}
+
+  ValueType get() noexcept { return Val; }
+  template <std::derived_from<T> CastTo> CastTo *getAs() {
+    assert(Val);
+    return static_cast<CastTo *>(Val);
+  }
+
+  void set(ValueType ValToSet) noexcept { Val = ValToSet; }
+
+  bool isNull() const noexcept { return Val == nullptr; }
+
+  ValueType operator->() { return Val; }
+
+  operator ValueType() { return Val; }
+
+protected:
+  ValueType Val;
+};
 
 class PCLValue {
 public:

@@ -123,10 +123,10 @@ private:
 // specialize only by type, without adding anything else.
 template <> class SymTable<llvm::Type> : public SymTableBase<llvm::Type> {};
 
-// This base class is responsible for associating a Value with a name, type, and
-// other attributes. It provides methods for access and insertion. Important:
-// Value insertion and access require a DeclKey, which must be obtained from the
-// SymTable class using the appropriate method.
+// This base class is responsible for associating a ValueTy with a name, type,
+// and other attributes. It provides methods for access and insertion.
+// Important: Value insertion and access require a DeclKey, which must be
+// obtained from the SymTable class using the appropriate method.
 template <typename ValueTy> class ValueManagerBase {
 public:
   using ValueType = ValueTy;
@@ -175,14 +175,14 @@ public:
   }
 
 private:
-  llvm::SmallVector<std::unique_ptr<PCLValue>> Values;
+  llvm::SmallVector<std::unique_ptr<ValueType>> Values;
 };
 
 // This specialization is used for code generation. In addition to the methods
 // and fields of the base class, it provides the ability to establish a
-// relationship between a Value and its Type. This is necessary because
-// sometimes we cannot retrieve the Type for a Value from the SymTable (no key
-// is available).
+// relationship between a llvm Value and its Type. This is necessary
+// because sometimes we cannot retrieve the Type for a Value from the SymTable
+// (no key is available).
 template <>
 class ValueManager<llvm::Value> : public ValueManagerBase<llvm::Value> {
 public:

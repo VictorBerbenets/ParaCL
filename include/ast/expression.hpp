@@ -29,7 +29,7 @@ public:
 
   const value_type &get_value() const noexcept;
 
-  void accept(VisitorBase *Vis) override;
+  ResultValue accept(VisitorBasePtr Vis) override;
 
 private:
   value_type value_;
@@ -40,7 +40,7 @@ public:
   variable(statement_block *curr_block, SymbNameType &&var_name,
            yy::location l);
 
-  void accept(VisitorBase *Vis) override;
+  ResultValue accept(VisitorBasePtr Vis) override;
 
   llvm::StringRef name() const noexcept;
 
@@ -54,7 +54,7 @@ class un_operator : public expression {
 public:
   un_operator(UnOp type, pointer_type arg, yy::location loc);
 
-  void accept(VisitorBase *Vis) override;
+  ResultValue accept(VisitorBasePtr Vis) override;
 
   expression *arg() noexcept;
   UnOp type() const noexcept;
@@ -83,14 +83,14 @@ class calc_expression : public bin_operator<CalcOp> {
 public:
   using bin_operator::bin_operator;
 
-  void accept(VisitorBase *Vis) override;
+  ResultValue accept(VisitorBasePtr Vis) override;
 };
 
 class logic_expression : public bin_operator<LogicOp> {
 public:
   using bin_operator::bin_operator;
 
-  void accept(VisitorBase *Vis) override;
+  ResultValue accept(VisitorBasePtr Vis) override;
 };
 
 class assignment : public expression {
@@ -98,7 +98,7 @@ public:
   assignment(statement_block *curr_block, variable *LValue, expression *expr,
              yy::location loc);
 
-  void accept(VisitorBase *VisitorBase) override;
+  ResultValue accept(VisitorBasePtr VisitorBase) override;
 
   variable *getLValue() noexcept;
   expression *getIdentExp() noexcept;
@@ -119,7 +119,7 @@ class read_expression : public expression {
 public:
   read_expression(yy::location loc);
 
-  void accept(VisitorBase *VisitorBase) override;
+  ResultValue accept(VisitorBasePtr VisitorBase) override;
 };
 
 } // namespace ast

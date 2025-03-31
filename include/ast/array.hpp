@@ -16,7 +16,7 @@ public:
   PresetArray(statement_block *StmBlock, Iter Begin, Iter End, yy::location Loc)
       : IArray(StmBlock, Loc), Elements(Begin, End) {}
 
-  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  ResultValue accept(VisitorBasePtr Vis) override { return Vis->visit(this); }
 
   auto begin() { return Elements.begin(); }
   auto end() { return Elements.end(); }
@@ -38,7 +38,7 @@ public:
   expression *getInitExpr() noexcept { return InitExpr; }
   expression *getSize() noexcept { return Size; }
 
-  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  ResultValue accept(VisitorBasePtr Vis) override { return Vis->visit(this); }
 
 private:
   expression *InitExpr;
@@ -53,7 +53,7 @@ public:
       : variable(StmBlock, std::forward<SymbNameType>(Name), loc),
         RanksId(Begin, End) {}
 
-  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  ResultValue accept(VisitorBasePtr Vis) override { return Vis->visit(this); }
 
   void setIdentExp(expression *Ident) { IdentExp = Ident; }
 
@@ -76,7 +76,7 @@ public:
                         expression *Ident, yy::location Loc)
       : expression(StmBlock, Loc), ArrAccess(Access), Identifier(Ident) {}
 
-  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  ResultValue accept(VisitorBasePtr Vis) override { return Vis->visit(this); }
 
   ArrayAccess *getArrayAccess() noexcept { return ArrAccess; }
   expression *getIdentExp() noexcept { return Identifier; }
@@ -97,7 +97,7 @@ public:
   ArrayHolder(statement_block *StmBlock, IArray *Arr, yy::location Loc)
       : expression(StmBlock, Loc), Arr(Arr) {}
 
-  void accept(VisitorBase *Vis) override { Vis->visit(this); }
+  ResultValue accept(VisitorBasePtr Vis) override { return Vis->visit(this); }
 
   IArray *get() noexcept { return Arr; }
 

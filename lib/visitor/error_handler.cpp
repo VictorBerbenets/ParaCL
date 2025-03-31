@@ -9,17 +9,20 @@
 
 namespace paracl {
 
-void ErrorHandler::visit(ast::root_statement_block *StmBlock) {
-  ErrorHandler::visit(static_cast<ast::statement_block *>(StmBlock));
+using ResultTy = ErrorHandler::ResultTy;
+
+ResultTy ErrorHandler::visit(ast::root_statement_block *StmBlock) {
+  return visit(static_cast<ast::statement_block *>(StmBlock));
 }
 
-void ErrorHandler::visit(ast::statement_block *StmBlock) {
+ResultTy ErrorHandler::visit(ast::statement_block *StmBlock) {
   acceptStatementBlock(StmBlock);
+  return createWrapperRef();
 }
 
-void ErrorHandler::visit(ast::calc_expression *CalcExp) {
-  auto [LhsTy, LhsVal] = getTypeAndValueAfterAccept(CalcExp->left());
-  auto [RhsTy, RhsVal] = getTypeAndValueAfterAccept(CalcExp->right());
+ResultTy ErrorHandler::visit(ast::calc_expression *CalcExp) {
+  auto [LhsTy, LhsVal] = acceptASTNode(CalcExp->left());
+  auto [RhsTy, RhsVal] = acceptASTNode(CalcExp->right());
   if (!LhsTy || !RhsTy) {
     Errors.emplace_back("expression is not computable. Couldn't deduce the "
                         "types for arithmetic operation.",
@@ -38,19 +41,19 @@ void ErrorHandler::visit(ast::calc_expression *CalcExp) {
                          LhsTy->getName()),
            CalcExp->location()});
     else if (LhsVal && RhsVal)
-      setTypeAndValue(
+      return createWrapperRef(
           LhsTy, performArithmeticOperation(
                      CalcExp->type(), static_cast<IntegerVal *>(LhsVal),
                      static_cast<IntegerVal *>(RhsVal),
                      static_cast<IntegerTy *>(LhsTy), CalcExp->location()));
-    else
-      setTypeAndValue(LhsTy, nullptr);
+    return createWrapperRef(LhsTy, nullptr);
   }
+  return createWrapperRef();
 }
 
-void ErrorHandler::visit(ast::logic_expression *LogExp) {
-  auto [LhsTy, LhsVal] = getTypeAndValueAfterAccept(LogExp->left());
-  auto [RhsTy, RhsVal] = getTypeAndValueAfterAccept(LogExp->right());
+ResultTy ErrorHandler::visit(ast::logic_expression *LogExp) {
+  auto [LhsTy, LhsVal] = acceptASTNode(LogExp->left());
+  auto [RhsTy, RhsVal] = acceptASTNode(LogExp->right());
   if (!LhsTy || !RhsTy) {
     Errors.emplace_back("expression is not comparable. Couldn't deduce the "
                         "types for logic comparison.",
@@ -68,18 +71,19 @@ void ErrorHandler::visit(ast::logic_expression *LogExp) {
                          LhsTy->getName()),
            LogExp->location()});
     else if (LhsVal && RhsVal)
-      setTypeAndValue(LhsTy,
-                      performLogicalOperation(LogExp->type(),
-                                              static_cast<IntegerVal *>(LhsVal),
-                                              static_cast<IntegerVal *>(RhsVal),
-                                              static_cast<IntegerTy *>(LhsTy)));
+      return createWrapperRef(
+          LhsTy, performLogicalOperation(LogExp->type(),
+                                         static_cast<IntegerVal *>(LhsVal),
+                                         static_cast<IntegerVal *>(RhsVal),
+                                         static_cast<IntegerTy *>(LhsTy)));
     else
-      setTypeAndValue(LhsTy, nullptr);
+      return createWrapperRef(LhsTy, nullptr);
   }
+  return createWrapperRef();
 }
 
-void ErrorHandler::visit(ast::un_operator *UnOp) {
-  auto [Type, Value] = getTypeAndValueAfterAccept(UnOp->arg());
+ResultTy ErrorHandler::visit(ast::un_operator *UnOp) {
+  auto [Type, Value] = acceptASTNode(UnOp->arg());
   if (!Type) {
     Errors.emplace_back(
         "couldn't calculate the unary operation. Type is unknown",
@@ -91,40 +95,40 @@ void ErrorHandler::visit(ast::un_operator *UnOp) {
                          Type->getName()),
            UnOp->location()});
     else if (Value)
-      setTypeAndValue(Type, performUnaryOperation(
-                                UnOp->type(), static_cast<IntegerVal *>(Value),
+      return createWrapperRef(
+          Type,
+          performUnaryOperation(UnOp->type(), static_cast<IntegerVal *>(Value),
                                 static_cast<IntegerTy *>(Type)));
     else
-      setTypeAndValue(Type, nullptr);
+      return createWrapperRef(Type, nullptr);
   }
+  return createWrapperRef();
 }
 
-void ErrorHandler::visit(ast::number *Num) {
+ResultTy ErrorHandler::visit(ast::number *Num) {
   auto *Type = SymTbl.createType(TypeID::Int32);
-  setTypeAndValue(Type,
-                  ValManager.createValue<IntegerVal>(Num->get_value(), Type));
+  return createWrapperRef(
+      Type, ValManager.createValue<IntegerVal>(Num->get_value(), Type));
 }
 
-void ErrorHandler::visit(ast::variable *Var) {
+ResultTy ErrorHandler::visit(ast::variable *Var) {
   auto EntityKey = Var->entityKey();
   if (!SymTbl.isDefined(EntityKey)) {
     Errors.push_back(
         {llvm::formatv("'{0}' was not declared in this scope", Var->name()),
          Var->location()});
-    setTypeAndValue(nullptr, nullptr);
-  } else {
-    auto *Type = SymTbl.getTypeFor(EntityKey);
-    assert(Type);
-    auto *Value = ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey));
-    setTypeAndValue(Type, Value);
+    return createWrapperRef();
   }
+  auto *Type = SymTbl.getTypeFor(EntityKey);
+  assert(Type);
+  auto *Value = ValManager.getValueFor(SymTbl.getDeclKeyFor(EntityKey));
+  return createWrapperRef(Type, Value);
 }
 
-void ErrorHandler::visit(ast::assignment *Assign) {
+ResultTy ErrorHandler::visit(ast::assignment *Assign) {
   static constexpr llvm::StringRef ErrDesc = "expression is not assignable";
 
-  auto [IdentType, IdentVal] =
-      getTypeAndValueAfterAccept(Assign->getIdentExp());
+  auto [IdentType, IdentVal] = acceptASTNode(Assign->getIdentExp());
   auto EntityKey = Assign->entityKey();
   if (!SymTbl.isDefined(EntityKey) && IdentType) {
     assert(IdentType);
@@ -132,7 +136,7 @@ void ErrorHandler::visit(ast::assignment *Assign) {
       Errors.emplace_back(
           llvm::formatv("{0}: arrays cannot be copy constructed", ErrDesc),
           Assign->location());
-      return;
+      return createWrapperRef(IdentType);
     }
     [[maybe_unused]] auto IsDefined = SymTbl.tryDefine(EntityKey, IdentType);
     assert(IsDefined);
@@ -142,7 +146,7 @@ void ErrorHandler::visit(ast::assignment *Assign) {
         Assign->location());
   }
 
-  auto [LValueType, LVal] = getTypeAndValueAfterAccept(Assign->getLValue());
+  auto [LValueType, LVal] = acceptASTNode(Assign->getLValue());
   if (!IdentType || !LValueType)
     Errors.emplace_back(
         llvm::formatv("{0}: couldn't deduce the "
@@ -156,10 +160,11 @@ void ErrorHandler::visit(ast::assignment *Assign) {
          Assign->location()});
   else
     ValManager.linkValueWithName(SymTbl.getDeclKeyFor(EntityKey), nullptr);
+  return createWrapperRef(IdentType);
 }
 
-void ErrorHandler::visit(ast::if_operator *If) {
-  auto [Type, Value] = getTypeAndValueAfterAccept(If->condition());
+ResultTy ErrorHandler::visit(ast::if_operator *If) {
+  auto [Type, Value] = acceptASTNode(If->condition());
   if (!Type)
     Errors.emplace_back("couldn't calculate the conditional expression for "
                         "the if statement. Type is unknown",
@@ -172,11 +177,12 @@ void ErrorHandler::visit(ast::if_operator *If) {
                       Type->getName()),
         If->location());
 
-  If->body()->accept(this);
+  acceptASTNode(If->body());
+  return createWrapperRef();
 }
 
-void ErrorHandler::visit(ast::while_operator *While) {
-  auto [Type, Value] = getTypeAndValueAfterAccept(While->condition());
+ResultTy ErrorHandler::visit(ast::while_operator *While) {
+  auto [Type, Value] = acceptASTNode(While->condition());
   if (!Type)
     Errors.emplace_back("couldn't calculate the conditional expression for "
                         "the while statement. Type is unknown",
@@ -189,30 +195,33 @@ void ErrorHandler::visit(ast::while_operator *While) {
                       Type->getName()),
         While->location());
 
-  While->body()->accept(this);
+  return acceptASTNode(While->body());
 }
 
-void ErrorHandler::visit(ast::read_expression * /*unused*/) {
+ResultTy ErrorHandler::visit(ast::read_expression * /*unused*/) {
   // Pass nullptr as Value* because we handle only 'compile time' cases
-  setTypeAndValue(SymTbl.createType(TypeID::Int32), nullptr);
+  return createWrapperRef(SymTbl.createType(TypeID::Int32));
 }
 
-void ErrorHandler::visit(ast::print_function *Print) {
-  auto [Type, _] = getTypeAndValueAfterAccept(Print->get());
-  if (Type && !isPrintableType(*Type))
+ResultTy ErrorHandler::visit(ast::print_function *Print) {
+  auto [Type, _] = acceptASTNode(Print->get());
+  if (Type && !isPrintableType(*Type)) {
     Errors.emplace_back(
         llvm::formatv("invalid operand type to print expression: '{0}'",
                       Type->getName()),
         Print->location());
+    return createWrapperRef();
+  }
+  return createWrapperRef(Type);
 }
 
-void ErrorHandler::visit(ast::ArrayHolder *ArrStore) {
+ResultTy ErrorHandler::visit(ast::ArrayHolder *ArrStore) {
   auto *Arr = ArrStore->get();
   assert(Arr);
-  Arr->accept(this);
+  return acceptASTNode(Arr);
 }
 
-void ErrorHandler::visit(ast::PresetArray *PresetArr) {
+ResultTy ErrorHandler::visit(ast::PresetArray *PresetArr) {
   llvm::SmallVector<StringErrType> InvalidArrArgs;
   std::optional<unsigned> ArrSz = 0;
   auto IncreaseIfNotNullopt = [&](auto Sz) {
@@ -221,7 +230,7 @@ void ErrorHandler::visit(ast::PresetArray *PresetArr) {
   };
 
   for (auto *CurrElem : *PresetArr) {
-    auto [Type, _] = getTypeAndValueAfterAccept(CurrElem);
+    auto [Type, _] = acceptASTNode(CurrElem);
     if (!Type) {
       InvalidArrArgs.emplace_back(makeValidationMessage(
           "couldn't deduce the type for passed element", CurrElem->location()));
@@ -258,12 +267,12 @@ void ErrorHandler::visit(ast::PresetArray *PresetArr) {
   ArrType->setContainedType(SymTbl.createType(TypeID::Int32));
   if (ArrSz.has_value())
     ArrType->setSize(ArrSz.value());
-  setTypeAndValue(ArrType, nullptr);
+  return createWrapperRef(ArrType);
 }
 
-void ErrorHandler::visit(ast::UniformArray *UnifArr) {
-  auto [ContainType, _] = getTypeAndValueAfterAccept(UnifArr->getInitExpr());
-  auto [SizeType, SizeVal] = getTypeAndValueAfterAccept(UnifArr->getSize());
+ResultTy ErrorHandler::visit(ast::UniformArray *UnifArr) {
+  auto [ContainType, _] = acceptASTNode(UnifArr->getInitExpr());
+  auto [SizeType, SizeVal] = acceptASTNode(UnifArr->getSize());
   auto *ArrType =
       static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray));
   if (SizeType) {
@@ -276,16 +285,15 @@ void ErrorHandler::visit(ast::UniformArray *UnifArr) {
       ArrType->setSize(static_cast<IntegerVal *>(SizeVal)->getValue());
   }
   ArrType->setContainedType(ContainType);
-  setTypeAndValue(ArrType, nullptr);
+  return createWrapperRef(ArrType);
 }
 
-void ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
+ResultTy ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
   auto [Name, DeclScope] = SymTbl.getDeclKeyFor(ArrAccess->entityKey());
   if (!DeclScope) {
     Errors.emplace_back(
         llvm::formatv("use of undeclared identifier '{0}'", Name),
         ArrAccess->location());
-    return;
   }
 
   auto *CurrTy = SymTbl.getTypeFor(Name, DeclScope);
@@ -295,12 +303,11 @@ void ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
           ArrAccess->getSize()) {
     Errors.emplace_back("subscripted value is not an array",
                         ArrAccess->location());
-    setTypeAndValue(nullptr, nullptr);
-    return;
+    return createWrapperRef();
   }
   for (auto *CurrArrTy = static_cast<ArrayTy *>(CurrTy);
        auto RankID : *ArrAccess) {
-    auto [RankTy, RankVal] = getTypeAndValueAfterAccept(RankID);
+    auto [RankTy, RankVal] = acceptASTNode(RankID);
     if (RankTy) {
       if (!RankTy->isInt32Ty()) {
         Errors.emplace_back(llvm::formatv("couldn't access the array '{0}', "
@@ -327,31 +334,29 @@ void ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
     }
     CurrArrTy = static_cast<ArrayTy *>(CurrArrTy->getContainedType());
   }
-  setTypeAndValue(SymTbl.createType(TypeID::Int32), nullptr);
+  return createWrapperRef(SymTbl.createType(TypeID::Int32));
 }
 
-void ErrorHandler::visit(ast::ArrayAccessAssignment *ArrAssign) {
+ResultTy ErrorHandler::visit(ast::ArrayAccessAssignment *ArrAssign) {
   if (!SymTbl.isDefined(ArrAssign->entityKey())) {
     Errors.emplace_back(
         llvm::formatv("use of undeclared identifier '{0}'", ArrAssign->name()),
         ArrAssign->location());
-    setTypeAndValue(nullptr, nullptr);
-  } else {
-    auto [LhsTy, AccVal] =
-        getTypeAndValueAfterAccept(ArrAssign->getArrayAccess());
-    auto [RhsTy, IdentVal] =
-        getTypeAndValueAfterAccept(ArrAssign->getIdentExp());
-    if (RhsTy && RhsTy->isArrayTy())
-      Errors.emplace_back(
-          "expression is not assignable. Arrays cannot be assigned",
-          ArrAssign->location());
-    if (LhsTy && RhsTy && *LhsTy != *RhsTy) {
-      Errors.push_back({llvm::formatv("expression is not assignable. "
-                                      "Couldn't convert '{0}' to '{1}'",
-                                      RhsTy->getName(), LhsTy->getName()),
-                        ArrAssign->location()});
-    }
+    return createWrapperRef();
   }
+  auto [LhsTy, AccVal] = acceptASTNode(ArrAssign->getArrayAccess());
+  auto [RhsTy, IdentVal] = acceptASTNode(ArrAssign->getIdentExp());
+  if (RhsTy && RhsTy->isArrayTy())
+    Errors.emplace_back(
+        "expression is not assignable. Arrays cannot be assigned",
+        ArrAssign->location());
+  if (LhsTy && RhsTy && *LhsTy != *RhsTy) {
+    Errors.push_back({llvm::formatv("expression is not assignable. "
+                                    "Couldn't convert '{0}' to '{1}'",
+                                    RhsTy->getName(), LhsTy->getName()),
+                      ArrAssign->location()});
+  }
+  return createWrapperRef();
 }
 
 void ErrorHandler::run(ast::statement_block *root) { visit(root); }
@@ -373,17 +378,6 @@ auto ErrorHandler::begin() noexcept { return Errors.begin(); }
 auto ErrorHandler::end() noexcept { return Errors.end(); }
 auto ErrorHandler::begin() const noexcept { return Errors.begin(); }
 auto ErrorHandler::end() const noexcept { return Errors.end(); }
-
-void ErrorHandler::setTypeAndValue(TypePtr Ty, ValuePtr Val) {
-  CurrTy = Ty;
-  CurrValue = Val;
-}
-
-std::pair<PCLType *, PCLValue *>
-ErrorHandler::getTypeAndValueAfterAccept(ast::statement *Stm) {
-  Stm->accept(this);
-  return {CurrTy, CurrValue};
-}
 
 ErrorHandler::StringErrType
 ErrorHandler::makeValidationMessage(const std::string &ErrMes,
