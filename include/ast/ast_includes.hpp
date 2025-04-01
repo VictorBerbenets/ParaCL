@@ -2,7 +2,6 @@
 
 #include "array.hpp"
 #include "ast.hpp"
-#include "definition.hpp"
 #include "expression.hpp"
 #include "function.hpp"
 #include "identifiers.hpp"
