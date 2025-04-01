@@ -5,6 +5,8 @@
 #include <llvm/IR/Value.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include <type_traits>
+
 #include "statement.hpp"
 #include "types.hpp"
 #include "values.hpp"
@@ -86,32 +88,34 @@ protected:
   llvm::DenseMap<SymTabKey, PtrType> NamesInfo;
 };
 
+using TypeID = PCLType::TypeID;
+
+template <TypeID ID> struct TypeFromID;
+
+template <> struct TypeFromID<TypeID::Int32> {
+  using Type = IntegerTy;
+};
+
+template <> struct TypeFromID<TypeID::PresetArray> {
+  using Type = ArrayTy;
+};
+
+template <> struct TypeFromID<TypeID::UniformArray> {
+  using Type = ArrayTy;
+};
+
+template <TypeID ID> using TypeFromIDTy = typename TypeFromID<ID>::Type;
+
 template <typename Ty> class SymTable;
 
 // Specialization for working with the Paracl language interpreter,
 // incorporating a basic type manager for handling created types.
 template <> class SymTable<PCLType> : public SymTableBase<PCLType> {
 public:
-  using TypeID = PCLType::TypeID;
-
-  PCLType *createType(TypeID ID) {
-    switch (ID) {
-    case TypeID::Int32:
-      Types.emplace_back(std::make_unique<IntegerTy>(ID));
-      break;
-    case TypeID::UniformArray:
-      Types.emplace_back(std::make_unique<ArrayTy>(ID));
-      break;
-    case TypeID::PresetArray:
-      Types.emplace_back(std::make_unique<ArrayTy>(ID));
-      break;
-    case TypeID::Unknown:
-      Types.emplace_back(std::make_unique<PCLType>(ID));
-    default:
-      llvm_unreachable("Unknown type ID");
-    }
+  template <TypeID ID> TypeFromIDTy<ID> *createType() {
+    Types.emplace_back(std::make_unique<TypeFromIDTy<ID>>(ID));
     assert(!Types.empty());
-    return Types.back().get();
+    return static_cast<TypeFromIDTy<ID> *>(Types.back().get());
   }
 
 private:

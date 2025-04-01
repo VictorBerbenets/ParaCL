@@ -106,7 +106,7 @@ ResultTy ErrorHandler::visit(ast::un_operator *UnOp) {
 }
 
 ResultTy ErrorHandler::visit(ast::number *Num) {
-  auto *Type = SymTbl.createType(TypeID::Int32);
+  auto *Type = SymTbl.createType<TypeID::Int32>();
   return createWrapperRef(
       Type, ValManager.createValue<IntegerVal>(Num->get_value(), Type));
 }
@@ -200,7 +200,7 @@ ResultTy ErrorHandler::visit(ast::while_operator *While) {
 
 ResultTy ErrorHandler::visit(ast::read_expression * /*unused*/) {
   // Pass nullptr as Value* because we handle only 'compile time' cases
-  return createWrapperRef(SymTbl.createType(TypeID::Int32));
+  return createWrapperRef(SymTbl.createType<TypeID::Int32>());
 }
 
 ResultTy ErrorHandler::visit(ast::print_function *Print) {
@@ -262,9 +262,8 @@ ResultTy ErrorHandler::visit(ast::PresetArray *PresetArr) {
     Errors.emplace_back(TopErrorMes + llvm::join(InvalidArrArgs, "\n"),
                         PresetArr->location());
   }
-  auto *ArrType =
-      static_cast<ArrayTy *>(SymTbl.createType(TypeID::PresetArray));
-  ArrType->setContainedType(SymTbl.createType(TypeID::Int32));
+  auto *ArrType = SymTbl.createType<TypeID::PresetArray>();
+  ArrType->setContainedType(SymTbl.createType<TypeID::Int32>());
   if (ArrSz.has_value())
     ArrType->setSize(ArrSz.value());
   return createWrapperRef(ArrType);
@@ -273,8 +272,7 @@ ResultTy ErrorHandler::visit(ast::PresetArray *PresetArr) {
 ResultTy ErrorHandler::visit(ast::UniformArray *UnifArr) {
   auto [ContainType, _] = acceptASTNode(UnifArr->getInitExpr());
   auto [SizeType, SizeVal] = acceptASTNode(UnifArr->getSize());
-  auto *ArrType =
-      static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray));
+  auto *ArrType = SymTbl.createType<TypeID::UniformArray>();
   if (SizeType) {
     if (!SizeType->isInt32Ty())
       Errors.emplace_back(
@@ -334,7 +332,7 @@ ResultTy ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
     }
     CurrArrTy = static_cast<ArrayTy *>(CurrArrTy->getContainedType());
   }
-  return createWrapperRef(SymTbl.createType(TypeID::Int32));
+  return createWrapperRef(SymTbl.createType<TypeID::Int32>());
 }
 
 ResultTy ErrorHandler::visit(ast::ArrayAccessAssignment *ArrAssign) {

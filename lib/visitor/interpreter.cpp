@@ -158,7 +158,7 @@ ResultTy Interpreter::visit(ast::logic_expression *LogExp) {
 
 ResultTy Interpreter::visit(ast::number *Num) {
   return createWrapperRef(ValManager.createValue<IntegerVal>(
-      Num->get_value(), SymTbl.createType(TypeID::Int32)));
+      Num->get_value(), SymTbl.createType<TypeID::Int32>()));
 }
 
 ResultTy Interpreter::visit(ast::variable *Var) {
@@ -199,7 +199,7 @@ ResultTy Interpreter::visit(ast::read_expression *ReadExp) {
   }
 
   return createWrapperRef(ValManager.createValue<IntegerVal>(
-      Tmp, SymTbl.createType(TypeID::Int32)));
+      Tmp, SymTbl.createType<TypeID::Int32>()));
 }
 
 ResultTy Interpreter::visit(ast::print_function *Print) {
@@ -228,7 +228,7 @@ ResultTy Interpreter::visit(ast::assignment *Assign) {
     if (IdentType->isInt32Ty())
       return createWrapperRef(ValManager.createValueFor<IntegerVal>(
           DeclKey, static_cast<IntegerVal *>(IdentExp)->getValue(),
-          SymTbl.createType(TypeID::Int32)));
+          SymTbl.createType<TypeID::Int32>()));
     return createWrapperRef();
   }
   auto *Value =
@@ -253,7 +253,7 @@ ResultTy Interpreter::visit(ast::PresetArray *PresetArr) {
 
   auto *ArrVal = ValManager.createValue<PresetArrayVal>(
       PresetValues.begin(), PresetValues.end(),
-      static_cast<ArrayTy *>(SymTbl.createType(TypeID::PresetArray)));
+      SymTbl.createType<TypeID::PresetArray>());
   addResourceForFree(ArrVal, PresetArr->scope());
   return createWrapperRef(ArrVal);
 }
@@ -282,8 +282,7 @@ ResultTy Interpreter::visit(ast::UniformArray *UnifArr) {
 
   assert(InitExpr && Size);
   auto *ArrVal = ValManager.createValue<UniformArrayVal>(
-      InitExpr, *Size,
-      static_cast<ArrayTy *>(SymTbl.createType(TypeID::UniformArray)));
+      InitExpr, *Size, SymTbl.createType<TypeID::UniformArray>());
   addResourceForFree(ArrVal, UnifArr->scope());
   return createWrapperRef(ArrVal);
 }

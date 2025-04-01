@@ -87,7 +87,7 @@ protected:
 
 class IntegerVal : public PCLValue {
 public:
-  IntegerVal(int Val, PCLType *Ty) : PCLValue(Ty), Val(Val) {}
+  IntegerVal(int Val, IntegerTy *Ty) : PCLValue(Ty), Val(Val) {}
 
   IntegerTy *getType() const override { return static_cast<IntegerTy *>(Ty); }
 
@@ -99,7 +99,9 @@ public:
     Val = NewValue->getValue();
   }
 
-  IntegerVal *clone() const override { return new IntegerVal(Val, Ty); }
+  IntegerVal *clone() const override {
+    return new IntegerVal(Val, static_cast<IntegerTy *>(Ty));
+  }
 
   operator int() const noexcept { return Val; }
 
@@ -204,7 +206,6 @@ public:
       auto *Type = AssignVal->getType();
       switch (Type->getTypeID()) {
       case TypeID::UniformArray:
-        [[fallthrough]];
       case TypeID::PresetArray:
         ArrPtr = static_cast<ArrayBase *>(AssignVal);
         ArrPtr->copy(std::addressof(Data[ArrIndex]));
@@ -214,8 +215,6 @@ public:
         Data[ArrIndex] = AssignVal->clone();
         ArrIndex++;
         break;
-      case TypeID::Unknown:
-        [[fallthrough]];
       default:
         llvm_unreachable("Unsupported type for preset array");
       }

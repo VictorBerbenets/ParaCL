@@ -54,7 +54,12 @@ class PCLType {
   static constexpr llvm::StringRef NameForUnknownTy = "unknown";
 
 public:
-  enum class TypeID { Unknown, Int32, UniformArray, PresetArray };
+  // Standard types of the ParaCL language. In addition to integer types, there
+  // are arrays:
+  // 1) PresetArray code example : array(1, 2, -1) // 1, 2, -1
+  // 2) UniformArray code example: repeat(repeat(1, 5), 10) - a two-dimensional
+  //    array of 10 * 5
+  enum class TypeID { Int32, UniformArray, PresetArray };
 
   PCLType(TypeID ID) : ID(ID) {}
 
