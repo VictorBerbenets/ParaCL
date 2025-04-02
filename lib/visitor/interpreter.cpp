@@ -310,9 +310,8 @@ void Interpreter::freeResources(ast::statement_block *StmBlock) {
 }
 
 ResultTy InterpreterBase::acceptStatementBlock(ast::statement_block *StmBlock) {
-  for (auto &&statement : *StmBlock) {
-    statement->accept(this);
-  }
+  for (auto &&statement : *StmBlock)
+    acceptASTNode(statement);
   return createWrapperRef();
 }
 

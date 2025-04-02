@@ -28,7 +28,7 @@ ResultTy CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
 
   // Generating LLVM IR for main objects
   for (auto &&CurStatement : *RootBlock)
-    CurStatement->accept(this);
+    acceptASTNode(CurStatement);
   freeResources(RootBlock);
 
   // Create exit block to end instruction insertion
@@ -40,7 +40,7 @@ ResultTy CodeGenVisitor::visit(ast::root_statement_block *RootBlock) {
 
 ResultTy CodeGenVisitor::visit(ast::statement_block *StmBlock) {
   for (auto &&CurStatement : *StmBlock)
-    CurStatement->accept(this);
+    acceptASTNode(CurStatement);
   freeResources(StmBlock);
   return createWrapperRef();
 }
@@ -179,7 +179,7 @@ ResultTy CodeGenVisitor::visit(ast::if_operator *If) {
 
   auto *CurrBlock = Builder().GetInsertBlock();
   auto [IfBodyBlock, IfEndBlock] = createStartIf();
-  If->body()->accept(this);
+  acceptASTNode(If->body());
   Builder().CreateBr(IfEndBlock);
 
   Builder().SetInsertPoint(CurrBlock);
@@ -189,7 +189,7 @@ ResultTy CodeGenVisitor::visit(ast::if_operator *If) {
     Builder().CreateCondBr(CondValue, IfBodyBlock, IfElseBlock);
 
     Builder().SetInsertPoint(IfElseBlock);
-    If->else_block()->accept(this);
+    acceptASTNode(If->else_block());
     Builder().CreateBr(IfEndBlock);
   } else {
     Builder().CreateCondBr(CondValue, IfBodyBlock, IfEndBlock);
@@ -202,7 +202,7 @@ ResultTy CodeGenVisitor::visit(ast::while_operator *While) {
   auto [WhileBodyBlock, WhileEndBlock] =
       createStartWhile(acceptASTNode(While->condition()));
   // While body codegen
-  While->body()->accept(this);
+  acceptASTNode(While->body());
 
   createEndWhile(acceptASTNode(While->condition()), WhileBodyBlock,
                  WhileEndBlock);
@@ -256,7 +256,7 @@ ResultTy CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   auto *Arr = ArrStore->get();
   assert(Arr);
   // Obtain information about the array: initial values and size.
-  Arr->accept(this);
+  acceptASTNode(Arr);
 
   auto *DataTy = CodeGen.getInt32Ty();
   DataLayout Layout(&Module());
@@ -723,7 +723,7 @@ void CodeGenVisitor::printIntegerValue(Value *Val) {
 
 void CodeGenVisitor::generateIRCode(ast::root_statement_block *RootBlock,
                                     raw_ostream &Os) {
-  RootBlock->accept(this);
+  acceptASTNode(RootBlock);
   printIRToOstream(Os);
 }
 
