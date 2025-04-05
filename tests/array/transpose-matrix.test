@@ -1,0 +1,48 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: bash %compiler %s -o %t
+// RUN: %t |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+Matrix = repeat(array(1, 2, 3), 3);
+Matrix[1][0] = Matrix[2][1] = Matrix[1][2] = -55;
+Transposed = repeat(repeat(0, 3), 3);
+i = j = 0;
+
+// Print original matrix
+print Matrix;
+
+// Transposing
+i = 0;
+while (i < 3) {
+    j = 0;
+    while (j < 3) {
+        Transposed[j][i] = Matrix[i][j];
+        j = j + 1;
+    }
+    i = i + 1;;
+}
+
+print Transposed;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 1
+// CHECK-NEXT: 2
+// CHECK-NEXT: 3
+// CHECK-NEXT: -55
+// CHECK-NEXT: 2
+// CHECK-NEXT: -55
+// CHECK-NEXT: 1
+// CHECK-NEXT: -55
+// CHECK-NEXT: 3
+// CHECK-NEXT: 1
+// CHECK-NEXT: -55
+// CHECK-NEXT: 1
+// CHECK-NEXT: 2
+// CHECK-NEXT: 2
+// CHECK-NEXT: -55
+// CHECK-NEXT: 3
+// CHECK-NEXT: -55
+// CHECK-NEXT: 3

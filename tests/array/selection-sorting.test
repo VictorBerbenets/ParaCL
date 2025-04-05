@@ -1,0 +1,48 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: bash %compiler %s -o %t
+// RUN: %t |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+Arr = array(7, 2, 9, 1, 5, -1, -1, 1, 2, 100, -2, 3, -3, -3, -2, 0, 1001, 1);
+n = 18;
+i = j = min_idx = temp = 0;
+
+while (i < n - 1) {
+    min_idx = i;
+    j = i + 1;
+    while (j < n) {
+        if (Arr[j] < Arr[min_idx]) {
+            min_idx = j;
+        }
+        j = j + 1;
+    }
+    temp = Arr[i];
+    Arr[i] = Arr[min_idx];
+    Arr[min_idx] = temp;
+    i = i + 1;
+}
+
+print Arr;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: -3
+// CHECK-NEXT: -3
+// CHECK-NEXT: -2
+// CHECK-NEXT: -2
+// CHECK-NEXT: -1
+// CHECK-NEXT: -1
+// CHECK-NEXT: 0
+// CHECK-NEXT: 1
+// CHECK-NEXT: 1
+// CHECK-NEXT: 1
+// CHECK-NEXT: 2
+// CHECK-NEXT: 2
+// CHECK-NEXT: 3
+// CHECK-NEXT: 5
+// CHECK-NEXT: 7
+// CHECK-NEXT: 9
+// CHECK-NEXT: 100
+// CHECK-NEXT: 1001

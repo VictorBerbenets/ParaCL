@@ -292,6 +292,7 @@ ResultTy ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
     Errors.emplace_back(
         llvm::formatv("use of undeclared identifier '{0}'", Name),
         ArrAccess->location());
+    return createWrapperRef();
   }
 
   auto *CurrTy = SymTbl.getTypeFor(Name, DeclScope);
@@ -312,6 +313,7 @@ ResultTy ErrorHandler::visit(ast::ArrayAccess *ArrAccess) {
                                           "the index types must be integer",
                                           Name),
                             ArrAccess->location());
+        return createWrapperRef();
       } else if (RankVal) {
         auto *IntRankVal = static_cast<IntegerVal *>(RankVal);
         auto Index = IntRankVal->getValue();

@@ -1,0 +1,30 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: bash %compiler %s -o %t
+// RUN: %t |& FileCheck %s -dump-input=fail
+
+//---------------------------ParaCL code---------------------------------------
+
+Nums = array(-2, 1, -3, 4, -1, 2, 1, -5, 4);
+N = 9;
+max_sum = Nums[0];
+current_sum = Nums[0];
+
+i = 1;
+while (i < N) {
+  if (Nums[i] > current_sum + Nums[i])
+    current_sum = Nums[i];
+  else
+    current_sum = current_sum + Nums[i];
+  if (current_sum > max_sum)
+    max_sum = current_sum;
+
+  i = i + 1;
+}
+
+print max_sum;
+
+//-----------------------------------------------------------------------------
+
+// COM: subarray with max sum (4,-1,2,1)
+// CHECK: 6 

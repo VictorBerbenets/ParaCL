@@ -1,0 +1,28 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: bash %compiler %s -o %t
+// RUN: %t |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+Arr = array(2, 5, 8, 12, 16, 17, 18, 18, 19, 23, 25);
+target = 19;
+low = mid = 0;
+high = 10;
+
+// find an index of the target
+while (low <= high) {
+  mid = (low + high) / 2;
+  if (Arr[mid] == target) {
+      print mid;
+      low = high + 1;
+  } else if (Arr[mid] < target) {
+      low = mid + 1;
+  } else {
+      high = mid - 1;
+  }
+}
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 8

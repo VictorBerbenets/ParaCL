@@ -1,0 +1,23 @@
+// RUN: %paracl %s |& FileCheck %s -dump-input=fail
+
+// RUN: bash %compiler %s -o %t
+// RUN: %t |& FileCheck %s -dump-input=fail
+
+//-----------------------------ParaCL code-------------------------------------
+
+nums = array(2, 7, 4, 9, 6);
+count = 0;
+i = 0;
+
+while (i < 5) {
+  if (nums[i] % 2 == 0) {
+      count = count + 1;
+  }
+  i = i + 1;
+}
+
+print count;
+
+//-----------------------------------------------------------------------------
+
+// CHECK: 3
