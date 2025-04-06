@@ -158,8 +158,10 @@ private:
   Value *createLogicAnd(ast::logic_expression *LogExp);
   Value *createLogicOr(ast::logic_expression *LogExp);
 
-  AllocaInst *createArrayWithData(Type *DataTy, ArrayRef<Value *> Elems,
-                                  unsigned ArrSize, unsigned ElemSize);
+  Value *createArray(IntegerType *DataTy, const ArrayInfo &ArrInfo,
+                     ast::statement_block *CurrScope);
+  AllocaInst *allocateLocalArray(Type *DataTy, ArrayRef<Value *> Elems,
+                                 unsigned ArrSize, unsigned ElemSize);
 
   Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 

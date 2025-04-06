@@ -142,10 +142,12 @@ ResultTy CodeGenVisitor::visit(ast::variable *Var) {
   auto DeclKey = SymTbl.getDeclKeyFor(Var->entityKey());
   auto *Val = ValManager.getValueFor(DeclKey);
   assert(Val);
-  auto *AllocTy = static_cast<AllocaInst *>(Val)->getAllocatedType();
-  assert(AllocTy);
-  if (AllocTy->isIntegerTy())
-    return createWrapperRef(Builder().CreateLoad(AllocTy, Val, Var->name()));
+  if (auto *IsAllocaVal = dyn_cast<AllocaInst>(Val); IsAllocaVal) {
+    auto AllocatedTy = IsAllocaVal->getAllocatedType();
+    if (AllocatedTy->isIntegerTy())
+      return createWrapperRef(
+          Builder().CreateLoad(AllocatedTy, Val, Var->name()));
+  }
   return createWrapperRef(Val);
 }
 
@@ -227,13 +229,11 @@ ResultTy CodeGenVisitor::visit(ast::print_function *PrintFuncNode) {
     auto *ArrType = ValManager.getTypeFor(PrintVal);
     assert(ArrType);
     auto *DataTy = CodeGen.getInt32Ty();
-    auto *ArrPtr = Builder().CreateStructGEP(ArrType, PrintVal, 0);
-    ArrPtr = Builder().CreateLoad(PointerType::get(DataTy, 0), ArrPtr);
     auto *ArrSize = ArrayInfo::calculateSize(Builder(), CodeGen.getInt32Ty(),
                                              ArrInfoMap[PrintVal].Sizes);
     // Print array in loop
     std::function<void(Value *)> LoopBody = [&](Value *LoopCounter) {
-      auto *ElemPtr = Builder().CreateGEP(DataTy, ArrPtr, LoopCounter);
+      auto *ElemPtr = Builder().CreateGEP(DataTy, PrintVal, LoopCounter);
       printIntegerValue(Builder().CreateLoad(DataTy, ElemPtr));
     };
     createUpCountLoop(ArrSize, LoopBody);
@@ -259,87 +259,20 @@ ResultTy CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   acceptASTNode(Arr);
 
   auto *DataTy = CodeGen.getInt32Ty();
-  DataLayout Layout(&Module());
-  unsigned ElementSize = Layout.getTypeAllocSize(DataTy);
-  // Create a struct type for the array: a pointer type and types for sizes (if
-  // the array is multidimensional).
-  SmallVector<Type *> Types;
-  Types.reserve(CurrArrInfo.Sizes.size() + 1);
-  Types.push_back(PointerType::get(DataTy, 0));
-  llvm::transform(CurrArrInfo.Sizes, std::back_inserter(Types),
-                  [](auto *Sz) { return Sz->getType(); });
-
-  auto *ArrStructTy = StructType::get(CodeGen.Context, Types);
-  auto *AllocaStructPtr =
-      Builder().CreateAlloca(ArrStructTy, nullptr, "array.struct");
-  auto *ArrPtrGEP = Builder().CreateStructGEP(ArrStructTy, AllocaStructPtr, 0);
-  // Initialize the dimension size fields in the structure
-  for (unsigned Index = 1; Index <= CurrArrInfo.Sizes.size(); ++Index) {
-    auto *PtrGEP =
-        Builder().CreateStructGEP(ArrStructTy, AllocaStructPtr, Index);
-    Builder().CreateStore(CurrArrInfo.Sizes[Index - 1], PtrGEP);
-  }
-
-  if (auto ConstSizesOpt =
-          tryConvertDataToConstant<ConstantInt>(CurrArrInfo.Sizes);
-      ConstSizesOpt.has_value()) {
-    // Stack allocation
-    auto *ArrSize = ArrayInfo::calculateSize(DataTy, ConstSizesOpt.value());
-    auto *AllocaArr = createArrayWithData(DataTy, CurrArrInfo.Data,
-                                          ArrSize->getZExtValue(), ElementSize);
-    assert(AllocaArr);
-    Builder().CreateStore(AllocaArr, ArrPtrGEP);
-  } else {
-    // Heap allocation
-    Constant *ElemSize = ConstantInt::get(DataTy, ElementSize);
-    // Calculate the array size to allocate memory.
-    auto *ArraySize =
-        ArrayInfo::calculateSize(Builder(), DataTy, CurrArrInfo.Sizes);
-    auto *MallocCall = Builder().CreateMalloc(DataTy, 0, ElemSize, ArraySize);
-    Builder().CreateStore(MallocCall, ArrPtrGEP);
-    // Create support array with init data
-    auto *InitArrSize = ConstantInt::get(DataTy, CurrArrInfo.Data.size());
-    auto *SupportArr = createArrayWithData(
-        DataTy, CurrArrInfo.Data, InitArrSize->getZExtValue(), ElementSize);
-
-    std::function<void(Value *)> LoopBody = [&](Value *LoopCounter) {
-      // Copy support array elements into the malloc-allocated array within the
-      // loop.
-      Value *InitVal;
-      if (InitArrSize->equalsInt(1)) {
-        InitVal = CurrArrInfo.Data.front();
-      } else {
-        // Access the indices of the support array by taking the remainder of
-        // the main loop counter divided by the size of the support array. This
-        // allows the malloc-allocated array to be filled in batches of values
-        // from the support array.
-        auto *InitArrInd = Builder().CreateSRem(LoopCounter, InitArrSize);
-        auto *InitArrPtr = Builder().CreateGEP(DataTy, SupportArr, InitArrInd);
-        InitVal = Builder().CreateLoad(DataTy, InitArrPtr);
-      }
-
-      auto *GEPtr = Builder().CreateGEP(DataTy, MallocCall, LoopCounter);
-      Builder().CreateStore(InitVal, GEPtr);
-    };
-    // Initialize the malloc array in loop
-    createUpCountLoop(ArraySize, LoopBody);
-
-    // Dont't forget to free the pointer
-    ResourcesToFree[ArrStore->scope()].push_back(MallocCall);
-  }
+  Value *ArrPtr = createArray(DataTy, CurrArrInfo, ArrStore->scope());
 
   // Save the array's metadata (initialization values and dimensions). This may
   // be necessary when initializing a new array with values from an existing
   // one.
   [[maybe_unused]] auto [_, IsEmplaced] =
-      ArrInfoMap.try_emplace(AllocaStructPtr, std::move(CurrArrInfo));
+      ArrInfoMap.try_emplace(ArrPtr, std::move(CurrArrInfo));
   assert(IsEmplaced);
   // Clear the current array tracker.
   CurrArrInfo.clear();
   CodeGen.createBlockAndLinkWith(Builder().GetInsertBlock());
 
-  ValManager.setValueTypeLink(AllocaStructPtr, ArrStructTy);
-  return createWrapperRef(AllocaStructPtr);
+  ValManager.setValueTypeLink(ArrPtr, PointerType::get(DataTy, 0));
+  return createWrapperRef(ArrPtr);
 }
 
 // In the next two functions, we recursively collecting information about an
@@ -506,11 +439,11 @@ Value *CodeGenVisitor::getArrayAccessPtr(ast::ArrayAccess *ArrAccess) {
   });
 
   auto DeclKey = SymTbl.getDeclKeyFor(ArrAccess->entityKey());
-  auto *ArrStructPtr = ValManager.getValueFor(DeclKey);
-  assert(ArrStructPtr);
-  auto *ArrType = ValManager.getTypeFor(ArrStructPtr);
+  auto *ArrPtr = ValManager.getValueFor(DeclKey);
+  assert(ArrPtr);
+  [[maybe_unused]] auto *ArrType = ValManager.getTypeFor(ArrPtr);
   assert(ArrType);
-  assert(ArrType->isStructTy());
+  assert(ArrType->isPointerTy());
 
   // Calculate the offset of an element A[i1][i2]...[in]
   // in a n-dimensional array A of size D1 x D2 x ... x Dn:
@@ -522,19 +455,18 @@ Value *CodeGenVisitor::getArrayAccessPtr(ast::ArrayAccess *ArrAccess) {
   //     i(n-1) * Dn       +
   //     in) * element_size
   Value *AccessIndex = ConstantInt::get(DataTy, 0);
+  const auto &ArrSizes = ArrInfoMap[ArrPtr].Sizes;
+  assert(ArrSizes.size() == Indexes.size());
   for (unsigned i = 0, IndexNum = Indexes.size(); i < IndexNum; ++i) {
     auto *CurrIndex = Indexes[i];
     Value *Multiplier = ConstantInt::get(DataTy, 1);
     for (unsigned j = i + 1; j < IndexNum; ++j) {
-      auto *DimPtr = Builder().CreateStructGEP(ArrType, ArrStructPtr, j);
-      auto *Dim = Builder().CreateLoad(DataTy, DimPtr);
+      auto *Dim = ArrSizes[IndexNum - j - 1];
       Multiplier = Builder().CreateMul(Multiplier, Dim);
     }
     Value *Term = Builder().CreateMul(CurrIndex, Multiplier);
     AccessIndex = Builder().CreateAdd(AccessIndex, Term, "access_index");
   }
-  auto *GEPArrPtr = Builder().CreateStructGEP(ArrType, ArrStructPtr, 0);
-  auto *ArrPtr = Builder().CreateLoad(PointerType::get(DataTy, 0), GEPArrPtr);
   return Builder().CreateGEP(DataTy, ArrPtr, AccessIndex);
 }
 
@@ -644,10 +576,59 @@ Value *CodeGenVisitor::createLogicOr(ast::logic_expression *LogExp) {
   return Phi;
 }
 
-AllocaInst *CodeGenVisitor::createArrayWithData(Type *DataTy,
-                                                ArrayRef<Value *> Elems,
-                                                unsigned ArrSize,
-                                                unsigned ElementSize) {
+Value *CodeGenVisitor::createArray(IntegerType *DataTy,
+                                   const ArrayInfo &ArrInfo,
+                                   ast::statement_block *CurrScope) {
+  DataLayout Layout(&Module());
+  unsigned ElementSize = Layout.getTypeAllocSize(DataTy);
+  // Stack allocation
+  if (auto ConstSizesOpt = tryConvertDataToConstant<ConstantInt>(ArrInfo.Sizes);
+      ConstSizesOpt.has_value()) {
+    auto *ArrSize = ArrayInfo::calculateSize(DataTy, ConstSizesOpt.value());
+    return allocateLocalArray(DataTy, ArrInfo.Data, ArrSize->getZExtValue(),
+                              ElementSize);
+  }
+  // Heap allocation
+  Constant *ElemSize = ConstantInt::get(DataTy, ElementSize);
+  // Calculate the array size to allocate memory.
+  auto *ArraySize = ArrayInfo::calculateSize(Builder(), DataTy, ArrInfo.Sizes);
+  auto *MallocCall = Builder().CreateMalloc(DataTy, 0, ElemSize, ArraySize);
+  //  Create support array with init data
+  auto *InitArrSize = ConstantInt::get(DataTy, ArrInfo.Data.size());
+  auto *SupportArr = allocateLocalArray(
+      DataTy, ArrInfo.Data, InitArrSize->getZExtValue(), ElementSize);
+
+  std::function<void(Value *)> LoopBody = [&](Value *LoopCounter) {
+    // Copy support array elements into the malloc-allocated array within the
+    // loop.
+    Value *InitVal;
+    if (InitArrSize->equalsInt(1)) {
+      InitVal = ArrInfo.Data.front();
+    } else {
+      // Access the indices of the support array by taking the remainder of
+      // the main loop counter divided by the size of the support array. This
+      // allows the malloc-allocated array to be filled in batches of values
+      // from the support array.
+      auto *InitArrInd = Builder().CreateSRem(LoopCounter, InitArrSize);
+      auto *InitArrPtr = Builder().CreateGEP(DataTy, SupportArr, InitArrInd);
+      InitVal = Builder().CreateLoad(DataTy, InitArrPtr);
+    }
+
+    auto *GEPtr = Builder().CreateGEP(DataTy, MallocCall, LoopCounter);
+    Builder().CreateStore(InitVal, GEPtr);
+  };
+  // Initialize the malloc array in loop
+  createUpCountLoop(ArraySize, LoopBody);
+
+  // Dont't forget to free the pointer
+  ResourcesToFree[CurrScope].push_back(MallocCall);
+  return MallocCall;
+}
+
+AllocaInst *CodeGenVisitor::allocateLocalArray(Type *DataTy,
+                                               ArrayRef<Value *> Elems,
+                                               unsigned ArrSize,
+                                               unsigned ElementSize) {
   // -- If the array is initialized with a mix of constants and patterns
   // (e.g., array(1, 2, repeat(1, 10), undef, array(-1, 1))), we use memcpy
   // to copy a precomputed array of constants into the allocated memory
