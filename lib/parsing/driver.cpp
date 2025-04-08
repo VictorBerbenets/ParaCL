@@ -53,7 +53,7 @@ void driver::evaluate(std::ostream &output, std::istream &input) {
 }
 
 void driver::compile(llvm::StringRef ModuleName, llvm::raw_ostream &Os) {
-  paracl::CodeGenVisitor CodeGenVis(ModuleName);
+  paracl::codegen::CodeGenVisitor CodeGenVis(ModuleName);
   CodeGenVis.generateIRCode(ast_.root_ptr(), Os);
   if (DumpCfg.getNumOccurrences() > 0)
     CodeGenVis.dumpInDotFormat(DumpCfg);

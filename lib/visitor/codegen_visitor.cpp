@@ -9,8 +9,10 @@
 #include "codegen_visitor.hpp"
 
 namespace paracl {
+namespace codegen {
 
 using ResultTy = CodeGenVisitor::ResultTy;
+using ResultArrayTy = CodeGenVisitor::ResultArrayTy;
 
 CodeGenVisitor::CodeGenVisitor(StringRef ModuleName) : CodeGen(ModuleName) {}
 
@@ -275,6 +277,15 @@ ResultTy CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   return createWrapperRef(ArrPtr);
 }
 
+ ArrayInfo CodeGenVisitor::getOrCreateArrayInfo(DefaultResultTy DefRes) {
+  if (DefRes.isLLVMValueWrapper()) {
+    return VisitorBase::createWrapperRef<ArrayInfoWrapper>(static_cast<ResultTy>(DefRes)); 
+  } else if (DefRes.isArrayInfoWrapper()) {
+    return *static_cast<ResultArrayTy>(DefRes);
+  }
+  llvm_unreachable("unknown codegen wrapper");
+}
+
 // In the next two functions, we recursively collecting information about an
 // array: its size and the values of the elements. The array will be created in
 // the visit ArrayHolder method of the class. The core idea is to gradually
@@ -282,9 +293,12 @@ ResultTy CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
 // (preset) arrays. At the end of each traversal, we set the returned Value to
 // nullptr (this signals that the next array’s initializer will be another
 // array).
-ResultTy CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
+ResultArrayTy CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
+  
   auto *DataTy = CodeGen.getInt32Ty();
-  auto &InitVal = acceptASTNode(UnifArr->getInitExpr());
+  auto &InitVal = acceptASTNodeDefault(UnifArr->getInitExpr());
+#if 0
+  if (!ArrManager.contains(InitVal))
   auto &Size = acceptASTNode(UnifArr->getSize());
   assert(Size);
   auto *ConstSize = isConstantInt(Size);
@@ -376,9 +390,11 @@ ResultTy CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   }
   CurrArrInfo.pushSize(Size);
   return createWrapperRef(nullptr);
+#endif
 }
 
-ResultTy CodeGenVisitor::visit(ast::PresetArray *PresetArr) {
+ResultArrayTy CodeGenVisitor::visit(ast::PresetArray *PresetArr) {
+#if 0
   auto *DataTy = CodeGen.getInt32Ty();
   llvm::for_each(*PresetArr, [&](auto *Exp) {
     auto &Val = acceptASTNode(Exp);
@@ -412,6 +428,7 @@ ResultTy CodeGenVisitor::visit(ast::PresetArray *PresetArr) {
   CurrArrInfo.clearSize();
   CurrArrInfo.pushSize(CodeGen.createConstantInt32(CurrArrInfo.Data.size()));
   return createWrapperRef(nullptr);
+#endif
 }
 
 ResultTy CodeGenVisitor::visit(ast::ArrayAccess *ArrAccess) {
@@ -668,27 +685,10 @@ LoadInst *CodeGenVisitor::createLocalVariable(Type *DataTy, Value *ToStore) {
   return Builder().CreateLoad(DataTy, Alloca);
 }
 
-void CodeGenVisitor::fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr,
-                                       Type *DataTy, ArrayRef<Value *> Data) {
-  for (unsigned Id = 0; Id < Data.size(); ++Id) {
-    auto *GEPPtr =
-        Builder.CreateGEP(DataTy, ArrPtr, ConstantInt::get(DataTy, Id));
-    Builder.CreateStore(Data[Id], GEPPtr);
-  }
-}
-
 void CodeGenVisitor::freeResources(ast::statement_block *StmBlock) {
   if (ResourcesToFree.contains(StmBlock))
     llvm::for_each(ResourcesToFree[StmBlock],
                    [&](auto *ValToFree) { Builder().CreateFree(ValToFree); });
-}
-
-bool CodeGenVisitor::isConstantData(ArrayRef<Value *> Data) {
-  return all_of(Data, [](auto *Val) { return isConstantInt(Val) != nullptr; });
-}
-
-ConstantInt *CodeGenVisitor::isConstantInt(Value *Val) {
-  return dyn_cast<ConstantInt>(Val);
 }
 
 void CodeGenVisitor::printIntegerValue(Value *Val) {
@@ -712,4 +712,5 @@ void CodeGenVisitor::printIRToOstream(raw_ostream &Os) const {
   CodeGen.Mod->print(Os, nullptr);
 }
 
+} // namespace codegen
 } // namespace paracl

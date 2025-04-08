@@ -3,92 +3,62 @@
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Support/Casting.h>
 
-#include <concepts>
 #include <functional>
 
 #include "codegen.hpp"
+#include "codegen_support.hpp"
 #include "semantic_context.hpp"
 #include "utils.hpp"
 #include "visitor.hpp"
 
 namespace paracl {
+namespace codegen {
 
 using namespace llvm;
 
-// Wrapper class for LLVM Values
-class LLVMValueWrapper : public ValueWrapper,
-                         public ValueWrapperInterface<Value> {
+class CodeGenWrapper: public ValueWrapper {
+protected:
+  enum class EntityType {LLVMValue, ArrayInfo};
+
+  CodeGenWrapper(EntityType EntTy): EntityTy(EntTy) {}
+
 public:
-  using WrapperInterfaceTy::WrapperInterfaceTy;
+  bool isLLVMValueWrapper() const noexcept { return EntityTy == EntityType::LLVMValue; }
+  bool isArrayInfoWrapper() const noexcept { return EntityTy == EntityType::ArrayInfo; }
+
+private:
+  EntityType EntityTy;
 };
 
-template <typename ConstTy>
-concept DerivedFromLLVMConstant = std::derived_from<ConstTy, Constant>;
+// Wrapper class for LLVM Values
+class LLVMValueWrapper final: public CodeGenWrapper,
+                         public ValueWrapperInterface<Value> {
+public:
+  LLVMValueWrapper(Value *Val): CodeGenWrapper(EntityType::LLVMValue), WrapperInterfaceTy(Val) {}
+};
+
+class ArrayInfoWrapper final: public CodeGenWrapper,
+                        public ValueWrapperInterface<ArrayInfo> {
+public:
+  ArrayInfoWrapper(ArrayInfo *Val): CodeGenWrapper(EntityType::ArrayInfo), WrapperInterfaceTy(Val) {}
+};
 
 class CodeGenVisitor : public VisitorBase {
-  // An auxiliary structure for recursively collecting data from an entire array
-  // and preparing for its creation
-  struct ArrayInfo final {
-    SmallVector<Value *> Sizes;
-    SmallVector<Value *> Data;
-
-    bool isConstant() const {
-      return isConstantData(Data) && isConstantData(Sizes);
-    }
-
-    void pushSize(Value *Sz) { Sizes.push_back(Sz); }
-
-    void pushData(Value *Dat) { Data.push_back(Dat); }
-
-    template <std::input_iterator InputIt>
-    void pushData(InputIt Begin, InputIt End) {
-      Data.insert(Data.end(), Begin, End);
-    }
-
-    void clearSize() { Sizes.clear(); }
-
-    void clearData() { Data.clear(); }
-
-    void clear() {
-      clearSize();
-      clearData();
-    }
-
-    static Value *calculateSize(IRBuilder<> &Builder, IntegerType *DataTy,
-                                ArrayRef<Value *> Data) {
-      if (auto OptData = tryConvertDataToConstant<ConstantInt>(Data);
-          OptData.has_value())
-        return calculateSize(DataTy, OptData.value());
-
-      Value *ArrSize = ConstantInt::get(DataTy, 1);
-      llvm::for_each(
-          Data, [&](auto *Sz) { ArrSize = Builder.CreateMul(ArrSize, Sz); });
-      return ArrSize;
-    }
-
-    static ConstantInt *calculateSize(IntegerType *DataTy,
-                                      ArrayRef<ConstantInt *> Data) {
-      auto *ArrSize = ConstantInt::get(DataTy, 1);
-      llvm::for_each(Data, [&ArrSize](auto *Sz) {
-        ArrSize = dyn_cast<ConstantInt>(ConstantExpr::getMul(ArrSize, Sz));
-        assert(ArrSize);
-      });
-      return ArrSize;
-    }
-  };
 
 public:
+  using DefaultValue = CodeGenWrapper;
+  using DefaultResultTy = DefaultValue &;
   using CodeGenValue = LLVMValueWrapper;
   using ResultTy = CodeGenValue &;
+  using ArrayInfoValue = ArrayInfoWrapper;
+  using ResultArrayTy = ArrayInfoValue &;
 
   CodeGenVisitor(StringRef ModuleName);
 
   ResultTy visit(ast::root_statement_block *stm) override;
   ResultTy visit(ast::ArrayHolder *ArrStore) override;
   ResultTy visit(ast::ArrayAccessAssignment *Arr) override;
-  ResultTy visit(ast::PresetArray *PresetArr) override;
   ResultTy visit(ast::ArrayAccess *ArrAccess) override;
-  ResultTy visit(ast::UniformArray *UnifArr) override;
   ResultTy visit(ast::calc_expression *stm) override;
   ResultTy visit(ast::un_operator *stm) override;
   ResultTy visit(ast::logic_expression *stm) override;
@@ -100,6 +70,8 @@ public:
   ResultTy visit(ast::if_operator *stm) override;
   ResultTy visit(ast::while_operator *stm) override;
   ResultTy visit(ast::print_function *stm) override;
+  ResultArrayTy visit(ast::PresetArray *PresetArr) override;
+  ResultArrayTy visit(ast::UniformArray *UnifArr) override;
 
   // Generate LLVM IR and write it to Os
   void generateIRCode(ast::root_statement_block *RootBlock, raw_ostream &Os);
@@ -114,6 +86,10 @@ private:
 
   ResultTy acceptASTNode(ast::statement *Stm) override {
     return static_cast<ResultTy>(Stm->accept(this));
+  }
+  
+  DefaultResultTy acceptASTNodeDefault(ast::statement *Stm) {
+    return static_cast<DefaultResultTy>(Stm->accept(this));
   }
 
   ResultTy createWrapperRef(Value *Val = nullptr) {
@@ -165,6 +141,8 @@ private:
 
   Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 
+  ArrayInfo getOrCreateArrayInfo(DefaultResultTy DefRes);
+
   LoadInst *createLocalVariable(Type *DataTy, Value *ToStore);
 
   void printIntegerValue(Value *Val);
@@ -173,40 +151,13 @@ private:
 
   void freeResources(ast::statement_block *StmBlock);
 
-  template <DerivedFromLLVMConstant ConstType = Constant>
-  static std::optional<SmallVector<ConstType *>>
-  tryConvertDataToConstant(ArrayRef<Value *> Data) {
-    SmallVector<ConstType *> ConstData;
-    ConstData.reserve(Data.size());
-    if (!isConstantData(Data))
-      return {};
-
-    llvm::transform(Data, std::back_inserter(ConstData), [](auto *Val) {
-      auto *ConstVal = dyn_cast<ConstType>(Val);
-      assert(ConstVal);
-      return ConstVal;
-    });
-    return ConstData;
-  }
-
-  static void fillArrayWithData(IRBuilder<> &Builder, Value *ArrPtr,
-                                Type *DataTy, ArrayRef<Value *> Data);
-
-  static bool isConstantData(ArrayRef<Value *> Data);
-
-  static ConstantInt *isConstantInt(Value *Val);
-
-  template <DerivedFromLLVMConstant ConstTy = Constant>
-  static ConstTy *isCompileTimeConstant(Value *Val) {
-    return dyn_cast<ConstTy>(Val);
-  }
-
   SymTable<Type> SymTbl;
   ValueManager<Value> ValManager;
-  codegen::IRCodeGenerator CodeGen;
+  IRCodeGenerator CodeGen;
   ArrayInfo CurrArrInfo;
   DenseMap<Value *, ArrayInfo> ArrInfoMap;
   DenseMap<ast::statement_block *, SmallVector<Value *>> ResourcesToFree;
 };
 
+} // namespace codegen
 } // namespace paracl

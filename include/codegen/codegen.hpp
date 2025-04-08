@@ -12,10 +12,9 @@
 #include <memory>
 
 namespace paracl {
+namespace codegen {
 
 class CodeGenVisitor;
-
-namespace codegen {
 
 using namespace llvm;
 
@@ -59,7 +58,7 @@ public:
                            Function::LinkageTypes LinkType, StringRef Name,
                            bool IsVarArg = false);
 
-  friend class paracl::CodeGenVisitor;
+  friend class CodeGenVisitor;
 
   const Module &getModule() const;
 
@@ -73,5 +72,4 @@ private:
 };
 
 } // namespace codegen
-
 } // namespace paracl
