@@ -277,14 +277,9 @@ ResultTy CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
   return createWrapperRef(ArrPtr);
 }
 
- ArrayInfo CodeGenVisitor::getOrCreateArrayInfo(DefaultResultTy DefRes) {
-  if (DefRes.isLLVMValueWrapper()) {
-    return VisitorBase::createWrapperRef<ArrayInfoWrapper>(static_cast<ResultTy>(DefRes)); 
-  } else if (DefRes.isArrayInfoWrapper()) {
-    return *static_cast<ResultArrayTy>(DefRes);
-  }
-  llvm_unreachable("unknown codegen wrapper");
-}
+ ResultArrayTy CodeGenVisitor::getOrCreateArrayInfo(DefaultResultTy DefRes, Value *Size) {
+
+ }
 
 // In the next two functions, we recursively collecting information about an
 // array: its size and the values of the elements. The array will be created in
@@ -296,9 +291,15 @@ ResultTy CodeGenVisitor::visit(ast::ArrayHolder *ArrStore) {
 ResultArrayTy CodeGenVisitor::visit(ast::UniformArray *UnifArr) {
   
   auto *DataTy = CodeGen.getInt32Ty();
-  auto &InitVal = acceptASTNodeDefault(UnifArr->getInitExpr());
+  auto &DefVal = acceptASTNodeDefault(UnifArr->getInitExpr());
+  if (DefVal.isLLVMValueWrapper()) {
+    auto &LLVMWrapper = static_cast<ResultTy>(DefVal); 
+    auto &ArrInfo = ArrManager.containsArrayPtr(LLVMWrapper) ? ArrManager[LLVMWrapper] : ArrManager.create();
+  } else if (DefVal.isArrayInfoWrapper()) {
+  
+  }
+  llvm_unreachable("unknown codegen wrapper");
 #if 0
-  if (!ArrManager.contains(InitVal))
   auto &Size = acceptASTNode(UnifArr->getSize());
   assert(Size);
   auto *ConstSize = isConstantInt(Size);

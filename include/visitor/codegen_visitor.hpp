@@ -88,13 +88,15 @@ private:
     return static_cast<ResultTy>(Stm->accept(this));
   }
   
-  DefaultResultTy acceptASTNodeDefault(ast::statement *Stm) {
-    return static_cast<DefaultResultTy>(Stm->accept(this));
-  }
-
   ResultTy createWrapperRef(Value *Val = nullptr) {
     return VisitorBase::createWrapperRef<CodeGenValue>(Val);
   }
+  
+  DefaultResultTy acceptASTNodeDefault(ast::statement *Stm) {
+    return static_cast<DefaultResultTy>(Stm->accept(this));
+  }
+  
+  ResultArrayTy getOrCreateArrayInfo(DefaultResultTy DefRes, Value *Size);
 
   std::pair<BasicBlock *, BasicBlock *> createStartIf();
   void createEndIf(BasicBlock *EndBlock);
@@ -141,8 +143,6 @@ private:
 
   Value *getArrayAccessPtr(ast::ArrayAccess *ArrAccess);
 
-  ArrayInfo getOrCreateArrayInfo(DefaultResultTy DefRes);
-
   LoadInst *createLocalVariable(Type *DataTy, Value *ToStore);
 
   void printIntegerValue(Value *Val);
@@ -156,6 +156,7 @@ private:
   IRCodeGenerator CodeGen;
   ArrayInfo CurrArrInfo;
   DenseMap<Value *, ArrayInfo> ArrInfoMap;
+  ArrayManager ArrManager;
   DenseMap<ast::statement_block *, SmallVector<Value *>> ResourcesToFree;
 };
 

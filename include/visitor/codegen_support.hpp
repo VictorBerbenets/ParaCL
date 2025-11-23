@@ -1,11 +1,13 @@
 #pragma once
 
 #include <llvm/ADT/SmallVector.h>
+#include <llvm/ADT/DenseMap.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Type.h>
 
 #include <concepts>
+#include <memory>
 
 #include "values.hpp"
 
@@ -108,9 +110,30 @@ struct ArrayInfo final {
 };
 
 class ArrayManager final {
+public:
+  ArrayManager() = default;
+  
+  bool containsArrayInfo(ArrayInfo *ArrInfo) const {
+    return llvm::find_if(ArrayInfoStor, [ArrInfo](auto &&UnPtr) {
+          return UnPtr.get() == ArrInfo; 
+        }) != ArrayInfoStor.end(); 
+  }
+  bool containsArrayPtr(Value *ArrPtr) const {
+    return ArrayInfoMap.contains(ArrPtr); 
+  }
+
+  ArrayInfo &create() {
+    ArrayInfoStor.emplace_back(std::make_unique<ArrayInfo>());
+    return *ArrayInfoStor.back().get();
+  }
+
+  ArrayInfo &operator[](Value *ArrPtr) {
+    return ArrayInfoMap[ArrPtr];
+  }
 
 private:
   DenseMap<Value*, ArrayInfo&> ArrayInfoMap;
+  SmallVector<std::unique_ptr<ArrayInfo>> ArrayInfoStor;
 };
 
 } // namespace codegen
